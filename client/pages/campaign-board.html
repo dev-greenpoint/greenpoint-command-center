@@ -138,7 +138,7 @@
     .task-list { width: 100%; }
     .task-cols {
       display: grid;
-      grid-template-columns: 18px 1fr 110px 95px 22px;
+      grid-template-columns: 18px 1fr 120px 95px 85px 22px;
       gap: 0 8px;
       padding: 0 4px 5px;
       border-bottom: 1px solid var(--border);
@@ -149,7 +149,7 @@
     }
     .task-row {
       display: grid;
-      grid-template-columns: 18px 1fr 110px 95px 22px;
+      grid-template-columns: 18px 1fr 120px 95px 85px 22px;
       gap: 0 8px;
       padding: 0 4px;
       min-height: 34px;
@@ -180,8 +180,51 @@
       font-size: 12px; padding: 3px 6px;
     }
     .task-cell input:focus { outline: none; }
+    .task-cell select {
+      display: none; width: 100%; box-sizing: border-box;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 4px; color: var(--text);
+      font-size: 11px; padding: 3px 4px; cursor: pointer;
+    }
+    .task-cell select:focus { outline: none; }
     .task-cell.editing span { display: none; }
-    .task-cell.editing input { display: block; }
+    .task-cell.editing input,
+    .task-cell.editing select { display: block; }
+
+    /* Assignee avatar */
+    .av {
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%; font-weight: 700; flex-shrink: 0;
+      vertical-align: middle; color: #fff;
+    }
+    .task-cell-assignee { cursor: pointer; overflow: visible !important; }
+    .task-cell-assignee > span { display: flex; align-items: center; gap: 5px; }
+
+    /* Assignee dropdown */
+    .av-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0;
+      z-index: 300; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      padding: 4px; min-width: 150px;
+    }
+    .av-dropdown.open { display: block; }
+    .av-option {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;
+    }
+    .av-option:hover { background: var(--surface-2); }
+
+    /* Progress chips */
+    .progress-chip {
+      display: inline-block; padding: 2px 7px; border-radius: 100px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .04em; white-space: nowrap; cursor: pointer;
+    }
+    .pc-not-assigned { background: var(--surface-2); color: var(--text-dim); }
+    .pc-planned      { background: #0d1f33; color: #6699cc; }
+    .pc-in-progress  { background: #2a1800; color: #cc8800; }
+    .pc-in-review    { background: #1a0a2e; color: #9966cc; }
+    .pc-complete     { background: #0d3323; color: var(--success); }
 
     /* Delete button */
     .task-del {
@@ -292,6 +335,7 @@
     const campaignId = location.pathname.split('/')[2];
     let campaign = null;
     let allTasks = [];
+    let teamMembers = [];
 
     const STAGES = {
       PR: ['Strategy','Newsroom Research','Angle Development','Draft Release','Internal Review','Client Approval','Media List','Pitch Copy','Pitching','Follow-up','Coverage Tracking','Reporting'],
@@ -299,13 +343,25 @@
     };
     function getStages(type) { return STAGES[type] || STAGES.default; }
 
+    const GROUPS = {
+      PR: [
+        { label: 'Brief & Strategy', stages: [0, 1, 2] },
+        { label: 'Content',          stages: [3, 4, 5] },
+        { label: 'Outreach',         stages: [6, 7, 8, 9] },
+        { label: 'Reporting',        stages: [10, 11] },
+      ],
+    };
+    function getGroups(type) { return GROUPS[type] || null; }
+
     // ── Load ──────────────────────────────────────────────────────────────────
 
     async function load() {
-      const [campRes, tasksRes] = await Promise.all([
+      const [campRes, tasksRes, teamRes] = await Promise.all([
         fetch(`/api/campaigns/${campaignId}`),
-        fetch(`/api/campaigns/${campaignId}/tasks`)
+        fetch(`/api/campaigns/${campaignId}/tasks`),
+        fetch('/api/team-members/names')
       ]);
+      teamMembers = teamRes.ok ? await teamRes.json() : [];
       if (!campRes.ok) {
         document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Campaign not found.</p>';
         return;
@@ -318,30 +374,24 @@
 
     function render() {
       const stages = getStages(campaign.type);
-      const currentStage = campaign.current_stage || 0;
-      const pct = Math.round((currentStage / stages.length) * 100);
+      const groups = getGroups(campaign.type);
       const chipClass = { active: 'chip-active', draft: 'chip-draft', paused: 'chip-paused', completed: 'chip-completed' }[campaign.status] || 'chip-draft';
       const statusLabel = campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1);
 
-      const dotsHtml = stages.map((s, i) => {
-        const done = i < currentStage;
-        const active = i === currentStage;
-        return `<div class="progress-dot ${done ? 'done' : active ? 'active' : ''}" title="${s}">${i + 1}</div>`;
-      }).join('');
-
-      const sectionsHtml = stages.map((s, i) => {
-        const isCurrent = i === currentStage;
-        const isDone = i < currentStage;
+      const stageHtml = (s, i) => {
         const stageTasks = allTasks.filter(t => t.stage_index === i);
         const doneCount = stageTasks.filter(t => t.done).length;
         const taskCountLabel = stageTasks.length ? `${doneCount}/${stageTasks.length}` : '';
 
         const colHeader = stageTasks.length ? `
           <div class="task-cols">
-            <div></div><div>Task</div><div>Assignee</div><div>Due</div><div></div>
+            <div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div>
           </div>` : '';
 
-        const tasksHtml = stageTasks.map(t => `
+        const tasksHtml = stageTasks.map(t => {
+          const prog = t.progress || 'Not Assigned';
+          const progClass = progressClass(prog);
+          return `
           <div class="task-row ${t.done ? 'done' : ''}" id="task-row-${t.id}">
             <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleDone(${t.id}, this.checked)">
             <div class="task-cell task-cell-title" onclick="editCell(this, ${t.id}, 'title')">
@@ -350,11 +400,23 @@
                 onblur="saveField(${t.id}, 'title', this.value)"
                 onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelCell(this.parentElement)">
             </div>
-            <div class="task-cell task-cell-assignee" onclick="editCell(this, ${t.id}, 'assignee')">
-              <span>${t.assignee || '<span style=color:var(--text-dim)>—</span>'}</span>
-              <input type="text" value="${t.assignee || ''}" placeholder="Assignee"
-                onblur="saveField(${t.id}, 'assignee', this.value)"
-                onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelCell(this.parentElement)">
+            <div class="task-cell task-cell-progress" onclick="editCell(this, ${t.id}, 'progress')">
+              <span><span class="progress-chip ${progClass}">${prog}</span></span>
+              <select onchange="saveField(${t.id}, 'progress', this.value)" onblur="cancelCell(this.parentElement)">
+                ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o => `<option${o===prog?' selected':''}>${o}</option>`).join('')}
+              </select>
+            </div>
+            <div class="task-cell task-cell-assignee" onclick="openAssigneeSelector(event, ${t.id})">
+              <span>${assigneeDisplay(t.assignee)}</span>
+              <div class="av-dropdown" id="av-drop-${t.id}">
+                <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, null)">
+                  <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
+                </div>
+                ${teamMembers.map(name => `
+                  <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, '${name.replace(/'/g, "\\'")}')">
+                    ${avatarHtml(name)} ${name}
+                  </div>`).join('')}
+              </div>
             </div>
             <div class="task-cell task-cell-due" onclick="editCell(this, ${t.id}, 'due_date')">
               <span>${t.due_date || '<span style=color:var(--text-dim)>—</span>'}</span>
@@ -364,19 +426,14 @@
                 onkeydown="if(event.key==='Escape')cancelCell(this.parentElement)">
             </div>
             <button class="task-del" onclick="deleteTask(${t.id})" title="Delete">×</button>
-          </div>
-        `).join('');
-
-        const badgeHtml = isCurrent
-          ? `<span class="stage-badge badge-current">Current</span>`
-          : isDone ? `<span class="stage-badge badge-done">Done</span>` : '';
+          </div>`;
+        }).join('');
 
         return `
-          <div class="stage-section ${isCurrent ? 'is-current open' : isDone ? 'is-done' : ''}" id="stage-section-${i}">
+          <div class="stage-section open" id="stage-section-${i}">
             <div class="stage-header" onclick="toggleSection(${i})">
               <div class="stage-num">${i + 1}</div>
               <div class="stage-name">${s}</div>
-              ${badgeHtml}
               ${taskCountLabel ? `<span class="stage-task-count">${taskCountLabel}</span>` : ''}
               <span class="stage-chevron">▼</span>
             </div>
@@ -397,9 +454,16 @@
                 <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px;" onclick="hideAddForm(${i})">✕</button>
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
+          </div>`;
+      };
+
+      const sectionsHtml = groups
+        ? groups.map(g => `
+            <div style="margin-bottom:6px;margin-top:20px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);padding:0 2px 8px;">${g.label}</div>
+              ${g.stages.map(i => stageHtml(stages[i], i)).join('')}
+            </div>`).join('')
+        : stages.map((s, i) => stageHtml(s, i)).join('');
 
       document.getElementById('page-content').innerHTML = `
         <div class="board-header">
@@ -411,19 +475,6 @@
           <div style="flex:1;"></div>
           <button class="btn btn-ghost" style="font-size:12px;" onclick="openEditDrawer()">Edit</button>
         </div>
-
-        <!-- Progress -->
-        <div class="progress-track">
-          ${currentStage > 0 ? `<button class="btn btn-ghost" style="font-size:12px;white-space:nowrap;" onclick="setStage(${currentStage - 1})">← Back</button>` : ''}
-          <div class="progress-center">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-align:center;">${stages[currentStage] || 'Complete'} &nbsp;·&nbsp; ${currentStage}/${stages.length} stages</div>
-            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-            <div class="progress-dots">${dotsHtml}</div>
-          </div>
-          ${currentStage < stages.length ? `<button class="btn btn-primary" style="font-size:12px;white-space:nowrap;" onclick="setStage(${currentStage + 1})">${currentStage + 1 < stages.length ? 'Advance →' : 'Complete ✓'}</button>` : '<span style="font-size:12px;color:var(--success);">All done ✓</span>'}
-        </div>
-
-        <!-- Stage sections -->
         <div id="stages-list">${sectionsHtml}</div>
       `;
     }
@@ -477,35 +528,84 @@
       if (task) task.done = done ? 1 : 0;
     }
 
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    function avatarColor(name) {
+      const palette = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
+      let h = 0;
+      for (let i = 0; i < (name||'').length; i++) h = (name.charCodeAt(i) + ((h << 5) - h)) | 0;
+      return palette[Math.abs(h) % palette.length];
+    }
+    function avatarHtml(name, size=20) {
+      if (!name) return '';
+      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return `<span class="av" style="width:${size}px;height:${size}px;background:${avatarColor(name)};font-size:${Math.round(size*.42)}px">${initials}</span>`;
+    }
+    function assigneeDisplay(name) {
+      return name
+        ? `${avatarHtml(name)} ${name}`
+        : '<span style="color:var(--text-dim)">—</span>';
+    }
+
+    function openAssigneeSelector(event, taskId) {
+      event.stopPropagation();
+      const drop = document.getElementById(`av-drop-${taskId}`);
+      const isOpen = drop.classList.contains('open');
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen) drop.classList.add('open');
+    }
+    async function selectAssignee(taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await saveField(taskId, 'assignee', name || '');
+    }
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+    });
+
+    function progressClass(p) {
+      return { 'Not Assigned': 'pc-not-assigned', 'Planned': 'pc-planned', 'In Progress': 'pc-in-progress', 'In Review': 'pc-in-review', 'Complete': 'pc-complete' }[p] || 'pc-not-assigned';
+    }
+
     // ── Per-field inline edit ──────────────────────────────────────────────────
 
     function editCell(cell, taskId, field) {
       cell.classList.add('editing');
-      const input = cell.querySelector('input');
-      input.focus();
-      if (input.type === 'text') input.select();
+      const el = cell.querySelector('input, select');
+      if (!el) return;
+      el.focus();
+      if (el.type === 'text') el.select();
     }
 
     function cancelCell(cell) {
-      const task = allTasks.find(t => t.id === parseInt(cell.closest('.task-row').id.replace('task-row-', '')));
       cell.classList.remove('editing');
     }
+
+    const cellFieldMap = { title: 'title', assignee: 'assignee', due_date: 'due', progress: 'progress' };
 
     async function saveField(taskId, field, value) {
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
-      if (field === 'title' && !value.trim()) { cancelCell(document.querySelector(`#task-row-${taskId} .task-cell-title`)); return; }
-      const sanitized = value.trim ? value.trim() : value;
-      if (task[field] === sanitized) { document.querySelectorAll(`#task-row-${taskId} .task-cell`).forEach(c => c.classList.remove('editing')); return; }
-      task[field] = sanitized || null;
+      const sanitized = (value && value.trim) ? value.trim() : value;
+      if (field === 'title' && !sanitized) { cancelCell(document.querySelector(`#task-row-${taskId} .task-cell-title`)); return; }
 
       const row = document.getElementById(`task-row-${taskId}`);
       if (row) {
         row.querySelectorAll('.task-cell').forEach(c => c.classList.remove('editing'));
-        const span = row.querySelector(`.task-cell-${field === 'due_date' ? 'due' : field} span`);
-        if (span) span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
+        const cellName = cellFieldMap[field];
+        const span = row.querySelector(`.task-cell-${cellName} > span`);
+        if (span) {
+          if (field === 'progress') {
+            const p = sanitized || 'Not Assigned';
+            span.innerHTML = `<span class="progress-chip ${progressClass(p)}">${p}</span>`;
+          } else if (field === 'assignee') {
+            span.innerHTML = assigneeDisplay(sanitized);
+          } else {
+            span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
+          }
+        }
       }
 
+      task[field] = sanitized || null;
       await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

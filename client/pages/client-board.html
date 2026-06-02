@@ -14,13 +14,28 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-    .board-columns {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 16px;
-      align-items: start;
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
     }
-    @media (max-width: 900px) { .board-columns { grid-template-columns: 1fr; } }
+    .tab-btn {
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     /* Collapsible sections */
     .brief-toggle {
@@ -64,33 +79,64 @@
     .service-group { margin-bottom: 16px; }
     .service-group:last-child { margin-bottom: 0; }
     .service-group-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--text-dim);
-      padding: 6px 0 4px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--text-dim); padding: 6px 0 4px;
     }
-    .task-row {
-      display: flex;
+
+    /* Shared compact task rows */
+    .cb-task-cols,
+    .cb-task-row {
+      display: grid;
+      grid-template-columns: 18px 1fr 120px 95px 85px 22px;
+      gap: 0 8px;
       align-items: center;
-      gap: 10px;
-      padding: 7px 0;
+    }
+    .cb-task-cols {
+      padding: 0 4px 5px;
       border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      font-size: 10px; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .06em;
     }
-    .task-row:last-child { border-bottom: none; }
-    .task-row select {
-      margin-left: auto;
-      flex-shrink: 0;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text);
-      font-size: 11px;
-      padding: 2px 6px;
+    .cb-task-row {
+      padding: 0 4px; min-height: 34px;
+      border-bottom: 1px solid var(--border);
     }
-    .task-row.done span { color: var(--text-muted); text-decoration: line-through; }
+    .cb-task-row:last-child { border-bottom: none; }
+    .cb-task-row:hover { background: var(--surface-2); }
+    .cb-task-row.done .cb-cell-title > span { text-decoration: line-through; color: var(--text-dim); }
+    .cb-task-row input[type=checkbox] { width: 13px; height: 13px; cursor: pointer; accent-color: var(--accent); }
+    .cb-cell { position: relative; cursor: text; min-width: 0; }
+    .cb-cell > span { display: block; font-size: 13px; line-height: 1; padding: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cb-cell-assignee > span, .cb-cell-due > span { font-size: 12px; color: var(--text-muted); }
+    .cb-cell input, .cb-cell select {
+      display: none; width: 100%; box-sizing: border-box;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 4px; color: var(--text); font-size: 12px; padding: 3px 6px;
+    }
+    .cb-cell select { font-size: 11px; padding: 3px 4px; }
+    .cb-cell input:focus, .cb-cell select:focus { outline: none; }
+    .cb-cell.editing > span { display: none; }
+    .cb-cell.editing input, .cb-cell.editing select { display: block; }
+    .cb-del { background: none; border: none; color: transparent; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+    .cb-task-row:hover .cb-del { color: var(--text-dim); }
+    .cb-del:hover { color: var(--danger) !important; }
+
+    /* Progress chips */
+    .progress-chip { display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+    .pc-not-assigned { background: var(--surface-2); color: var(--text-dim); }
+    .pc-planned      { background: #0d1f33; color: #6699cc; }
+    .pc-in-progress  { background: #2a1800; color: #cc8800; }
+    .pc-in-review    { background: #1a0a2e; color: #9966cc; }
+    .pc-complete     { background: #0d3323; color: var(--success); }
+
+    /* Assignee avatar */
+    .av { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 700; flex-shrink: 0; vertical-align: middle; color: #fff; }
+    .cb-cell-assignee { cursor: pointer; overflow: visible !important; }
+    .cb-cell-assignee > span { display: flex; align-items: center; gap: 5px; }
+    .av-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 300; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 6px 16px rgba(0,0,0,0.35); padding: 4px; min-width: 150px; }
+    .av-dropdown.open { display: block; }
+    .av-option { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .av-option:hover { background: var(--surface-2); }
 
     /* Campaign timeline bar */
     .campaign-bar {
@@ -145,29 +191,13 @@
     .camp-stage-tick { font-size: 10px; color: var(--success); opacity: 0; }
     .camp-stage-row.done .camp-stage-tick { opacity: 1; }
 
-    /* Embedded task cards */
-    .camp-task-item {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 8px 10px;
-      margin-bottom: 5px;
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 12px;
-      transition: border-color 0.15s;
-    }
-    .camp-task-item:last-child { margin-bottom: 0; }
-    .camp-task-item:hover { border-color: var(--text-dim); }
-    .camp-task-item input[type=checkbox] { width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); margin-top: 2px; }
-    .camp-task-item.done { opacity: 0.55; }
-    .camp-task-item.done .camp-task-title { text-decoration: line-through; color: var(--text-muted); }
-    .camp-task-item .camp-task-body { flex: 1; min-width: 0; }
-    .camp-task-item .camp-task-title { font-size: 12px; font-weight: 500; line-height: 1.4; }
-    .camp-task-item .camp-task-meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-    .camp-task-item .del-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; opacity: 0; padding: 0 2px; flex-shrink: 0; }
-    .camp-task-item:hover .del-btn { opacity: 1; }
+    /* Add task inline form */
+    .cb-add-trigger { font-size: 12px; color: var(--text-dim); cursor: pointer; padding: 6px 4px; }
+    .cb-add-trigger:hover { color: var(--accent); }
+    .cb-add-form { display: none; }
+    .cb-add-form.open { display: grid; grid-template-columns: 1fr 90px 80px auto auto; gap: 5px; align-items: center; padding: 6px 4px; }
+    .cb-add-form input { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; padding: 4px 7px; width: 100%; box-sizing: border-box; }
+    .cb-add-form input:focus { outline: none; border-color: var(--accent); }
 
     /* Drawer */
     .drawer-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200; }
@@ -215,14 +245,13 @@
         <select id="cd-type">
           <option value="">Select type</option>
           <option value="PR">PR</option>
+          <option value="PR Light">PR Light</option>
           <option value="Social Media">Social Media</option>
-          <option value="Google Ads">Google Ads</option>
-          <option value="Email">Email</option>
-          <option value="SEO">SEO</option>
           <option value="Content">Content</option>
-          <option value="Video">Video</option>
-          <option value="Multi-channel">Multi-channel</option>
-          <option value="Other">Other</option>
+          <option value="Events & Partnerships">Events & Partnerships</option>
+          <option value="Awards">Awards</option>
+          <option value="Paid Media">Paid Media</option>
+          <option value="Design">Design</option>
         </select>
       </div>
       <div class="form-group">
@@ -245,10 +274,112 @@
       default: ['Planning','In Progress','Review','Wrap-up'],
     };
 
-    // Module-level campaign state (avoids full page reloads for campaign interactions)
+    // Map client service names → campaign section labels
+    const SERVICE_TYPE_MAP = {
+      'PR':                                    'PR',
+      'PR Light':                              'PR Light',
+      'Content - Social':                      'Content - Social',
+      'Content - eDM':                         'Content - Other',
+      'Content - Web/Blogs/Other Copy':        'Content - Other',
+      'Content - Influencer':                  'Content - Other',
+      'Content - Shortform Capture':           'Content - Other',
+      'Content - Video Production':            'Content - Other',
+      'Brand Activation - Events & Partnerships': 'Events & Partnerships',
+      'Awards':                                'Awards',
+      'Paid Media':                            'Paid Media',
+      'Design':                                'Design',
+    };
+
+    // Board URL per type
+    function campBoardUrl(c) {
+      return c.type === 'Social Media' ? `/social/${c.id}` : `/campaigns/${c.id}`;
+    }
+
+    // Section label → campaign type stored in DB
+    const SECTION_DB_TYPE = {
+      'PR':                  'PR',
+      'PR Light':            'PR Light',
+      'Content - Social':    'Social Media',
+      'Content - Other':     'Content',
+      'Events & Partnerships': 'Events & Partnerships',
+      'Awards':              'Awards',
+      'Paid Media':          'Paid Media',
+      'Design':              'Design',
+    };
+
     let campaigns = [];
-    const selectedStages = {}; // campId → stageIndex being viewed
-    const expandedCamps = new Set(); // campIds currently expanded
+    let client = null;
+    const selectedStages = {};
+    const expandedCamps = new Set();
+    const campTasksData = {};
+    let clientTeam = [];
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    function avatarColor(name) {
+      const palette = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
+      let h = 0;
+      for (let i = 0; i < (name||'').length; i++) h = (name.charCodeAt(i) + ((h << 5) - h)) | 0;
+      return palette[Math.abs(h) % palette.length];
+    }
+    function avatarHtml(name, size=20) {
+      if (!name) return '';
+      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return `<span class="av" style="width:${size}px;height:${size}px;background:${avatarColor(name)};font-size:${Math.round(size*.42)}px">${initials}</span>`;
+    }
+    function assigneeDisplay(name) {
+      return name ? `${avatarHtml(name)} ${name}` : '<span style="color:var(--text-dim)">—</span>';
+    }
+    function openCbAssigneeSelector(event, taskId, prefix) {
+      event.stopPropagation();
+      const drop = document.getElementById(`av-drop-${prefix}-${taskId}`);
+      const isOpen = drop && drop.classList.contains('open');
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen && drop) drop.classList.add('open');
+    }
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+    });
+
+    function progressClass(p) {
+      return { 'Not Assigned':'pc-not-assigned','Planned':'pc-planned','In Progress':'pc-in-progress','In Review':'pc-in-review','Complete':'pc-complete' }[p] || 'pc-not-assigned';
+    }
+    function taskStatusClass(s) {
+      return { 'todo':'pc-not-assigned','in_progress':'pc-in-progress','done':'pc-complete' }[s] || 'pc-not-assigned';
+    }
+    function taskStatusLabel(s) {
+      return { 'todo':'To Do','in_progress':'In Progress','done':'Done' }[s] || 'To Do';
+    }
+
+    function avDropdownHtml(dropId, callPrefix) {
+      // callPrefix e.g. "selectClientAssignee(5," or "selectCampAssignee(7,5,"
+      return `<div class="av-dropdown" id="${dropId}">
+        <div class="av-option" onclick="event.stopPropagation();${callPrefix}null)">
+          <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
+        </div>
+        ${clientTeam.map(name => `<div class="av-option" onclick="event.stopPropagation();${callPrefix}'${name.replace(/'/g,"\\'")}')">
+          ${avatarHtml(name)} ${name}</div>`).join('')}
+      </div>`;
+    }
+    async function selectClientAssignee(taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await cbSaveClientField(taskId, 'assignee', name);
+    }
+    async function selectCampAssignee(campId, taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await cbSaveCampField(campId, taskId, 'assignee', name);
+    }
+
+    // ── Shared cell edit ───────────────────────────────────────────────────────
+
+    function cbEditCell(cell) {
+      cell.classList.add('editing');
+      const el = cell.querySelector('input, select');
+      if (!el) return;
+      el.focus();
+      if (el.type === 'text') el.select();
+    }
+    function cbCancelCell(cell) { cell.classList.remove('editing'); }
 
     // ── Main load ──────────────────────────────────────────────────────────────
 
@@ -262,7 +393,9 @@
         return;
       }
       campaigns = campaignsRes.ok ? await campaignsRes.json() : [];
-      const { client, tasks, team, contacts } = await profileRes.json();
+      const { client: clientData, tasks, team, contacts } = await profileRes.json();
+      client = clientData;
+      clientTeam = (team || []).map(m => m.name).filter(Boolean);
 
       renderShell({ pageId: 'client-' + clientId, title: client.name });
 
@@ -301,22 +434,19 @@
           <a href="/clients/${clientId}" class="btn btn-ghost" style="font-size:12px;">Edit Profile</a>
         </div>
 
-        <div class="board-columns">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('one', this)">One</button>
+          <button class="tab-btn" onclick="switchTab('two', this)">Two</button>
+        </div>
 
-          <!-- Left — Campaigns + Social -->
+        <!-- Tab One — Campaigns -->
+        <div class="tab-panel active" id="tab-one">
+          <div id="campaigns-sections"></div>
+        </div>
+
+        <!-- Tab Two — Client Info -->
+        <div class="tab-panel" id="tab-two">
           <div style="display:flex;flex-direction:column;gap:16px;">
-
-            <div class="card">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <div class="section-label" style="margin-bottom:0;">Campaigns</div>
-                <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="openCampDrawer()">+ New</button>
-              </div>
-              <div id="campaigns-card-body"></div>
-            </div>
-
-            <div class="placeholder-section">Social Status — coming soon</div>
-
-          </div>
 
           <!-- Right — Brief, Scope, Team, Tasks -->
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -377,9 +507,25 @@
                 </div>` : ''}
 
                 ${client.website ? `
-                <div>
+                <div style="margin-bottom:14px;">
                   <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Website</div>
                   <a href="${client.website}" target="_blank" style="font-size:13px;color:var(--accent);">${client.website}</a>
+                </div>` : ''}
+
+                ${client.platforms ? `
+                <div style="margin-bottom:14px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Platforms</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    ${client.platforms.split(',').map(p => `
+                      <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${p.trim()}</span>
+                    `).join('')}
+                  </div>
+                </div>` : ''}
+
+                ${client.notes ? `
+                <div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Notes</div>
+                  <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${client.notes}</p>
                 </div>` : ''}
 
               </div>
@@ -414,21 +560,47 @@
                 ${Object.entries(grouped).map(([svc, svctasks]) => `
                   <div class="service-group">
                     <div class="service-group-label">${svc}</div>
-                    ${svctasks.map(t => `
-                      <div class="task-row ${t.status === 'done' ? 'done' : ''}" id="task-row-${t.id}">
-                        <span>${t.title}</span>
-                        <select data-id="${t.id}" onchange="updateTask(${t.id}, this.value)">
-                          <option value="todo"        ${t.status === 'todo'        ? 'selected' : ''}>To Do</option>
-                          <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                          <option value="done"        ${t.status === 'done'        ? 'selected' : ''}>Done</option>
-                        </select>
-                      </div>
-                    `).join('')}
+                    <div class="cb-task-cols"><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>
+                    ${svctasks.map(t => {
+                      const sc = taskStatusClass(t.status);
+                      const sl = taskStatusLabel(t.status);
+                      return `
+                      <div class="cb-task-row ${t.status === 'done' ? 'done' : ''}" id="client-task-${t.id}">
+                        <input type="checkbox" ${t.status === 'done' ? 'checked' : ''} onchange="toggleClientTask(${t.id}, this.checked)">
+                        <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
+                          <span>${t.title}</span>
+                          <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
+                            onblur="cbSaveClientField(${t.id},'title',this.value)"
+                            onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+                        </div>
+                        <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
+                          <span><span class="progress-chip ${sc}">${sl}</span></span>
+                          <select onchange="cbSaveClientField(${t.id},'status',this.value)" onblur="cbCancelCell(this.parentElement)">
+                            <option value="todo"${t.status==='todo'?' selected':''}>To Do</option>
+                            <option value="in_progress"${t.status==='in_progress'?' selected':''}>In Progress</option>
+                            <option value="done"${t.status==='done'?' selected':''}>Done</option>
+                          </select>
+                        </div>
+                        <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'ct')">
+                          <span>${assigneeDisplay(t.assignee)}</span>
+                          ${avDropdownHtml(`av-drop-ct-${t.id}`, `selectClientAssignee(${t.id},`)}
+                        </div>
+                        <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
+                          <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
+                          <input type="date" value="${t.due_date||''}"
+                            onchange="cbSaveClientField(${t.id},'due_date',this.value)"
+                            onblur="cbSaveClientField(${t.id},'due_date',this.value)"
+                            onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
+                        </div>
+                        <button class="cb-del" onclick="deleteClientTask(${t.id})" title="Delete">×</button>
+                      </div>`;
+                    }).join('')}
                   </div>
                 `).join('')}
               </div>
             </div>
 
+          </div>
           </div>
         </div>
       `;
@@ -436,16 +608,57 @@
       renderCampaigns();
     }
 
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
     // ── Campaign rendering ─────────────────────────────────────────────────────
 
     function renderCampaigns() {
-      const body = document.getElementById('campaigns-card-body');
-      if (!body) return;
-      if (!campaigns.length) {
-        body.innerHTML = '<p style="font-size:13px;color:var(--text-muted);margin:0;">No campaigns yet.</p>';
+      const container = document.getElementById('campaigns-sections');
+      if (!container) return;
+
+      // Determine which sections to show: services from client + any campaign types not in services
+      const clientServices = (client && client.services) ? client.services.split(',').map(s => s.trim()) : [];
+      const serviceTypes = [...new Set(clientServices.map(s => SERVICE_TYPE_MAP[s]).filter(Boolean))];
+
+      // Add section labels for existing campaigns not already covered
+      const campSectionLabels = [...new Set(campaigns.map(c => {
+        const entry = Object.entries(SECTION_DB_TYPE).find(([, v]) => v === c.type);
+        return entry ? entry[0] : c.type;
+      }).filter(Boolean))];
+      campSectionLabels.forEach(t => { if (!serviceTypes.includes(t)) serviceTypes.push(t); });
+
+      // If no services and no campaigns, show generic empty state
+      if (!serviceTypes.length && !campaigns.length) {
+        container.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No campaigns yet.</p></div>`;
         return;
       }
-      body.innerHTML = campaigns.map(c => renderCampItem(c)).join('');
+
+      // If no serviceTypes determined but campaigns exist, show all campaigns together
+      const sectionsToShow = serviceTypes.length ? serviceTypes : [''];
+
+      container.innerHTML = sectionsToShow.map(sectionLabel => {
+        const dbType = SECTION_DB_TYPE[sectionLabel] || sectionLabel;
+        const typeCampaigns = sectionLabel ? campaigns.filter(c => c.type === dbType) : campaigns;
+        const label = sectionLabel || 'Campaigns';
+        const items = typeCampaigns.map(c => renderCampItem(c)).join('');
+        const empty = typeCampaigns.length === 0
+          ? `<p style="font-size:13px;color:var(--text-muted);margin:0 0 4px;">No ${label} campaigns yet.</p>`
+          : '';
+        return `
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="section-label" style="margin-bottom:0;">${label}</div>
+              <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="openCampDrawer('${dbType}')">+ New</button>
+            </div>
+            ${empty}${items}
+          </div>`;
+      }).join('');
+
       // Reload tasks for any expanded campaigns
       expandedCamps.forEach(id => loadCampTasks(id));
     }
@@ -492,25 +705,20 @@
               <div id="camp-tasks-${c.id}">
                 <p style="font-size:12px;color:var(--text-muted);">Loading…</p>
               </div>
-              <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
-                <input id="camp-task-input-${c.id}"
-                  style="width:100%;box-sizing:border-box;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;padding:6px 9px;"
-                  placeholder="Task title…"
-                  onkeydown="if(event.key==='Enter')addCampTask(${c.id})">
-                <div style="display:flex;gap:6px;">
-                  <input id="camp-task-assignee-${c.id}"
-                    style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:11px;padding:5px 8px;"
-                    placeholder="Assignee">
-                  <input type="date" id="camp-task-due-${c.id}"
-                    style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:11px;padding:5px 8px;">
-                  <button class="btn btn-ghost" style="font-size:11px;white-space:nowrap;" onclick="addCampTask(${c.id})">Add</button>
-                </div>
+              <div id="cb-add-trigger-${c.id}" class="cb-add-trigger" onclick="showCbAddForm(${c.id})">+ Add task</div>
+              <div class="cb-add-form" id="cb-add-form-${c.id}">
+                <input id="camp-task-input-${c.id}" placeholder="Task title…"
+                  onkeydown="if(event.key==='Enter')addCampTask(${c.id});if(event.key==='Escape')hideCbAddForm(${c.id})">
+                <input id="camp-task-assignee-${c.id}" placeholder="Assignee">
+                <input type="date" id="camp-task-due-${c.id}">
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addCampTask(${c.id})">Add</button>
+                <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideCbAddForm(${c.id})">✕</button>
               </div>
             </div>
           </div>
 
           <div style="margin-top:12px;text-align:right;">
-            <a href="/campaigns/${c.id}" style="font-size:11px;color:var(--accent);">Open full board →</a>
+            <a href="${campBoardUrl(c)}" style="font-size:11px;color:var(--accent);">Open full board →</a>
           </div>
         </div>
       ` : '';
@@ -569,22 +777,117 @@
       const selStage = selectedStages[campId] !== undefined ? selectedStages[campId] : 0;
       const res = await fetch(`/api/campaigns/${campId}/tasks/${selStage}`);
       const tasks = res.ok ? await res.json() : [];
+      campTasksData[campId] = tasks;
       const list = document.getElementById(`camp-tasks-${campId}`);
       if (!list) return;
       if (!tasks.length) {
-        list.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin:0;">No tasks yet — add one below.</p>`;
+        list.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin:0;">No tasks yet.</p>`;
         return;
       }
-      list.innerHTML = tasks.map(t => `
-        <div class="camp-task-item ${t.done ? 'done' : ''}" id="camp-task-${t.id}">
-          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleCampTask(${campId}, ${t.id}, this.checked)">
-          <div class="camp-task-body">
-            <div class="camp-task-title">${t.title}</div>
-            ${t.assignee || t.due_date ? `<div class="camp-task-meta">${[t.assignee, t.due_date].filter(Boolean).join(' · ')}</div>` : ''}
-          </div>
-          <button class="del-btn" onclick="deleteCampTask(${campId}, ${t.id})">×</button>
-        </div>
-      `).join('');
+      list.innerHTML = `
+        <div class="cb-task-cols"><div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div></div>
+        ${tasks.map(t => {
+          const prog = t.progress || 'Not Assigned';
+          return `
+          <div class="cb-task-row ${t.done ? 'done' : ''}" id="camp-task-${t.id}">
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleCampTask(${campId}, ${t.id}, this.checked)">
+            <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
+              <span>${t.title}</span>
+              <input type="text" value="${t.title.replace(/"/g,'&quot;')}"
+                onblur="cbSaveCampField(${campId},${t.id},'title',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+            </div>
+            <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
+              <span><span class="progress-chip ${progressClass(prog)}">${prog}</span></span>
+              <select onchange="cbSaveCampField(${campId},${t.id},'progress',this.value)" onblur="cbCancelCell(this.parentElement)">
+                ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
+              </select>
+            </div>
+            <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'cc${campId}')">
+              <span>${assigneeDisplay(t.assignee)}</span>
+              ${avDropdownHtml(`av-drop-cc${campId}-${t.id}`, `selectCampAssignee(${campId},${t.id},`)}
+            </div>
+            <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
+              <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
+              <input type="date" value="${t.due_date||''}"
+                onchange="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
+                onblur="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
+                onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
+            </div>
+            <button class="cb-del" onclick="deleteCampTask(${campId},${t.id})" title="Delete">×</button>
+          </div>`;
+        }).join('')}`;
+    }
+
+    async function cbSaveCampField(campId, taskId, field, value) {
+      const sanitized = (value && value.trim) ? value.trim() : value;
+      if (field === 'title' && !sanitized) { cbCancelCell(document.querySelector(`#camp-task-${taskId} .cb-cell-title`)); return; }
+      const row = document.getElementById(`camp-task-${taskId}`);
+      if (row) {
+        row.querySelectorAll('.cb-cell').forEach(c => c.classList.remove('editing'));
+        const cellMap = { title:'title', assignee:'assignee', due_date:'due', progress:'progress' };
+        const span = row.querySelector(`.cb-cell-${cellMap[field]} > span`);
+        if (span) {
+        if (field === 'progress') span.innerHTML = `<span class="progress-chip ${progressClass(sanitized||'Not Assigned')}">${sanitized||'Not Assigned'}</span>`;
+        else if (field === 'assignee') span.innerHTML = assigneeDisplay(sanitized);
+        else span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
+      }
+      }
+      const tasks = campTasksData[campId] || [];
+      const task = tasks.find(t => t.id === taskId);
+      if (task) task[field] = sanitized || null;
+      await fetch(`/api/campaigns/${campId}/tasks/${taskId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: sanitized || null })
+      });
+    }
+
+    async function cbSaveClientField(taskId, field, value) {
+      const sanitized = (value && value.trim) ? value.trim() : value;
+      if (field === 'title' && !sanitized) { cbCancelCell(document.querySelector(`#client-task-${taskId} .cb-cell-title`)); return; }
+      const row = document.getElementById(`client-task-${taskId}`);
+      if (row) {
+        row.querySelectorAll('.cb-cell').forEach(c => c.classList.remove('editing'));
+        const cellMap = { title:'title', assignee:'assignee', due_date:'due', status:'progress' };
+        const span = row.querySelector(`.cb-cell-${cellMap[field]} > span`);
+        if (span) {
+          if (field === 'status') {
+            span.innerHTML = `<span class="progress-chip ${taskStatusClass(sanitized)}">${taskStatusLabel(sanitized)}</span>`;
+            row.classList.toggle('done', sanitized === 'done');
+            const cb = row.querySelector('input[type=checkbox]');
+            if (cb) cb.checked = sanitized === 'done';
+          } else if (field === 'assignee') {
+            span.innerHTML = assigneeDisplay(sanitized);
+          } else {
+            span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
+          }
+        }
+      }
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: sanitized || null })
+      });
+    }
+
+    async function toggleClientTask(taskId, checked) {
+      await cbSaveClientField(taskId, 'status', checked ? 'done' : 'todo');
+    }
+
+    async function deleteClientTask(taskId) {
+      if (!confirm('Delete this task?')) return;
+      await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+      load();
+    }
+
+    function showCbAddForm(campId) {
+      document.getElementById(`cb-add-trigger-${campId}`).style.display = 'none';
+      document.getElementById(`cb-add-form-${campId}`).classList.add('open');
+      document.getElementById(`camp-task-input-${campId}`).focus();
+    }
+    function hideCbAddForm(campId) {
+      document.getElementById(`cb-add-form-${campId}`).classList.remove('open');
+      const trigger = document.getElementById(`cb-add-trigger-${campId}`);
+      if (trigger) trigger.style.display = '';
     }
 
     async function addCampTask(campId) {
@@ -628,27 +931,18 @@
       body.classList.toggle('collapsed');
     }
 
-    // ── Tasks ──────────────────────────────────────────────────────────────────
-
-    async function updateTask(taskId, status) {
-      await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      const row = document.getElementById('task-row-' + taskId);
-      if (row) row.classList.toggle('done', status === 'done');
-      const selects = document.querySelectorAll('.task-row select');
-      const total = selects.length;
-      const done = Array.from(selects).filter(s => s.value === 'done').length;
-      const pct = total ? Math.round((done / total) * 100) : 0;
-      const bar = document.getElementById('task-progress-bar');
-      if (bar) bar.style.width = pct + '%';
-    }
 
     // ── Campaign drawer ────────────────────────────────────────────────────────
 
-    function openCampDrawer() {
+    function openCampDrawer(type) {
+      const sel = document.getElementById('cd-type');
+      if (type) {
+        sel.value = type;
+        sel.disabled = true;
+      } else {
+        sel.value = '';
+        sel.disabled = false;
+      }
       document.getElementById('camp-overlay').classList.add('open');
       document.getElementById('camp-drawer').classList.add('open');
     }
@@ -675,7 +969,8 @@
         })
       });
       const { id } = await res.json();
-      window.location.href = `/campaigns/${id}`;
+      const type = document.getElementById('cd-type').value;
+      window.location.href = type === 'Social Media' ? `/social/${id}` : `/campaigns/${id}`;
     });
 
     load();

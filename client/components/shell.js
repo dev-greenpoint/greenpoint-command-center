@@ -33,6 +33,10 @@ function renderShell({ pageId, title }) {
         <span class="nav-icon">◎</span>
         <span class="nav-label">Accounts | Admin</span>
       </a>
+      <a class="nav-item ${'team-admin' === pageId ? 'active' : ''}" href="/team-admin">
+        <span class="nav-icon">◉</span>
+        <span class="nav-label">Team | Admin</span>
+      </a>
       <a class="nav-item" href="#">
         <span class="nav-icon">⚙</span>
         <span class="nav-label">Settings</span>
@@ -83,8 +87,8 @@ function renderShell({ pageId, title }) {
       document.getElementById('sidebar-clients').innerHTML = '';
     });
 
-  // Team list — pulled from onboarding data
-  fetch('/api/team-planner')
+  // Team list — pulled from team_members table
+  fetch('/api/team-members/names')
     .then(r => r.json())
     .then(members => {
       const el = document.getElementById('sidebar-team');

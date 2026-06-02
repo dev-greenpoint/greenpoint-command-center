@@ -102,10 +102,23 @@ async function initSchema() {
     )
   `);
 
+  d.run(`
+    CREATE TABLE IF NOT EXISTS team_members (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      role TEXT,
+      email TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // Add columns that may not exist in older DBs
+  try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN assignee TEXT`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE campaigns ADD COLUMN scope TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE clients ADD COLUMN platforms TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE clients ADD COLUMN monthly_hours INTEGER`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN due_date TEXT`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN progress TEXT DEFAULT 'Not Assigned'`); db.saveDb(); } catch {}
 
   db.saveDb();
 }
