@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clients — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+    }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed;
+      top: 0; right: -480px;
+      width: 480px;
+      height: 100%;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 201;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.25s ease;
+    }
+    .drawer.open { right: 0; }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-header h2 { font-size: 15px; font-weight: 600; }
+    .drawer-close {
+      background: none; border: none;
+      color: var(--text-muted); cursor: pointer;
+      font-size: 20px; line-height: 1;
+    }
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .drawer-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      padding: 8px 10px;
+      font-family: var(--font);
+      width: 100%;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .services-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .service-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .service-check input { width: auto; }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .dot-active { background: var(--success); }
+    .dot-onboarding { background: var(--warning); }
+    .dot-inactive { background: var(--text-dim); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div id="client-count" style="font-size:13px;color:var(--text-muted);">Loading…</div>
+          <button class="btn btn-primary" id="add-client-btn">+ Add Client</button>
+        </div>
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Industry</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Services</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody">
+              <tr><td colspan="7" style="color:var(--text-muted);text-align:center;padding:32px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h2 id="drawer-title">Add Client</h2>
+      <button class="drawer-close" id="drawer-close">×</button>
+    </div>
+    <div class="drawer-body">
+      <input type="hidden" id="client-id">
+
+      <div class="form-group">
+        <label>Client Name *</label>
+        <input type="text" id="f-name" placeholder="e.g. Acme Corp">
+      </div>
+
+      <div id="status-row" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Industry</label>
+            <input type="text" id="f-industry" placeholder="Auto-filled by research">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="onboarding">Onboarding</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Campaign Start Date</label>
+          <input type="date" id="f-start-date">
+        </div>
+        <div class="form-group">
+          <label>Campaign Length</label>
+          <select id="f-campaign-length">
+            <option value="">Select length</option>
+            <option value="1">1 month</option>
+            <option value="2">2 months</option>
+            <option value="3">3 months</option>
+            <option value="4">4 months</option>
+            <option value="6">6 months</option>
+            <option value="9">9 months</option>
+            <option value="12">12 months</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monthly Hours</label>
+          <input type="number" id="f-monthly-hours" placeholder="e.g. 40" min="1">
+        </div>
+        <div class="form-group"></div>
+      </div>
+
+
+      <div class="form-group">
+        <label>Website</label>
+        <input type="url" id="f-website" placeholder="https://example.com.au">
+      </div>
+
+      <div class="form-group">
+        <label>Client Contacts</label>
+        <div id="contact-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px;"></div>
+        <button type="button" class="btn btn-ghost" id="add-contact-btn" style="width:100%;font-size:12px;">+ Add Contact</button>
+      </div>
+
+      <div class="form-group">
+        <label>Services</label>
+        <div class="services-grid">
+          <label class="service-check"><input type="checkbox" value="PR"> PR</label>
+          <label class="service-check"><input type="checkbox" value="PR Light"> PR Light</label>
+          <label class="service-check"><input type="checkbox" value="Content - Social"> Content - Social</label>
+          <label class="service-check"><input type="checkbox" value="Content - eDM"> Content - eDM</label>
+          <label class="service-check"><input type="checkbox" value="Content - Web/Blogs/Other Copy"> Content - Web/Blogs/Other Copy</label>
+          <label class="service-check"><input type="checkbox" value="Content - Influencer"> Content - Influencer</label>
+          <label class="service-check"><input type="checkbox" value="Content - Shortform Capture"> Content - Shortform Capture</label>
+          <label class="service-check"><input type="checkbox" value="Content - Video Production"> Content - Video Production</label>
+          <label class="service-check"><input type="checkbox" value="Brand Activation - Events & Partnerships"> Brand Activation - Events & Partnerships</label>
+          <label class="service-check"><input type="checkbox" value="Awards"> Awards</label>
+          <label class="service-check"><input type="checkbox" value="Paid Media"> Paid Media</label>
+          <label class="service-check"><input type="checkbox" value="Design"> Design</label>
+          <label class="service-check"><input type="checkbox" value="Other" id="other-checkbox"> Other</label>
+        </div>
+        <div id="other-input-wrap" style="display:none;margin-top:8px;">
+          <input type="text" id="f-other-service" placeholder="Describe the service…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 10px;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Content Platforms</label>
+        <div class="platforms-grid services-grid">
+          <label class="service-check"><input type="checkbox" class="platform-cb" value="Facebook"> Facebook</label>
+          <label class="service-check"><input type="checkbox" class="platform-cb" value="Instagram"> Instagram</label>
+          <label class="service-check"><input type="checkbox" class="platform-cb" value="LinkedIn"> LinkedIn</label>
+          <label class="service-check"><input type="checkbox" class="platform-cb" value="TikTok"> TikTok</label>
+          <label class="service-check"><input type="checkbox" class="platform-cb" value="YouTube"> YouTube</label>
+          <label class="service-check"><input type="checkbox" class="platform-cb" value="Other" id="platform-other-checkbox"> Other</label>
+        </div>
+        <div id="platform-other-wrap" style="display:none;margin-top:8px;">
+          <input type="text" id="f-other-platform" placeholder="Describe the platform…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 10px;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Team</label>
+        <div id="team-grid" style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Ash"> Ash</label>
+            <select class="team-role-select" data-member="Ash" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Nicola"> Nicola</label>
+            <select class="team-role-select" data-member="Nicola" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Joseph"> Joseph</label>
+            <select class="team-role-select" data-member="Joseph" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Alana"> Alana</label>
+            <select class="team-role-select" data-member="Alana" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Sejal"> Sejal</label>
+            <select class="team-role-select" data-member="Sejal" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Taylor"> Taylor</label>
+            <select class="team-role-select" data-member="Taylor" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Emily"> Emily</label>
+            <select class="team-role-select" data-member="Emily" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Jaye"> Jaye</label>
+            <select class="team-role-select" data-member="Jaye" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label class="service-check" style="width:90px;flex-shrink:0;"><input type="checkbox" class="team-cb" value="Brandon"> Brandon</label>
+            <select class="team-role-select" data-member="Brandon" disabled style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;padding:5px 8px;opacity:0.4;">
+              <option value="">Role</option><option>Account Coach</option><option>Account Lead</option><option>Account Support</option><option>Social Manager</option><option>Social Support</option><option>Design</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Any additional notes…"></textarea>
+      </div>
+
+      <div id="tasks-preview" style="display:none;">
+        <div style="font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Tasks that will be created</div>
+        <div id="tasks-preview-list" style="display:flex;flex-direction:column;gap:4px;"></div>
+      </div>
+
+      <div id="research-section" style="display:none;">
+        <div style="font-size:12px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Client Research</div>
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;">
+          <div id="research-content" style="font-size:13px;color:var(--text);white-space:pre-wrap;line-height:1.6;"></div>
+        </div>
+        <button class="btn btn-ghost" id="research-btn" style="width:100%;">Run Research</button>
+      </div>
+
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-ghost" id="drawer-delete" style="display:none;color:var(--danger);border-color:var(--danger);">Delete</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost" id="drawer-cancel">Cancel</button>
+      <button class="btn btn-primary" id="drawer-save">Save Client</button>
+    </div>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    renderShell({ pageId: 'clients', title: 'Clients' });
+
+    const tbody = document.getElementById('clients-tbody');
+    const countEl = document.getElementById('client-count');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    let editingId = null;
+
+    function statusDot(status) {
+      const cls = status === 'active' ? 'dot-active' : status === 'onboarding' ? 'dot-onboarding' : 'dot-inactive';
+      const label = status.charAt(0).toUpperCase() + status.slice(1);
+      return `<span class="status-dot ${cls}"></span>${label}`;
+    }
+
+    async function loadClients() {
+      const res = await fetch('/api/clients');
+      const clients = await res.json();
+      countEl.textContent = `${clients.length} client${clients.length !== 1 ? 's' : ''}`;
+      if (!clients.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--text-muted);text-align:center;padding:32px;">No clients yet — add your first one</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = clients.map(c => `
+        <tr>
+          <td><strong>${c.name}</strong></td>
+          <td>${c.industry || '—'}</td>
+          <td>${statusDot(c.status)}</td>
+          <td>${c.start_date || '—'}</td>
+          <td>${c.end_date || '—'}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${c.services || '—'}</td>
+          <td style="text-align:right;">
+            <a href="/clients/${c.id}" class="btn btn-ghost" style="padding:4px 10px;font-size:12px;">View</a>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="openEdit(${c.id})">Edit</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openDrawer(title) {
+      document.getElementById('drawer-title').textContent = title;
+      drawer.classList.add('open');
+      overlay.classList.add('open');
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('open');
+      overlay.classList.remove('open');
+      editingId = null;
+      clearForm();
+    }
+
+    document.getElementById('drawer-delete').addEventListener('click', async () => {
+      if (!editingId) return;
+      if (!confirm('Delete this client? This cannot be undone.')) return;
+      await fetch(`/api/clients/${editingId}`, { method: 'DELETE' });
+      closeDrawer();
+      loadClients();
+    });
+
+    function clearForm() {
+      ['f-name','f-industry','f-website','f-start-date','f-notes'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('f-campaign-length').value = '';
+      document.getElementById('f-monthly-hours').value = '';
+      document.getElementById('f-other-service').value = '';
+      document.getElementById('other-input-wrap').style.display = 'none';
+      clearContacts();
+      clearTeam();
+      clearPlatforms();
+      document.getElementById('f-status').value = 'onboarding';
+      document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]').forEach(cb => cb.checked = false);
+      document.getElementById('client-id').value = '';
+      document.getElementById('tasks-preview').style.display = 'none';
+      document.getElementById('research-section').style.display = 'none';
+      document.getElementById('drawer-delete').style.display = 'none';
+      document.getElementById('status-row').style.display = 'none';
+    }
+
+    const TASK_TEMPLATES = {
+      'PR': ['Build media list','Draft PR strategy','Write first press release','Identify key media targets','Set up media monitoring'],
+      'PR Light': ['Build targeted media list','Draft PR brief','Set up media monitoring'],
+      'Content - Social': ['Audit existing social channels','Set up content calendar','Define content pillars and tone of voice','Schedule first month of content','Set up scheduling tool access'],
+      'Content - eDM': ['Confirm eDM platform access','Draft eDM template','Define send schedule and audience segments'],
+      'Content - Web/Blogs/Other Copy': ['Confirm copy brief and deliverables','Define tone of voice and style guide','Draft first content piece'],
+      'Content - Influencer': ['Define influencer criteria and tiers','Build influencer longlist','Draft influencer outreach templates','Confirm gifting or paid brief process'],
+      'Content - Shortform Capture': ['Confirm shoot brief and deliverables','Schedule first shoot','Set up asset delivery process'],
+      'Content - Video Production': ['Confirm video brief and deliverables','Schedule pre-production meeting','Confirm shoot dates and locations','Set up asset delivery process'],
+      'Brand Activation - Events & Partnerships': ['Define event/activation objectives','Draft event brief','Build run sheet template','Confirm key dates and suppliers'],
+      'Awards': ['Identify relevant award opportunities','Confirm submission deadlines','Draft awards brief'],
+      'Paid Media': ['Confirm paid media brief and budget','Set up ad account access','Define campaign objectives and KPIs','Draft first campaign plan'],
+      'Design': ['Collect brand assets (logos, fonts, colours)','Confirm design brief and deliverables','Set up shared design folder'],
+    };
+
+    function updateTaskPreview() {
+      if (editingId) return; // don't show on edit, tasks already exist
+      const checked = Array.from(document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]:checked')).map(cb => cb.value);
+      const previewEl = document.getElementById('tasks-preview');
+      const listEl = document.getElementById('tasks-preview-list');
+      if (!checked.length) { previewEl.style.display = 'none'; return; }
+      const tasks = checked.flatMap(s => (TASK_TEMPLATES[s] || []).map(t => ({ service: s, title: t })));
+      listEl.innerHTML = tasks.map(t => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface-2);border-radius:4px;">
+          <span style="font-size:11px;color:var(--text-muted);width:80px;flex-shrink:0;">${t.service}</span>
+          <span style="font-size:13px;">${t.title}</span>
+        </div>
+      `).join('');
+      previewEl.style.display = 'block';
+    }
+
+    document.querySelectorAll('.services-grid input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', updateTaskPreview);
+    });
+
+    function addContactRow(c = {}) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-direction:column;gap:5px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;position:relative;';
+      row.innerHTML = `
+        <button type="button" onclick="this.closest('div').remove()" style="position:absolute;top:6px;right:8px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1;">×</button>
+        <input type="text" class="c-name" placeholder="Name *" value="${c.name||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;padding:6px 8px;">
+        <input type="text" class="c-role" placeholder="Title / Role" value="${c.role||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;padding:6px 8px;">
+        <input type="email" class="c-email" placeholder="Email" value="${c.email||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;padding:6px 8px;">
+        <input type="text" class="c-phone" placeholder="Phone" value="${c.phone||''}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;padding:6px 8px;">
+      `;
+      document.getElementById('contact-rows').appendChild(row);
+    }
+
+    function getContacts() {
+      return Array.from(document.querySelectorAll('#contact-rows > div')).map(row => ({
+        name: row.querySelector('.c-name').value.trim(),
+        role: row.querySelector('.c-role').value.trim(),
+        email: row.querySelector('.c-email').value.trim(),
+        phone: row.querySelector('.c-phone').value.trim(),
+      })).filter(c => c.name);
+    }
+
+    function clearContacts() {
+      document.getElementById('contact-rows').innerHTML = '';
+    }
+
+    document.getElementById('add-contact-btn').addEventListener('click', () => addContactRow());
+
+    function getTeam() {
+      return Array.from(document.querySelectorAll('.team-cb:checked')).map(cb => {
+        const sel = document.querySelector(`.team-role-select[data-member="${cb.value}"]`);
+        return { name: cb.value, role: sel ? sel.value : '' };
+      });
+    }
+
+    function clearTeam() {
+      document.querySelectorAll('.team-cb').forEach(cb => {
+        cb.checked = false;
+        const sel = document.querySelector(`.team-role-select[data-member="${cb.value}"]`);
+        if (sel) { sel.value = ''; sel.disabled = true; sel.style.opacity = '0.4'; sel.style.color = 'var(--text-muted)'; }
+      });
+    }
+
+    function setTeam(members) {
+      clearTeam();
+      members.forEach(m => {
+        const cb = document.querySelector(`.team-cb[value="${m.name}"]`);
+        if (!cb) return;
+        cb.checked = true;
+        const sel = document.querySelector(`.team-role-select[data-member="${m.name}"]`);
+        if (sel) { sel.disabled = false; sel.style.opacity = '1'; sel.style.color = 'var(--text)'; sel.value = m.role || ''; }
+      });
+    }
+
+    document.querySelectorAll('.team-cb').forEach(cb => {
+      cb.addEventListener('change', function() {
+        const sel = document.querySelector(`.team-role-select[data-member="${this.value}"]`);
+        if (!sel) return;
+        sel.disabled = !this.checked;
+        sel.style.opacity = this.checked ? '1' : '0.4';
+        sel.style.color = this.checked ? 'var(--text)' : 'var(--text-muted)';
+        if (!this.checked) sel.value = '';
+      });
+    });
+
+    document.getElementById('other-checkbox').addEventListener('change', function() {
+      document.getElementById('other-input-wrap').style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) document.getElementById('f-other-service').value = '';
+    });
+
+    document.getElementById('platform-other-checkbox').addEventListener('change', function() {
+      document.getElementById('platform-other-wrap').style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) document.getElementById('f-other-platform').value = '';
+    });
+
+    function getPlatforms() {
+      return Array.from(document.querySelectorAll('.platform-cb:checked'))
+        .map(cb => {
+          if (cb.value === 'Other') {
+            const custom = document.getElementById('f-other-platform').value.trim();
+            return custom ? custom : null;
+          }
+          return cb.value;
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    function setPlatforms(str) {
+      const vals = (str || '').split(',').map(s => s.trim());
+      document.querySelectorAll('.platform-cb').forEach(cb => {
+        cb.checked = vals.includes(cb.value);
+      });
+    }
+
+    function clearPlatforms() {
+      document.querySelectorAll('.platform-cb').forEach(cb => cb.checked = false);
+      document.getElementById('f-other-platform').value = '';
+      document.getElementById('platform-other-wrap').style.display = 'none';
+    }
+
+    function getServices() {
+      return Array.from(document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]:checked'))
+        .map(cb => {
+          if (cb.value === 'Other') {
+            const custom = document.getElementById('f-other-service').value.trim();
+            return custom ? custom : null;
+          }
+          return cb.value;
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    function setServices(str) {
+      const vals = (str || '').split(',').map(s => s.trim());
+      document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]').forEach(cb => {
+        cb.checked = vals.includes(cb.value);
+      });
+    }
+
+    async function openEdit(id) {
+      const res = await fetch(`/api/clients/${id}`);
+      if (!res.ok) return;
+      const c = await res.json();
+      editingId = id;
+      document.getElementById('client-id').value = id;
+      document.getElementById('f-name').value = c.name || '';
+      document.getElementById('f-industry').value = c.industry || '';
+      document.getElementById('f-status').value = c.status || 'onboarding';
+      document.getElementById('f-start-date').value = c.start_date || '';
+      document.getElementById('f-campaign-length').value = c.campaign_length || '';
+      document.getElementById('f-monthly-hours').value = c.monthly_hours || '';
+      document.getElementById('f-website').value = c.website || '';
+      document.getElementById('f-notes').value = c.notes || '';
+      setServices(c.services);
+      setPlatforms(c.platforms);
+      document.getElementById('tasks-preview').style.display = 'none';
+      document.getElementById('research-section').style.display = 'block';
+      document.getElementById('drawer-delete').style.display = 'block';
+      document.getElementById('status-row').style.display = 'block';
+      const teamRes = await fetch(`/api/clients/${id}/team`);
+      const team = await teamRes.json();
+      setTeam(team);
+      clearContacts();
+      const contactRes = await fetch(`/api/clients/${id}/contacts`);
+      const contacts = await contactRes.json();
+      contacts.forEach(c => addContactRow(c));
+      const researchEl = document.getElementById('research-content');
+      researchEl.textContent = c.research || '';
+      document.getElementById('research-section').style.display = 'block';
+      openDrawer('Edit Client');
+    }
+
+    document.getElementById('research-btn').addEventListener('click', async () => {
+      if (!editingId) return;
+      const btn = document.getElementById('research-btn');
+      const contentEl = document.getElementById('research-content');
+      btn.textContent = 'Researching…';
+      btn.disabled = true;
+      contentEl.style.color = 'var(--text-muted)';
+      contentEl.textContent = 'Generating research brief…';
+      try {
+        const res = await fetch(`/api/clients/${editingId}/research`, { method: 'POST' });
+        const data = await res.json();
+        if (data.research) {
+          contentEl.style.color = 'var(--text)';
+          contentEl.textContent = data.research;
+        } else if (data.error) {
+          contentEl.style.color = 'var(--danger)';
+          contentEl.textContent = data.error;
+        } else {
+          contentEl.style.color = 'var(--text-muted)';
+          contentEl.textContent = 'Not enough information found — try adding the website URL and running again.';
+        }
+        if (data.industry) {
+          document.getElementById('f-industry').value = data.industry;
+        }
+      } catch {
+        contentEl.textContent = 'Research failed. Check server logs.';
+      }
+      btn.textContent = 'Run Research';
+      btn.disabled = false;
+    });
+
+    document.getElementById('add-client-btn').addEventListener('click', () => {
+      clearForm();
+      openDrawer('Add Client');
+    });
+
+    document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+    document.getElementById('drawer-cancel').addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+
+    document.getElementById('drawer-save').addEventListener('click', async () => {
+      const name = document.getElementById('f-name').value.trim();
+      if (!name) { alert('Client name is required'); return; }
+
+      const saveBtn = document.getElementById('drawer-save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      try {
+        const body = {
+          name,
+          industry: document.getElementById('f-industry').value || null,
+          status: document.getElementById('f-status').value || 'onboarding',
+          start_date: document.getElementById('f-start-date').value || null,
+          campaign_length: document.getElementById('f-campaign-length').value || null,
+          monthly_hours: document.getElementById('f-monthly-hours').value || null,
+          website: document.getElementById('f-website').value || null,
+          services: getServices() || null,
+          platforms: getPlatforms() || null,
+          notes: document.getElementById('f-notes').value || null,
+        };
+
+        let clientId = editingId;
+        if (editingId) {
+          const r = await fetch(`/api/clients/${editingId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          if (!r.ok) throw new Error(`PUT failed: ${r.status}`);
+          const existing = await fetch(`/api/clients/${editingId}/team`).then(r => r.json());
+          await Promise.all(existing.map(m => fetch(`/api/clients/${editingId}/team/${m.id}`, { method: 'DELETE' })));
+        } else {
+          const res = await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || `POST failed: ${res.status}`);
+          clientId = data.id;
+        }
+
+        const team = getTeam();
+        await Promise.all(team.map(m => fetch(`/api/clients/${clientId}/team`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m)
+        })));
+
+        if (editingId) {
+          const existingContacts = await fetch(`/api/clients/${clientId}/contacts`).then(r => r.json());
+          await Promise.all(existingContacts.map(c => fetch(`/api/clients/${clientId}/contacts/${c.id}`, { method: 'DELETE' })));
+        }
+        const contacts = getContacts();
+        await Promise.all(contacts.map(c => fetch(`/api/clients/${clientId}/contacts`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c)
+        })));
+
+        closeDrawer();
+        loadClients();
+      } catch (err) {
+        alert('Save failed: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Client';
+      }
+    });
+
+    loadClients();
+  </script>
+</body>
+</html>

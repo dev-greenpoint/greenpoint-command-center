@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Planner — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .planner-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) { .planner-grid { grid-template-columns: 1fr; } }
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-val { font-size: 26px; font-weight: 700; color: var(--accent); }
+    .stat-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+    .section-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--text-muted); margin-bottom: 10px;
+    }
+    .list-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .list-row:last-child { border-bottom: none; }
+    .list-row:hover { color: var(--accent); }
+    .chip {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 100px;
+      font-size: 11px; font-weight: 600;
+    }
+    .chip-active    { background: #0d3323; color: var(--success); }
+    .chip-onboarding{ background: #3d2a00; color: var(--warning); }
+    .chip-inactive  { background: var(--surface-2); color: var(--text-muted); }
+    .chip-todo      { background: var(--surface-2); color: var(--text-muted); }
+    .chip-in_progress { background: #3d2a00; color: var(--warning); }
+    .chip-done      { background: #0d3323; color: var(--success); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content" id="page-content">
+        <p style="color:var(--text-muted);">Loading…</p>
+      </main>
+    </div>
+  </div>
+  <script src="/components/shell.js"></script>
+  <script>
+    const memberName = decodeURIComponent(location.pathname.split('/').pop());
+
+    renderShell({ pageId: 'team-' + memberName.toLowerCase(), title: memberName });
+
+    async function load() {
+      const res = await fetch(`/api/team-planner/${encodeURIComponent(memberName)}`);
+      const { clients, tasks, campaigns } = await res.json();
+
+      const todoTasks = tasks.filter(t => t.status !== 'done');
+
+      document.getElementById('page-content').innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#000;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;">
+            ${memberName.charAt(0).toUpperCase()}
+          </div>
+          <h1 style="font-size:20px;font-weight:700;">${memberName}</h1>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-val">${clients.length}</div>
+            <div class="stat-lbl">Clients</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">${todoTasks.length}</div>
+            <div class="stat-lbl">Open Tasks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val">${campaigns.length}</div>
+            <div class="stat-lbl">Campaigns</div>
+          </div>
+        </div>
+
+        <div class="planner-grid">
+
+          <!-- Clients -->
+          <div class="card">
+            <div class="section-label">Clients</div>
+            ${clients.length === 0
+              ? `<p style="font-size:13px;color:var(--text-muted);">Not assigned to any clients yet.</p>`
+              : clients.map(c => {
+                  const chipClass = { active: 'chip-active', onboarding: 'chip-onboarding', inactive: 'chip-inactive' }[c.status] || 'chip-inactive';
+                  const statusLabel = c.status.charAt(0).toUpperCase() + c.status.slice(1);
+                  return `
+                  <a class="list-row" href="/clients/${c.id}/board">
+                    <div>
+                      <div style="font-weight:500;">${c.name}</div>
+                      ${c.role ? `<div style="font-size:11px;color:var(--text-muted);">${c.role}</div>` : ''}
+                    </div>
+                    <span class="chip ${chipClass}">${statusLabel}</span>
+                  </a>`;
+                }).join('')
+            }
+          </div>
+
+          <!-- Tasks -->
+          <div class="card">
+            <div class="section-label">Open Tasks</div>
+            ${todoTasks.length === 0
+              ? `<p style="font-size:13px;color:var(--text-muted);">No open tasks.</p>`
+              : todoTasks.map(t => {
+                  const chipClass = { todo: 'chip-todo', in_progress: 'chip-in_progress' }[t.status] || 'chip-todo';
+                  const statusLabel = t.status === 'in_progress' ? 'In Progress' : 'To Do';
+                  return `
+                  <a class="list-row" href="/clients/${t.client_id}/board">
+                    <div>
+                      <div style="font-weight:500;">${t.title}</div>
+                      <div style="font-size:11px;color:var(--text-muted);">${t.client_name}${t.service ? ' · ' + t.service : ''}</div>
+                    </div>
+                    <span class="chip ${chipClass}">${statusLabel}</span>
+                  </a>`;
+                }).join('')
+            }
+          </div>
+
+          <!-- Campaigns -->
+          <div class="card">
+            <div class="section-label">Campaigns</div>
+            ${campaigns.length === 0
+              ? `<p style="font-size:13px;color:var(--text-muted);">No campaigns for your clients yet.</p>`
+              : campaigns.map(c => `
+                  <a class="list-row" href="/campaigns/${c.id}">
+                    <div>
+                      <div style="font-weight:500;">${c.name}</div>
+                      <div style="font-size:11px;color:var(--text-muted);">${c.client_name}${c.type ? ' · ' + c.type : ''}</div>
+                    </div>
+                    <span style="font-size:11px;color:var(--text-muted);">${c.status}</span>
+                  </a>`
+                ).join('')
+            }
+          </div>
+
+          <!-- Schedule placeholder -->
+          <div class="card">
+            <div class="section-label">Schedule</div>
+            <p style="font-size:13px;color:var(--text-muted);">Coming soon.</p>
+          </div>
+
+        </div>
+      `;
+    }
+
+    load();
+  </script>
+</body>
+</html>

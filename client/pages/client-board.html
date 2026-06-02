@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Board — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .board-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .board-columns {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .board-columns { grid-template-columns: 1fr; } }
+
+    /* Collapsible sections */
+    .brief-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .brief-toggle .toggle-icon {
+      font-size: 11px;
+      color: var(--text-dim);
+      transition: transform 0.2s;
+    }
+    .brief-toggle.collapsed .toggle-icon { transform: rotate(-90deg); }
+    .brief-body {
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+      max-height: 2000px;
+      opacity: 1;
+    }
+    .brief-body.collapsed { max-height: 0; opacity: 0; }
+
+    /* Status chips */
+    .status-chip { display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600; }
+    .chip-active    { background:#0d3323;color:var(--success); }
+    .chip-draft     { background:var(--surface-2);color:var(--text-muted); }
+    .chip-paused    { background:#3d2a00;color:var(--warning); }
+    .chip-completed { background:#1a1a2e;color:#8888cc; }
+    .chip-onboarding{ background:#3d2a00;color:var(--warning); }
+    .chip-inactive  { background:var(--surface-2);color:var(--text-muted); }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .service-group { margin-bottom: 16px; }
+    .service-group:last-child { margin-bottom: 0; }
+    .service-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-dim);
+      padding: 6px 0 4px;
+    }
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-row select {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 11px;
+      padding: 2px 6px;
+    }
+    .task-row.done span { color: var(--text-muted); text-decoration: line-through; }
+
+    /* Campaign timeline bar */
+    .campaign-bar {
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .campaign-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    /* Campaign items */
+    .camp-item { border-bottom: 1px solid var(--border); }
+    .camp-item:last-child { border-bottom: none; }
+    .camp-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      cursor: pointer;
+    }
+
+    /* Embedded stage list */
+    .camp-stage-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 7px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.15s;
+    }
+    .camp-stage-row:hover { background: var(--surface-2); }
+    .camp-stage-row.active { background: var(--surface-2); border-color: var(--accent); }
+    .camp-stage-row.done .camp-stage-num { background: var(--success); color: #000; border-color: var(--success); }
+    .camp-stage-num {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--surface-2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; flex-shrink: 0; color: var(--text-muted);
+    }
+    .camp-stage-row.active .camp-stage-num { background: var(--accent); color: #000; border-color: var(--accent); }
+    .camp-stage-name { font-size: 11px; font-weight: 500; flex: 1; }
+    .camp-stage-tick { font-size: 10px; color: var(--success); opacity: 0; }
+    .camp-stage-row.done .camp-stage-tick { opacity: 1; }
+
+    /* Embedded task cards */
+    .camp-task-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      transition: border-color 0.15s;
+    }
+    .camp-task-item:last-child { margin-bottom: 0; }
+    .camp-task-item:hover { border-color: var(--text-dim); }
+    .camp-task-item input[type=checkbox] { width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); margin-top: 2px; }
+    .camp-task-item.done { opacity: 0.55; }
+    .camp-task-item.done .camp-task-title { text-decoration: line-through; color: var(--text-muted); }
+    .camp-task-item .camp-task-body { flex: 1; min-width: 0; }
+    .camp-task-item .camp-task-title { font-size: 12px; font-weight: 500; line-height: 1.4; }
+    .camp-task-item .camp-task-meta { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .camp-task-item .del-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; opacity: 0; padding: 0 2px; flex-shrink: 0; }
+    .camp-task-item:hover .del-btn { opacity: 1; }
+
+    /* Drawer */
+    .drawer-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200; }
+    .drawer-overlay.open { display:block; }
+    .drawer { position:fixed;top:0;right:-440px;width:440px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right 0.25s ease; }
+    .drawer.open { right:0; }
+    .drawer-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border); }
+    .drawer-header h2 { font-size:15px;font-weight:600; }
+    .drawer-close { background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1; }
+    .drawer-body { flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px; }
+    .drawer-footer { padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px; }
+
+    .placeholder-section {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content" id="page-content">
+        <p style="color:var(--text-muted);">Loading…</p>
+      </main>
+    </div>
+  </div>
+
+  <!-- Campaign drawer -->
+  <div class="drawer-overlay" id="camp-overlay"></div>
+  <div class="drawer" id="camp-drawer">
+    <div class="drawer-header">
+      <h2>New Campaign</h2>
+      <button class="drawer-close" onclick="closeCampDrawer()">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="cd-type">
+          <option value="">Select type</option>
+          <option value="PR">PR</option>
+          <option value="Social Media">Social Media</option>
+          <option value="Google Ads">Google Ads</option>
+          <option value="Email">Email</option>
+          <option value="SEO">SEO</option>
+          <option value="Content">Content</option>
+          <option value="Video">Video</option>
+          <option value="Multi-channel">Multi-channel</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Campaign Name</label>
+        <input type="text" id="cd-name" placeholder="e.g. Spring Launch PR">
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-primary" id="cd-save">Create Campaign</button>
+      <button class="btn btn-ghost" onclick="closeCampDrawer()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    const clientId = location.pathname.split('/')[2];
+
+    const STAGES = {
+      PR: ['Strategy','Newsroom Research','Angle Development','Draft Release','Internal Review','Client Approval','Media List','Pitch Copy','Pitching','Follow-up','Coverage Tracking','Reporting'],
+      default: ['Planning','In Progress','Review','Wrap-up'],
+    };
+
+    // Module-level campaign state (avoids full page reloads for campaign interactions)
+    let campaigns = [];
+    const selectedStages = {}; // campId → stageIndex being viewed
+    const expandedCamps = new Set(); // campIds currently expanded
+
+    // ── Main load ──────────────────────────────────────────────────────────────
+
+    async function load() {
+      const [profileRes, campaignsRes] = await Promise.all([
+        fetch(`/api/clients/${clientId}/profile`),
+        fetch(`/api/campaigns/client/${clientId}`)
+      ]);
+      if (!profileRes.ok) {
+        document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Client not found.</p>';
+        return;
+      }
+      campaigns = campaignsRes.ok ? await campaignsRes.json() : [];
+      const { client, tasks, team, contacts } = await profileRes.json();
+
+      renderShell({ pageId: 'client-' + clientId, title: client.name });
+
+      const statusClass = client.status === 'active' ? 'chip-active' : client.status === 'onboarding' ? 'chip-onboarding' : 'chip-inactive';
+      const statusLabel = client.status.charAt(0).toUpperCase() + client.status.slice(1);
+
+      const today = new Date();
+      const start = client.start_date ? new Date(client.start_date) : null;
+      const end = client.end_date ? new Date(client.end_date) : null;
+      let campaignPct = 0, campaignStatus = '';
+      if (start && end) {
+        const total = end - start;
+        const elapsed = today - start;
+        campaignPct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+        const daysLeft = Math.max(0, Math.round((end - today) / (1000 * 60 * 60 * 24)));
+        campaignStatus = daysLeft > 0 ? `${daysLeft} days remaining` : 'Campaign ended';
+      }
+
+      const totalTasks = tasks.length;
+      const doneTasks = tasks.filter(t => t.status === 'done').length;
+      const taskPct = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+      const grouped = {};
+      tasks.forEach(t => {
+        const svc = t.service || 'General';
+        if (!grouped[svc]) grouped[svc] = [];
+        grouped[svc].push(t);
+      });
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="board-header">
+          <h1 style="font-size:20px;font-weight:700;">${client.name}</h1>
+          <span class="status-chip ${statusClass}">${statusLabel}</span>
+          ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${client.industry}</span>` : ''}
+          <div style="flex:1;"></div>
+          <a href="/clients/${clientId}" class="btn btn-ghost" style="font-size:12px;">Edit Profile</a>
+        </div>
+
+        <div class="board-columns">
+
+          <!-- Left — Campaigns + Social -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <div class="card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div class="section-label" style="margin-bottom:0;">Campaigns</div>
+                <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="openCampDrawer()">+ New</button>
+              </div>
+              <div id="campaigns-card-body"></div>
+            </div>
+
+            <div class="placeholder-section">Social Status — coming soon</div>
+
+          </div>
+
+          <!-- Right — Brief, Scope, Team, Tasks -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <div class="card">
+              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
+                Client Brief
+                <span class="toggle-icon">▼</span>
+              </div>
+              <div class="brief-body collapsed" style="margin-top:12px;">
+                <p style="font-size:13px;line-height:1.8;color:var(--text);margin:0;">${client.research || ''}</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
+                Scope & Client
+                <span class="toggle-icon">▼</span>
+              </div>
+              <div class="brief-body collapsed" style="margin-top:12px;">
+
+                ${start ? `
+                <div style="margin-bottom:14px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Campaign</div>
+                  <div class="stat-row"><span>${client.start_date}</span><span>${client.end_date || '—'}</span></div>
+                  ${start && end ? `
+                  <div class="campaign-bar"><div class="campaign-bar-fill" style="width:${campaignPct}%"></div></div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${campaignPct}% through · ${campaignStatus}</div>
+                  ` : ''}
+                </div>` : ''}
+
+                ${client.monthly_hours ? `
+                <div style="margin-bottom:14px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Monthly Hours</div>
+                  <div style="font-size:15px;font-weight:600;">${client.monthly_hours} hrs</div>
+                </div>` : ''}
+
+                ${client.services ? `
+                <div style="margin-bottom:14px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Services</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    ${client.services.split(',').map(s => `
+                      <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${s.trim()}</span>
+                    `).join('')}
+                  </div>
+                </div>` : ''}
+
+                ${contacts.length ? `
+                <div style="margin-bottom:14px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Contacts</div>
+                  ${contacts.map(c => `
+                    <div style="padding:5px 0;border-bottom:1px solid var(--border);">
+                      <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
+                      ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
+                      ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
+                    </div>
+                  `).join('')}
+                </div>` : ''}
+
+                ${client.website ? `
+                <div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Website</div>
+                  <a href="${client.website}" target="_blank" style="font-size:13px;color:var(--accent);">${client.website}</a>
+                </div>` : ''}
+
+              </div>
+            </div>
+
+            ${team.length ? `
+            <div class="card">
+              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
+                Team
+                <span class="toggle-icon">▼</span>
+              </div>
+              <div class="brief-body collapsed" style="margin-top:12px;">
+                ${team.map(m => `
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                    <span style="font-weight:500;">${m.name}</span>
+                    ${m.role ? `<span style="font-size:11px;color:var(--text-muted);">${m.role}</span>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>` : ''}
+
+            <div class="card">
+              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
+                <span>Tasks <span style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneTasks}/${totalTasks} done</span></span>
+                <span class="toggle-icon">▼</span>
+              </div>
+              <div class="brief-body collapsed" style="margin-top:12px;">
+                <div class="campaign-bar" style="margin-bottom:12px;">
+                  <div class="campaign-bar-fill" id="task-progress-bar" style="width:${taskPct}%"></div>
+                </div>
+                ${totalTasks === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No tasks yet.</p>` : ''}
+                ${Object.entries(grouped).map(([svc, svctasks]) => `
+                  <div class="service-group">
+                    <div class="service-group-label">${svc}</div>
+                    ${svctasks.map(t => `
+                      <div class="task-row ${t.status === 'done' ? 'done' : ''}" id="task-row-${t.id}">
+                        <span>${t.title}</span>
+                        <select data-id="${t.id}" onchange="updateTask(${t.id}, this.value)">
+                          <option value="todo"        ${t.status === 'todo'        ? 'selected' : ''}>To Do</option>
+                          <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                          <option value="done"        ${t.status === 'done'        ? 'selected' : ''}>Done</option>
+                        </select>
+                      </div>
+                    `).join('')}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+
+      renderCampaigns();
+    }
+
+    // ── Campaign rendering ─────────────────────────────────────────────────────
+
+    function renderCampaigns() {
+      const body = document.getElementById('campaigns-card-body');
+      if (!body) return;
+      if (!campaigns.length) {
+        body.innerHTML = '<p style="font-size:13px;color:var(--text-muted);margin:0;">No campaigns yet.</p>';
+        return;
+      }
+      body.innerHTML = campaigns.map(c => renderCampItem(c)).join('');
+      // Reload tasks for any expanded campaigns
+      expandedCamps.forEach(id => loadCampTasks(id));
+    }
+
+    function renderCampItem(c) {
+      const stages = STAGES[c.type] || STAGES.default;
+      const currentStage = c.current_stage || 0;
+      const selStage = selectedStages[c.id] !== undefined ? selectedStages[c.id] : currentStage;
+      const isExpanded = expandedCamps.has(c.id);
+      const chipClass = { active: 'chip-active', draft: 'chip-draft', paused: 'chip-paused', completed: 'chip-completed' }[c.status] || 'chip-draft';
+      const statusLabel = c.status.charAt(0).toUpperCase() + c.status.slice(1);
+      const currentStageName = stages[currentStage] || 'Complete';
+
+      const stageListHtml = stages.map((s, i) => {
+        const done = i < currentStage;
+        const active = i === selStage;
+        return `<div class="camp-stage-row ${done ? 'done' : ''} ${active ? 'active' : ''}" onclick="selectCampStage(${c.id}, ${i})">
+          <div class="camp-stage-num">${i + 1}</div>
+          <div class="camp-stage-name">${s}</div>
+          <div class="camp-stage-tick">✓</div>
+        </div>`;
+      }).join('');
+
+      const backBtn = selStage > 0
+        ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;" onclick="advanceCampStage(${c.id},${selStage - 1},event)">← Back</button>`
+        : '';
+      const advBtn = selStage < stages.length
+        ? `<button class="btn btn-primary" style="font-size:11px;padding:3px 8px;" onclick="advanceCampStage(${c.id},${selStage + 1},event)">${selStage + 1 < stages.length ? 'Advance →' : 'Complete'}</button>`
+        : '<span style="font-size:11px;color:var(--success);">All done ✓</span>';
+
+      const expandedHtml = isExpanded ? `
+        <div style="padding-bottom:14px;">
+          <!-- Stage list + task panel -->
+          <div style="display:grid;grid-template-columns:160px 1fr;gap:12px;">
+            <!-- Stage list -->
+            <div>${stageListHtml}</div>
+
+            <!-- Task panel -->
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div class="section-label" style="margin-bottom:0;">${stages[selStage] || 'Complete'}</div>
+                <div style="display:flex;gap:6px;">${backBtn}${advBtn}</div>
+              </div>
+              <div id="camp-tasks-${c.id}">
+                <p style="font-size:12px;color:var(--text-muted);">Loading…</p>
+              </div>
+              <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
+                <input id="camp-task-input-${c.id}"
+                  style="width:100%;box-sizing:border-box;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;padding:6px 9px;"
+                  placeholder="Task title…"
+                  onkeydown="if(event.key==='Enter')addCampTask(${c.id})">
+                <div style="display:flex;gap:6px;">
+                  <input id="camp-task-assignee-${c.id}"
+                    style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:11px;padding:5px 8px;"
+                    placeholder="Assignee">
+                  <input type="date" id="camp-task-due-${c.id}"
+                    style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:11px;padding:5px 8px;">
+                  <button class="btn btn-ghost" style="font-size:11px;white-space:nowrap;" onclick="addCampTask(${c.id})">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;text-align:right;">
+            <a href="/campaigns/${c.id}" style="font-size:11px;color:var(--accent);">Open full board →</a>
+          </div>
+        </div>
+      ` : '';
+
+      return `
+        <div class="camp-item" data-camp-id="${c.id}">
+          <div class="camp-summary" onclick="toggleCamp(${c.id}, ${currentStage})">
+            <div>
+              <div style="font-size:13px;font-weight:600;">${c.name}</div>
+              ${c.type ? `<div style="font-size:11px;color:var(--text-muted);margin-top:1px;">${c.type} · ${currentStageName}</div>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="status-chip ${chipClass}">${statusLabel}</span>
+              <span class="camp-item-arrow" style="font-size:11px;color:var(--text-dim);">${isExpanded ? '▲' : '▼'}</span>
+            </div>
+          </div>
+          ${expandedHtml}
+        </div>
+      `;
+    }
+
+    // ── Campaign expand / stage / task actions ─────────────────────────────────
+
+    function toggleCamp(campId, currentStage) {
+      if (expandedCamps.has(campId)) {
+        expandedCamps.delete(campId);
+      } else {
+        expandedCamps.add(campId);
+        if (selectedStages[campId] === undefined) selectedStages[campId] = currentStage;
+      }
+      renderCampaigns();
+    }
+
+    function selectCampStage(campId, stageIndex) {
+      selectedStages[campId] = stageIndex;
+      renderCampaigns();
+    }
+
+    async function advanceCampStage(campId, newStageIndex, event) {
+      if (event) event.stopPropagation();
+      const camp = campaigns.find(c => c.id == campId);
+      if (!camp) return;
+      const stages = STAGES[camp.type] || STAGES.default;
+      const clamped = Math.max(0, Math.min(stages.length, newStageIndex));
+      await fetch(`/api/campaigns/${campId}/stage`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage: clamped })
+      });
+      camp.current_stage = clamped;
+      selectedStages[campId] = clamped;
+      renderCampaigns();
+    }
+
+    async function loadCampTasks(campId) {
+      const selStage = selectedStages[campId] !== undefined ? selectedStages[campId] : 0;
+      const res = await fetch(`/api/campaigns/${campId}/tasks/${selStage}`);
+      const tasks = res.ok ? await res.json() : [];
+      const list = document.getElementById(`camp-tasks-${campId}`);
+      if (!list) return;
+      if (!tasks.length) {
+        list.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin:0;">No tasks yet — add one below.</p>`;
+        return;
+      }
+      list.innerHTML = tasks.map(t => `
+        <div class="camp-task-item ${t.done ? 'done' : ''}" id="camp-task-${t.id}">
+          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleCampTask(${campId}, ${t.id}, this.checked)">
+          <div class="camp-task-body">
+            <div class="camp-task-title">${t.title}</div>
+            ${t.assignee || t.due_date ? `<div class="camp-task-meta">${[t.assignee, t.due_date].filter(Boolean).join(' · ')}</div>` : ''}
+          </div>
+          <button class="del-btn" onclick="deleteCampTask(${campId}, ${t.id})">×</button>
+        </div>
+      `).join('');
+    }
+
+    async function addCampTask(campId) {
+      const input = document.getElementById(`camp-task-input-${campId}`);
+      const title = input.value.trim();
+      if (!title) return;
+      const selStage = selectedStages[campId] !== undefined ? selectedStages[campId] : 0;
+      const assignee = document.getElementById(`camp-task-assignee-${campId}`)?.value.trim();
+      const due_date = document.getElementById(`camp-task-due-${campId}`)?.value;
+      input.value = '';
+      if (document.getElementById(`camp-task-assignee-${campId}`)) document.getElementById(`camp-task-assignee-${campId}`).value = '';
+      if (document.getElementById(`camp-task-due-${campId}`)) document.getElementById(`camp-task-due-${campId}`).value = '';
+      await fetch(`/api/campaigns/${campId}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage_index: selStage, title, assignee: assignee || null, due_date: due_date || null })
+      });
+      loadCampTasks(campId);
+    }
+
+    async function toggleCampTask(campId, taskId, done) {
+      const row = document.getElementById(`camp-task-${taskId}`);
+      if (row) row.classList.toggle('done', done);
+      await fetch(`/api/campaigns/${campId}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done })
+      });
+    }
+
+    async function deleteCampTask(campId, taskId) {
+      await fetch(`/api/campaigns/${campId}/tasks/${taskId}`, { method: 'DELETE' });
+      loadCampTasks(campId);
+    }
+
+    // ── Right-column collapsibles ──────────────────────────────────────────────
+
+    function toggleBrief(toggle) {
+      const body = toggle.nextElementSibling;
+      toggle.classList.toggle('collapsed');
+      body.classList.toggle('collapsed');
+    }
+
+    // ── Tasks ──────────────────────────────────────────────────────────────────
+
+    async function updateTask(taskId, status) {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const row = document.getElementById('task-row-' + taskId);
+      if (row) row.classList.toggle('done', status === 'done');
+      const selects = document.querySelectorAll('.task-row select');
+      const total = selects.length;
+      const done = Array.from(selects).filter(s => s.value === 'done').length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const bar = document.getElementById('task-progress-bar');
+      if (bar) bar.style.width = pct + '%';
+    }
+
+    // ── Campaign drawer ────────────────────────────────────────────────────────
+
+    function openCampDrawer() {
+      document.getElementById('camp-overlay').classList.add('open');
+      document.getElementById('camp-drawer').classList.add('open');
+    }
+    function closeCampDrawer() {
+      document.getElementById('camp-overlay').classList.remove('open');
+      document.getElementById('camp-drawer').classList.remove('open');
+    }
+    document.getElementById('camp-overlay').addEventListener('click', closeCampDrawer);
+
+    document.getElementById('cd-save').addEventListener('click', async () => {
+      const name = document.getElementById('cd-name').value.trim();
+      if (!name) { alert('Campaign name is required'); return; }
+      const btn = document.getElementById('cd-save');
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: clientId,
+          name,
+          type: document.getElementById('cd-type').value || null,
+          status: 'draft',
+        })
+      });
+      const { id } = await res.json();
+      window.location.href = `/campaigns/${id}`;
+    });
+
+    load();
+  </script>
+</body>
+</html>
