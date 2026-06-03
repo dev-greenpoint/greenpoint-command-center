@@ -2,6 +2,26 @@ const express = require('express');
 const router = express.Router();
 const { getDb, saveDb } = require('../db/database');
 
+function rows(result) {
+  if (!result.length) return [];
+  return result[0].values.map(row =>
+    Object.fromEntries(result[0].columns.map((c, i) => [c, row[i]]))
+  );
+}
+
+router.post('/', async (req, res) => {
+  const db = await getDb();
+  const { client_id, title, service, assignee, due_date } = req.body;
+  if (!client_id || !title) return res.status(400).json({ error: 'client_id and title required' });
+  db.run(
+    'INSERT INTO tasks (client_id, title, service, assignee, due_date) VALUES (?, ?, ?, ?, ?)',
+    [client_id, title, service || null, assignee || null, due_date || null]
+  );
+  const id = rows(db.exec('SELECT last_insert_rowid() as id'))[0].id;
+  saveDb();
+  res.status(201).json({ id });
+});
+
 router.patch('/:id', async (req, res) => {
   const db = await getDb();
   const existing = db.exec('SELECT * FROM tasks WHERE id=?', [req.params.id]);

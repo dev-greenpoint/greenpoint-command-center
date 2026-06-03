@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const { getDb } = require('./db/database');
 const { initSchema } = require('./db/schema');
 const overviewRouter = require('./routes/overview');
@@ -24,6 +26,29 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, '../client')));
 
+// ── File uploads ──────────────────────────────────────────────────────────────
+const uploadsDir = path.join(__dirname, '../client/uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(null, /^image\/(jpeg|png|gif|webp|svg\+xml)$/.test(file.mimetype));
+  },
+});
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ url: `/uploads/${req.file.filename}` });
+});
+
 app.get('/api/health', async (req, res) => {
   await getDb();
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -41,7 +66,7 @@ app.use('/api/team-planner', teamPlannerRouter);
 app.use('/api/team-members', teamMembersRouter);
 app.use('/api/strategies', strategiesRouter);
 
-const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin'];
+const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies'];
 PAGES.forEach(page => {
   app.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, `../client/pages/${page}.html`));

@@ -213,6 +213,21 @@
     .drawer-overlay.open { display:block; }
     .drawer { position:fixed;top:0;right:-440px;width:440px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right 0.25s ease; }
     .drawer.open { right:0; }
+    .drawer-wide { width:600px;right:-600px; }
+    .drawer-wide.open { right:0; }
+
+    /* Strategy drawer content */
+    .strat-section { border-bottom:1px solid var(--border);padding:16px 0; }
+    .strat-section:last-child { border-bottom:none; }
+    .strat-section-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:10px; }
+    .strat-section-body { font-size:13px;line-height:1.75;color:var(--text); }
+    .strat-section-body h1,.strat-section-body h2,.strat-section-body h3 { font-size:13px;font-weight:700;margin:12px 0 4px; }
+    .strat-section-body h1:first-child,.strat-section-body h2:first-child,.strat-section-body h3:first-child { margin-top:0; }
+    .strat-section-body p { margin:0 0 8px; }
+    .strat-section-body p:last-child { margin-bottom:0; }
+    .strat-section-body ul,.strat-section-body ol { margin:0 0 8px;padding-left:18px; }
+    .strat-section-body li { margin-bottom:3px; }
+    .strat-section-body strong { font-weight:700; }
     .drawer-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border); }
     .drawer-header h2 { font-size:15px;font-weight:600; }
     .drawer-close { background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1; }
@@ -274,6 +289,23 @@
     </div>
   </div>
 
+  <!-- Strategy drawer -->
+  <div class="drawer-overlay" id="strat-overlay" onclick="closeStrategyDrawer()"></div>
+  <div class="drawer drawer-wide" id="strat-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 id="strat-drawer-title" style="margin:0;">Strategy</h2>
+        <div id="strat-drawer-meta" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
+      </div>
+      <button class="drawer-close" onclick="closeStrategyDrawer()">×</button>
+    </div>
+    <div class="drawer-body" id="strat-drawer-body">
+      <p style="font-size:13px;color:var(--text-muted);">Loading…</p>
+    </div>
+    <div class="drawer-footer" id="strat-drawer-footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="/components/shell.js"></script>
   <script>
     const clientId = location.pathname.split('/')[2];
@@ -326,10 +358,24 @@
     let campaigns = [];
     let clientStrategies = [];
     let client = null;
+    let clientChecklist = [];
+    let allTeamMembers = [];
     const selectedStages = {};
     const expandedCamps = new Set();
     const campTasksData = {};
     let clientTeam = [];
+
+    // Maps section label → which checklist categories belong in it
+    const SECTION_CHECKLIST_CATEGORIES = {
+      'PR':                    ['PR'],
+      'PR Light':              ['PR Light'],
+      'Content - Social':      ['Content - Social'],
+      'Content - Other':       ['Content - eDM','Content - Web/Blogs/Other Copy','Content - Influencer','Content - Shortform Capture','Content - Video Production'],
+      'Events & Partnerships': ['Brand Activation - Events & Partnerships'],
+      'Awards':                ['Awards'],
+      'Paid Media':            ['Paid Media'],
+      'Design':                ['Design'],
+    };
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -401,11 +447,13 @@
     // ── Main load ──────────────────────────────────────────────────────────────
 
     async function load() {
-      const [profileRes, campaignsRes, strategiesRes] = await Promise.all([
+      const [profileRes, campaignsRes, strategiesRes, teamMembersRes] = await Promise.all([
         fetch(`/api/clients/${clientId}/profile`),
         fetch(`/api/campaigns/client/${clientId}`),
-        fetch(`/api/strategies/client/${clientId}`)
+        fetch(`/api/strategies/client/${clientId}`),
+        fetch('/api/team-members')
       ]);
+      allTeamMembers = teamMembersRes.ok ? await teamMembersRes.json() : [];
       if (!profileRes.ok) {
         document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Client not found.</p>';
         return;
@@ -414,6 +462,7 @@
       clientStrategies = strategiesRes.ok ? await strategiesRes.json() : [];
       const { client: clientData, checklist, tasks, team, contacts } = await profileRes.json();
       client = clientData;
+      clientChecklist = checklist || [];
       clientTeam = (team || []).map(m => m.name).filter(Boolean);
       renderShell({ pageId: 'client-' + clientId, title: client.name });
 
@@ -449,6 +498,7 @@
           <span class="status-chip ${statusClass}">${statusLabel}</span>
           ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${client.industry}</span>` : ''}
           <div style="flex:1;"></div>
+          ${client.status === 'onboarding' ? `<button class="btn btn-primary" style="font-size:12px;" id="complete-onboarding-btn" onclick="completeOnboarding()">Complete Onboarding</button>` : ''}
           <a href="/clients/${clientId}" class="btn btn-ghost" style="font-size:12px;">Edit Profile</a>
         </div>
 
@@ -457,19 +507,25 @@
           <button class="tab-btn" onclick="switchTab('two', this)">Two</button>
         </div>
 
-        <!-- Tab One — Strategy + Campaigns -->
+        <!-- Tab One — 2-column layout -->
         <div class="tab-panel active" id="tab-one">
-          <!-- Strategy card -->
-          <div class="card" style="margin-bottom:16px;" id="strategy-card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Strategy</div>
-              <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" id="strategy-new-btn" onclick="newStrategy()">+ New</button>
-            </div>
-            <div id="strategy-list">
-              <p style="font-size:13px;color:var(--text-dim);">Loading…</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+            <!-- Column 1 — Campaigns -->
+            <div id="campaigns-sections"></div>
+            <!-- Column 2 — TBD -->
+            <div id="tab-one-col2">
+              <!-- Strategy card -->
+              <div class="card" style="margin-bottom:16px;" id="strategy-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Strategy</div>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" id="strategy-new-btn" onclick="newStrategy()">+ New</button>
+                </div>
+                <div id="strategy-list">
+                  <p style="font-size:13px;color:var(--text-dim);">Loading…</p>
+                </div>
+              </div>
             </div>
           </div>
-          <div id="campaigns-sections"></div>
         </div>
 
         <!-- Tab Two — Client Info -->
@@ -559,101 +615,37 @@
               </div>
             </div>
 
-            ${team.length ? `
-            <div class="card">
-              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
-                Team
-                <span class="toggle-icon">▼</span>
-              </div>
-              <div class="brief-body collapsed" style="margin-top:12px;">
-                ${team.map(m => `
-                  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
-                    <span style="font-weight:500;">${m.name}</span>
-                    ${m.role ? `<span style="font-size:11px;color:var(--text-muted);">${m.role}</span>` : ''}
-                  </div>
-                `).join('')}
-              </div>
-            </div>` : ''}
+            <div class="card" id="team-card"></div>
 
-            ${(() => {
-              const serviceItems = checklist.filter(i => (i.category || 'general') !== 'general');
-              if (!serviceItems.length) return '';
-              const grouped = {};
-              serviceItems.forEach(i => { if (!grouped[i.category]) grouped[i.category] = []; grouped[i.category].push(i); });
-              const totalSvc = serviceItems.length;
-              const doneSvc = serviceItems.filter(i => i.completed).length;
-              return `
-              <div class="card">
-                <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
-                  <span>Service Setup <span style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneSvc}/${totalSvc}</span></span>
-                  <span class="toggle-icon">▼</span>
-                </div>
-                <div class="brief-body collapsed" style="margin-top:12px;">
-                  ${Object.entries(grouped).map(([cat, items]) => `
-                    <div style="margin-bottom:12px;">
-                      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:4px 0 6px;">${cat}</div>
-                      ${items.map(item => `
-                        <label style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;${item.completed ? 'color:var(--text-muted);text-decoration:line-through;' : ''}">
-                          <input type="checkbox" data-svc-id="${item.id}" ${item.completed ? 'checked' : ''} style="width:13px;height:13px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;" onchange="toggleServiceItem(${item.id}, this.checked, this)">
-                          ${item.item}
-                        </label>
-                      `).join('')}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>`;
-            })()}
 
-            <div class="card">
+            <div class="card" id="client-tasks-card">
               <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
-                <span>Tasks <span style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneTasks}/${totalTasks} done</span></span>
+                <span>Tasks <span id="client-task-count" style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneTasks}/${totalTasks} done</span></span>
                 <span class="toggle-icon">▼</span>
               </div>
               <div class="brief-body collapsed" style="margin-top:12px;">
                 <div class="campaign-bar" style="margin-bottom:12px;">
                   <div class="campaign-bar-fill" id="task-progress-bar" style="width:${taskPct}%"></div>
                 </div>
-                ${totalTasks === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No tasks yet.</p>` : ''}
-                ${Object.entries(grouped).map(([svc, svctasks]) => `
-                  <div class="service-group">
-                    <div class="service-group-label">${svc}</div>
-                    <div class="cb-task-cols"><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>
-                    ${svctasks.map(t => {
-                      const sc = taskStatusClass(t.status);
-                      const sl = taskStatusLabel(t.status);
-                      return `
-                      <div class="cb-task-row ${t.status === 'done' ? 'done' : ''}" id="client-task-${t.id}">
-                        <input type="checkbox" ${t.status === 'done' ? 'checked' : ''} onchange="toggleClientTask(${t.id}, this.checked)">
-                        <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
-                          <span>${t.title}</span>
-                          <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
-                            onblur="cbSaveClientField(${t.id},'title',this.value)"
-                            onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
-                        </div>
-                        <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
-                          <span><span class="progress-chip ${sc}">${sl}</span></span>
-                          <select onchange="cbSaveClientField(${t.id},'status',this.value)" onblur="cbCancelCell(this.parentElement)">
-                            <option value="todo"${t.status==='todo'?' selected':''}>To Do</option>
-                            <option value="in_progress"${t.status==='in_progress'?' selected':''}>In Progress</option>
-                            <option value="done"${t.status==='done'?' selected':''}>Done</option>
-                          </select>
-                        </div>
-                        <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'ct')">
-                          <span>${assigneeDisplay(t.assignee)}</span>
-                          ${avDropdownHtml(`av-drop-ct-${t.id}`, `selectClientAssignee(${t.id},`)}
-                        </div>
-                        <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
-                          <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
-                          <input type="date" value="${t.due_date||''}"
-                            onchange="cbSaveClientField(${t.id},'due_date',this.value)"
-                            onblur="cbSaveClientField(${t.id},'due_date',this.value)"
-                            onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
-                        </div>
-                        <button class="cb-del" onclick="deleteClientTask(${t.id})" title="Delete">×</button>
-                      </div>`;
-                    }).join('')}
-                  </div>
-                `).join('')}
+                ${totalTasks === 0 ? `<p id="tasks-empty" style="font-size:13px;color:var(--text-muted);">No tasks yet.</p>` : ''}
+                <div id="client-tasks-list">
+                  ${Object.entries(grouped).map(([svc, svctasks]) => `
+                    <div class="service-group" data-svc-group="${svc}">
+                      <div class="service-group-label">${svc}</div>
+                      <div class="cb-task-cols"><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>
+                      ${svctasks.map(t => clientTaskRowHtml(t)).join('')}
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="cb-add-trigger" id="client-add-trigger" onclick="showClientAddForm()">+ Add task</div>
+                <div class="cb-add-form" id="client-add-form">
+                  <input id="client-task-input" placeholder="Task title…"
+                    onkeydown="if(event.key==='Enter')addClientTask();if(event.key==='Escape')hideClientAddForm()">
+                  <input id="client-task-assignee" placeholder="Assignee">
+                  <input type="date" id="client-task-due">
+                  <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addClientTask()">Add</button>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideClientAddForm()">✕</button>
+                </div>
               </div>
             </div>
 
@@ -664,6 +656,7 @@
 
       renderCampaigns();
       renderStrategyCard(clientStrategies);
+      renderTeamCard(team);
     }
 
     function switchTab(name, btn) {
@@ -671,6 +664,38 @@
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    // ── Section setup checklist ────────────────────────────────────────────────
+
+    function sectionSetupHtml(sectionLabel) {
+      const cats = SECTION_CHECKLIST_CATEGORIES[sectionLabel] || [];
+      const items = clientChecklist.filter(i => cats.includes(i.category));
+      if (!items.length) return '';
+      const total = items.length;
+      const done = items.filter(i => i.completed).length;
+      // Group by category (relevant for Content - Other which spans multiple)
+      const grouped = {};
+      items.forEach(i => { if (!grouped[i.category]) grouped[i.category] = []; grouped[i.category].push(i); });
+      const showCatLabel = Object.keys(grouped).length > 1;
+      return `
+        <div class="section-setup" data-section="${sectionLabel}" style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);">Setup</span>
+            <span style="font-size:10px;color:var(--text-muted);" id="setup-count-${sectionLabel.replace(/\s/g,'-')}">${done}/${total}</span>
+            ${done < total ? `<button class="mark-all-btn" onclick="markAllSetupDone('${sectionLabel.replace(/'/g,"\\'")}',this)" style="margin-left:auto;font-size:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0;" title="Mark all done">Mark all done</button>` : ''}
+          </div>
+          ${Object.entries(grouped).map(([cat, catItems]) => `
+            ${showCatLabel ? `<div style="font-size:10px;color:var(--text-dim);font-style:italic;padding:2px 0 4px;">${cat}</div>` : ''}
+            ${catItems.map(item => `
+              <label style="display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;${item.completed ? 'color:var(--text-muted);text-decoration:line-through;' : ''}">
+                <input type="checkbox" data-item-id="${item.id}" ${item.completed ? 'checked' : ''} style="width:13px;height:13px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;"
+                  onchange="toggleServiceItem(${item.id}, this.checked, this, '${sectionLabel.replace(/'/g,"\\'")}')">
+                ${item.item}
+              </label>
+            `).join('')}
+          `).join('')}
+        </div>`;
     }
 
     // ── Campaign rendering ─────────────────────────────────────────────────────
@@ -707,12 +732,20 @@
         const empty = typeCampaigns.length === 0
           ? `<p style="font-size:13px;color:var(--text-muted);margin:0 0 4px;">No ${label} campaigns yet.</p>`
           : '';
+        const cats = SECTION_CHECKLIST_CATEGORIES[sectionLabel] || [];
+        const setupItems = clientChecklist.filter(i => cats.includes(i.category));
+        const setupComplete = !setupItems.length || setupItems.every(i => i.completed);
+        const btnId = `camp-new-btn-${sectionLabel.replace(/[^a-zA-Z0-9]/g,'-')}`;
+        const newBtn = setupComplete
+          ? `<button class="btn btn-primary" id="${btnId}" style="font-size:11px;padding:4px 10px;" onclick="openCampDrawer('${dbType}')">+ New</button>`
+          : `<button class="btn btn-ghost" id="${btnId}" disabled style="font-size:11px;padding:4px 10px;opacity:0.4;cursor:not-allowed;" title="Complete setup before adding campaigns">+ New</button>`;
         return `
           <div class="card" style="margin-bottom:16px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
               <div class="section-label" style="margin-bottom:0;">${label}</div>
-              <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="openCampDrawer('${dbType}')">+ New</button>
+              ${newBtn}
             </div>
+            ${sectionSetupHtml(sectionLabel)}
             ${empty}${items}
           </div>`;
       }).join('');
@@ -927,6 +960,7 @@
             row.classList.toggle('done', sanitized === 'done');
             const cb = row.querySelector('input[type=checkbox]');
             if (cb) cb.checked = sanitized === 'done';
+            updateClientTaskCount();
           } else if (field === 'assignee') {
             span.innerHTML = assigneeDisplay(sanitized);
           } else {
@@ -947,7 +981,8 @@
     async function deleteClientTask(taskId) {
       if (!confirm('Delete this task?')) return;
       await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
-      load();
+      document.getElementById(`client-task-${taskId}`)?.remove();
+      updateClientTaskCount();
     }
 
     function showCbAddForm(campId) {
@@ -1044,6 +1079,80 @@
       window.location.href = type === 'Social Media' ? `/social/${id}` : `/campaigns/${id}`;
     });
 
+    // ── Strategy drawer ────────────────────────────────────────────────────────
+
+    const SECTION_DEFS = [
+      { id: 'overview',      label: 'Overview & Situation' },
+      { id: 'strategy',      label: 'Strategic Approach' },
+      { id: 'audiences',     label: 'Target Audiences' },
+      { id: 'messages',      label: 'Key Messages' },
+      { id: 'tactical_plan', label: 'Tactical Plan' },
+      { id: 'pr',            label: 'PR Campaigns' },
+      { id: 'social',        label: 'Social Media' },
+      { id: 'content',       label: 'Content Pillars' },
+      { id: 'events',        label: 'Events & Activations' },
+      { id: 'partnerships',  label: 'Partnerships' },
+      { id: 'email',         label: 'Email & CRM' },
+      { id: 'paid',          label: 'Paid Media' },
+      { id: 'timeline',      label: 'Timeline & Phasing' },
+      { id: 'measurement',   label: 'Measurement & KPIs' },
+    ];
+
+    async function openStrategyDrawer(strategyId) {
+      document.getElementById('strat-overlay').classList.add('open');
+      document.getElementById('strat-drawer').classList.add('open');
+      document.getElementById('strat-drawer-body').innerHTML = '<p style="font-size:13px;color:var(--text-muted);">Loading…</p>';
+      document.getElementById('strat-drawer-footer').innerHTML = '';
+
+      const res = await fetch(`/api/strategies/${strategyId}`);
+      if (!res.ok) {
+        document.getElementById('strat-drawer-body').innerHTML = '<p style="color:var(--danger);">Could not load strategy.</p>';
+        return;
+      }
+      const s = await res.json();
+      const sections = s.sections ? JSON.parse(s.sections) : {};
+      const active = s.active_sections ? JSON.parse(s.active_sections) : [];
+
+      const chipMap = {
+        draft:             'background:var(--surface-2);color:var(--text-muted)',
+        awaiting_approval: 'background:#3d2a00;color:#f5a623',
+        approved:          'background:#0d3323;color:#3ecf6e',
+      };
+      const chipLabels = { draft: 'Draft', awaiting_approval: 'Awaiting Approval', approved: 'Approved' };
+      const chipStyle = chipMap[s.status] || chipMap.draft;
+      const chipLabel = chipLabels[s.status] || s.status;
+      const date = s.updated_at ? new Date(s.updated_at).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }) : '';
+
+      document.getElementById('strat-drawer-title').textContent = s.title;
+      document.getElementById('strat-drawer-meta').innerHTML = `
+        <span style="${chipStyle};font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:100px;">${chipLabel}</span>
+        ${date ? `<span style="margin-left:8px;">${date}</span>` : ''}
+      `;
+
+      const visibleSections = SECTION_DEFS.filter(def => active.includes(def.id) && sections[def.id]?.trim());
+
+      if (!visibleSections.length) {
+        document.getElementById('strat-drawer-body').innerHTML = '<p style="font-size:13px;color:var(--text-muted);">No content yet — open the strategy builder to start drafting.</p>';
+      } else {
+        document.getElementById('strat-drawer-body').innerHTML = visibleSections.map(def => `
+          <div class="strat-section">
+            <div class="strat-section-label">${def.label}</div>
+            <div class="strat-section-body">${marked.parse(sections[def.id])}</div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('strat-drawer-footer').innerHTML = `
+        <a href="/strategy/${s.id}" class="btn btn-primary" style="font-size:12px;">Open Builder</a>
+        ${s.share_token && s.status !== 'draft' ? `<a href="/s/${s.share_token}" target="_blank" class="btn btn-ghost" style="font-size:12px;">Client View</a>` : ''}
+      `;
+    }
+
+    function closeStrategyDrawer() {
+      document.getElementById('strat-overlay').classList.remove('open');
+      document.getElementById('strat-drawer').classList.remove('open');
+    }
+
     // ── Strategy card ──────────────────────────────────────────────────────────
 
     function strategyChip(status) {
@@ -1080,7 +1189,7 @@
               ${date ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Updated ${date}</div>` : ''}
             </div>
             <span style="${style}font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:100px;white-space:nowrap;">${label}</span>
-            ${hasLink ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;white-space:nowrap;" onclick="viewStrategy('${s.share_token}')">View</button>` : ''}
+            <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;white-space:nowrap;" onclick="openStrategyDrawer(${s.id})">View</button>
             ${hasLink ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;" onclick="copyStrategyLink('${s.share_token}', this)" title="Copy link">⎘</button>` : ''}
             <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;" onclick="window.location='/strategy/${s.id}'">Edit</button>
           </div>`;
@@ -1142,7 +1251,11 @@
       renderCampaigns();
     }
 
-    async function toggleServiceItem(itemId, completed, el) {
+    async function toggleServiceItem(itemId, completed, el, sectionLabel) {
+      // Update checklist data in memory
+      const item = clientChecklist.find(i => i.id === itemId);
+      if (item) item.completed = completed;
+
       await fetch(`/api/clients/${clientId}/checklist/${itemId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1153,6 +1266,231 @@
         label.style.color = completed ? 'var(--text-muted)' : '';
         label.style.textDecoration = completed ? 'line-through' : '';
       }
+      // Update done/total count and "+ New" button state for this section
+      if (sectionLabel) {
+        const sectionEl = document.querySelector(`.section-setup[data-section="${sectionLabel}"]`);
+        if (sectionEl) {
+          const total = sectionEl.querySelectorAll('input[type=checkbox]').length;
+          const done = sectionEl.querySelectorAll('input[type=checkbox]:checked').length;
+          const countEl = document.getElementById(`setup-count-${sectionLabel.replace(/\s/g,'-')}`);
+          if (countEl) countEl.textContent = `${done}/${total}`;
+        }
+        const cats = SECTION_CHECKLIST_CATEGORIES[sectionLabel] || [];
+        const sectionItems = clientChecklist.filter(i => cats.includes(i.category));
+        const allDone = sectionItems.every(i => i.completed);
+        const btnId = `camp-new-btn-${sectionLabel.replace(/[^a-zA-Z0-9]/g,'-')}`;
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.disabled = !allDone;
+          btn.className = allDone ? 'btn btn-primary' : 'btn btn-ghost';
+          btn.style.opacity = allDone ? '' : '0.4';
+          btn.style.cursor = allDone ? '' : 'not-allowed';
+          btn.title = allDone ? '' : 'Complete setup before adding campaigns';
+          if (allDone) {
+            const dbType = SECTION_DB_TYPE[sectionLabel] || sectionLabel;
+            btn.onclick = () => openCampDrawer(dbType);
+          }
+        }
+      }
+    }
+
+    // ── Complete onboarding ────────────────────────────────────────────────────
+
+    async function completeOnboarding() {
+      if (!confirm('Mark onboarding complete? The client status will change to Active.')) return;
+      await fetch(`/api/clients/${clientId}/complete-onboarding`, { method: 'POST' });
+      client.status = 'active';
+      const chip = document.querySelector('.board-header .status-chip');
+      if (chip) { chip.className = 'status-chip chip-active'; chip.textContent = 'Active'; }
+      document.getElementById('complete-onboarding-btn')?.remove();
+    }
+
+    // ── Mark all setup done ────────────────────────────────────────────────────
+
+    async function markAllSetupDone(sectionLabel, btn) {
+      if (btn) btn.style.display = 'none';
+      const sectionEl = document.querySelector(`.section-setup[data-section="${sectionLabel}"]`);
+      if (!sectionEl) return;
+      const unchecked = [...sectionEl.querySelectorAll('input[type=checkbox]:not(:checked)')];
+      for (const cb of unchecked) {
+        const itemId = parseInt(cb.dataset.itemId);
+        cb.checked = true;
+        const label = cb.closest('label');
+        if (label) { label.style.color = 'var(--text-muted)'; label.style.textDecoration = 'line-through'; }
+        const item = clientChecklist.find(i => i.id === itemId);
+        if (item) item.completed = true;
+        await fetch(`/api/clients/${clientId}/checklist/${itemId}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: true })
+        });
+      }
+      const total = sectionEl.querySelectorAll('input[type=checkbox]').length;
+      const countEl = document.getElementById(`setup-count-${sectionLabel.replace(/\s/g,'-')}`);
+      if (countEl) countEl.textContent = `${total}/${total}`;
+      const btnId = `camp-new-btn-${sectionLabel.replace(/[^a-zA-Z0-9]/g,'-')}`;
+      const newBtn = document.getElementById(btnId);
+      if (newBtn) {
+        newBtn.disabled = false;
+        newBtn.className = 'btn btn-primary';
+        newBtn.style.opacity = '';
+        newBtn.style.cursor = '';
+        newBtn.title = '';
+        const dbType = SECTION_DB_TYPE[sectionLabel] || sectionLabel;
+        newBtn.onclick = () => openCampDrawer(dbType);
+      }
+    }
+
+    // ── Team card ──────────────────────────────────────────────────────────────
+
+    function renderTeamCard(teamData) {
+      const el = document.getElementById('team-card');
+      if (!el) return;
+      const wasOpen = el.querySelector('.brief-body') && !el.querySelector('.brief-body').classList.contains('collapsed');
+      const memberRows = teamData.length
+        ? teamData.map(m => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;" id="team-row-${m.id}">
+              <div>
+                <span style="font-weight:500;">${m.name}</span>
+                ${m.role ? `<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">· ${m.role}</span>` : ''}
+              </div>
+              <button onclick="removeTeamMember(${m.id})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;" title="Remove">×</button>
+            </div>`).join('')
+        : '<p style="font-size:13px;color:var(--text-muted);margin:0 0 10px;">No team members assigned yet.</p>';
+      const alreadyIn = new Set(teamData.map(m => m.name));
+      const selectOpts = allTeamMembers.filter(m => !alreadyIn.has(m.name))
+        .map(m => `<option value="${m.id}" data-name="${m.name.replace(/"/g,'&quot;')}" data-role="${(m.role||'').replace(/"/g,'&quot;')}">${m.name}${m.role ? ` · ${m.role}` : ''}</option>`)
+        .join('');
+      el.innerHTML = `
+        <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
+          Team
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="brief-body collapsed" style="margin-top:12px;">
+          <div id="team-member-list">${memberRows}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:10px;">
+            <select id="team-add-select" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;padding:5px 8px;">
+              <option value="">Add team member…</option>
+              ${selectOpts}
+            </select>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="addTeamMember()">Add</button>
+          </div>
+        </div>`;
+      if (wasOpen) {
+        el.querySelector('.brief-toggle')?.classList.remove('collapsed');
+        el.querySelector('.brief-body')?.classList.remove('collapsed');
+      }
+    }
+
+    async function addTeamMember() {
+      const sel = document.getElementById('team-add-select');
+      const opt = sel && sel.options[sel.selectedIndex];
+      if (!opt || !opt.value) return;
+      const name = opt.dataset.name;
+      const role = opt.dataset.role || null;
+      await fetch(`/api/clients/${clientId}/team`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, role })
+      });
+      const fresh = await fetch(`/api/clients/${clientId}/team`).then(r => r.json());
+      clientTeam = fresh.map(m => m.name).filter(Boolean);
+      renderTeamCard(fresh);
+    }
+
+    async function removeTeamMember(memberId) {
+      await fetch(`/api/clients/${clientId}/team/${memberId}`, { method: 'DELETE' });
+      const fresh = await fetch(`/api/clients/${clientId}/team`).then(r => r.json());
+      clientTeam = fresh.map(m => m.name).filter(Boolean);
+      renderTeamCard(fresh);
+    }
+
+    // ── Client task helpers ────────────────────────────────────────────────────
+
+    function clientTaskRowHtml(t) {
+      const sc = taskStatusClass(t.status);
+      const sl = taskStatusLabel(t.status);
+      return `
+        <div class="cb-task-row ${t.status === 'done' ? 'done' : ''}" id="client-task-${t.id}">
+          <input type="checkbox" ${t.status === 'done' ? 'checked' : ''} onchange="toggleClientTask(${t.id}, this.checked)">
+          <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
+            <span>${t.title}</span>
+            <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
+              onblur="cbSaveClientField(${t.id},'title',this.value)"
+              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+          </div>
+          <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
+            <span><span class="progress-chip ${sc}">${sl}</span></span>
+            <select onchange="cbSaveClientField(${t.id},'status',this.value)" onblur="cbCancelCell(this.parentElement)">
+              <option value="todo"${t.status==='todo'?' selected':''}>To Do</option>
+              <option value="in_progress"${t.status==='in_progress'?' selected':''}>In Progress</option>
+              <option value="done"${t.status==='done'?' selected':''}>Done</option>
+            </select>
+          </div>
+          <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'ct')">
+            <span>${assigneeDisplay(t.assignee)}</span>
+            ${avDropdownHtml(`av-drop-ct-${t.id}`, `selectClientAssignee(${t.id},`)}
+          </div>
+          <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
+            <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
+            <input type="date" value="${t.due_date||''}"
+              onchange="cbSaveClientField(${t.id},'due_date',this.value)"
+              onblur="cbSaveClientField(${t.id},'due_date',this.value)"
+              onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
+          </div>
+          <button class="cb-del" onclick="deleteClientTask(${t.id})" title="Delete">×</button>
+        </div>`;
+    }
+
+    function updateClientTaskCount() {
+      const list = document.getElementById('client-tasks-list');
+      if (!list) return;
+      const total = list.querySelectorAll('.cb-task-row').length;
+      const done = list.querySelectorAll('.cb-task-row.done').length;
+      const countEl = document.getElementById('client-task-count');
+      if (countEl) countEl.textContent = `${done}/${total} done`;
+      const bar = document.getElementById('task-progress-bar');
+      if (bar) bar.style.width = total ? `${Math.round((done / total) * 100)}%` : '0%';
+    }
+
+    function showClientAddForm() {
+      document.getElementById('client-add-trigger').style.display = 'none';
+      document.getElementById('client-add-form').classList.add('open');
+      document.getElementById('client-task-input').focus();
+    }
+
+    function hideClientAddForm() {
+      document.getElementById('client-add-form').classList.remove('open');
+      const t = document.getElementById('client-add-trigger');
+      if (t) t.style.display = '';
+    }
+
+    async function addClientTask() {
+      const input = document.getElementById('client-task-input');
+      const title = input.value.trim();
+      if (!title) return;
+      const assignee = document.getElementById('client-task-assignee').value.trim();
+      const due_date = document.getElementById('client-task-due').value;
+      input.value = '';
+      document.getElementById('client-task-assignee').value = '';
+      document.getElementById('client-task-due').value = '';
+      const res = await fetch('/api/tasks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, title, assignee: assignee || null, due_date: due_date || null })
+      });
+      const { id } = await res.json();
+      const newTask = { id, title, status: 'todo', assignee: assignee || null, due_date: due_date || null };
+      document.getElementById('tasks-empty')?.remove();
+      const list = document.getElementById('client-tasks-list');
+      let group = list.querySelector('[data-svc-group="General"]');
+      if (!group) {
+        group = document.createElement('div');
+        group.className = 'service-group';
+        group.dataset.svcGroup = 'General';
+        group.innerHTML = `<div class="service-group-label">General</div><div class="cb-task-cols"><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>`;
+        list.appendChild(group);
+      }
+      group.insertAdjacentHTML('beforeend', clientTaskRowHtml(newTask));
+      updateClientTaskCount();
+      hideClientAddForm();
     }
 
     load();

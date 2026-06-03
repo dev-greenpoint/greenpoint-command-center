@@ -293,6 +293,62 @@
     }
     .footer-text { font-size: 12px; color: var(--text-25); }
 
+    /* ── PDF download button ── */
+    .pdf-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 6px; font-size: 13px;
+      font-weight: 500; color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      cursor: pointer; font-family: var(--font); transition: background 0.15s, color 0.15s;
+    }
+    .pdf-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* ── Print / PDF ── */
+    #print-view { display: none; }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background: #fff !important; color: #111 !important; font-size: 13px; }
+      .topbar, .tab-wrap, .bottom-nav, .pdf-btn, #loading { display: none !important; }
+      #app-shell { display: block !important; }
+      .hero { padding: 24px 0 20px; }
+      .hero-eyebrow { color: #738C7B !important; }
+      .hero-title { font-size: 2.2rem !important; color: #111 !important; }
+      .hero-desc { color: #555 !important; }
+      .content-area { display: none !important; }
+      #print-view {
+        display: block !important;
+        padding: 0 0 40px;
+      }
+      .print-section { page-break-before: always; padding-top: 32px; }
+      .print-section:first-child { page-break-before: avoid; }
+      .print-eyebrow {
+        font-size: 10px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .1em; color: #738C7B !important; margin-bottom: 8px;
+      }
+      .print-section-title {
+        font-size: 1.4rem; font-weight: 300; color: #111 !important;
+        margin-bottom: 20px; padding-bottom: 8px;
+        border-bottom: 1px solid #e5e5e5;
+      }
+      .card {
+        background: #f9f9f9 !important; border: 1px solid #e5e5e5 !important;
+        border-radius: 6px; padding: 16px; margin-bottom: 12px; break-inside: avoid;
+      }
+      .card-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+      .obj-num { color: #738C7B !important; }
+      .obj-title, .msg-title, .pillar-tag { color: #111 !important; }
+      .obj-body, .msg-body, .pillar-body, .rich-text { color: #444 !important; }
+      .check-icon { color: #738C7B !important; }
+      .chip { border: 1px solid #e5e5e5 !important; color: #444 !important; }
+      .pr-card { background: #f9f9f9 !important; border: 1px solid #e5e5e5 !important; }
+      .pr-title { color: #111 !important; }
+      .pr-detail, .pr-target { color: #444 !important; }
+      .footer { border-top: 1px solid #e5e5e5; }
+      .footer-text { color: #aaa !important; }
+      img { max-width: 100%; }
+    }
+
     /* ── Error / loading ── */
     .center-msg {
       min-height: 60vh;
@@ -320,7 +376,10 @@
         <div style="width:28px;height:28px;background:#738C7B;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;">G</div>
         <span style="font-size:13px;font-weight:600;">Greenpoint Media</span>
       </div>
-      <div class="topbar-badge" id="topbar-badge"></div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="topbar-badge" id="topbar-badge"></div>
+        <button class="pdf-btn" onclick="downloadPdf()">↓ Download PDF</button>
+      </div>
     </div>
   </div>
 
@@ -341,6 +400,7 @@
 
     <div class="outer">
       <div class="content-area" id="content-area"></div>
+      <div id="print-view"></div>
 
       <div class="footer">
         <p class="footer-text" id="footer-text"></p>
@@ -381,15 +441,20 @@
     let strategyData = null;
 
     const ALL_SECTION_DEFS = [
-      { id: 'overview',       label: 'Overview',          renderFn: renderOverview },
-      { id: 'audiences',      label: 'Target Audiences',  renderFn: renderAudiences },
-      { id: 'messages',       label: 'Key Messages',      renderFn: renderMessages },
-      { id: 'channels',       label: 'Channel Approach',  renderFn: renderChannels },
-      { id: 'pr_angles',      label: 'PR Strategy',       renderFn: renderPR },
-      { id: 'social_pillars', label: 'Content Strategy',  renderFn: renderContentStrategy },
-      { id: 'paid_plan',      label: 'Paid Media',        renderFn: renderGeneric },
-      { id: 'timeline',       label: 'Timeline',          renderFn: renderTimeline },
-      { id: 'measurement',    label: 'Measurement',       renderFn: renderGeneric },
+      { id: 'overview',      label: 'Overview',            renderFn: renderOverview },
+      { id: 'strategy',      label: 'Strategic Approach',  renderFn: renderGeneric },
+      { id: 'audiences',     label: 'Target Audiences',    renderFn: renderAudiences },
+      { id: 'messages',      label: 'Key Messages',        renderFn: renderMessages },
+      { id: 'tactical_plan', label: 'Tactical Plan',       renderFn: renderChannels },
+      { id: 'pr',            label: 'PR Campaigns',        renderFn: renderPR },
+      { id: 'social',        label: 'Social Media',        renderFn: renderContentStrategy },
+      { id: 'content',       label: 'Content Pillars',     renderFn: renderContentStrategy },
+      { id: 'events',        label: 'Events & Activations',renderFn: renderGeneric },
+      { id: 'partnerships',  label: 'Partnerships',        renderFn: renderGeneric },
+      { id: 'paid',          label: 'Paid Media',          renderFn: renderGeneric },
+      { id: 'design',        label: 'Design',              renderFn: renderGeneric },
+      { id: 'timeline',      label: 'Timeline & Phasing',  renderFn: renderTimeline },
+      { id: 'measurement',   label: 'Measurement & KPIs',  renderFn: renderGeneric },
     ];
 
     // ── Parse text into structured blocks ────────────────────────────────────────
@@ -403,6 +468,14 @@
       while (i < lines.length) {
         const line = lines[i].trim();
         if (!line) { i++; continue; }
+
+        // Image: ![alt](url)
+        const imgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
+        if (imgMatch) {
+          blocks.push({ type: 'image', alt: imgMatch[1], src: imgMatch[2] });
+          i++;
+          continue;
+        }
 
         // ## Heading → card title
         if (line.startsWith('## ')) {
@@ -739,7 +812,8 @@
           </div>`).join('')}</div>`;
       }
 
-      const remaining = blocks.filter(b => b.type !== 'numbered' && b.type !== 'titled');
+      const images = blocks.filter(b => b.type === 'image');
+      const remaining = blocks.filter(b => b.type !== 'numbered' && b.type !== 'titled' && b.type !== 'image');
       if (remaining.length) {
         let richHtml = '';
         remaining.forEach(b => {
@@ -749,6 +823,11 @@
           else if (b.type === 'bullets') richHtml += `<ul>${b.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`;
         });
         if (richHtml) html += `<div class="card"><div class="rich-text">${richHtml}</div></div>`;
+      }
+      if (images.length) {
+        html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px;">
+          ${images.map(b => `<img src="${esc(b.src)}" alt="${esc(b.alt)}" style="width:100%;border-radius:8px;border:1px solid var(--border);object-fit:cover;">`).join('')}
+        </div>`;
       }
 
       return html || `<p style="color:rgba(255,255,255,0.3);font-size:14px;">No content yet.</p>`;
@@ -852,6 +931,25 @@
       renderTabBar();
       renderSection();
       updateBottomNav();
+    }
+
+    function buildPrintView() {
+      const el = document.getElementById('print-view');
+      if (!el) return;
+      el.innerHTML = sectionDefs.map((def, i) => {
+        const content = sections[def.id] || '';
+        return `
+          <div class="print-section">
+            <div class="print-eyebrow">${esc(def.label)}</div>
+            <div class="print-section-title">${esc(def.label)}</div>
+            <div>${def.renderFn(content)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function downloadPdf() {
+      buildPrintView();
+      window.print();
     }
 
     function esc(str) {

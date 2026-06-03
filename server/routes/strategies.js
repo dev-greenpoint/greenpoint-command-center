@@ -7,15 +7,23 @@ const { getDb, saveDb } = require('../db/database');
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SECTION_DEFS = [
-  { id: 'overview',       label: 'Overview & Objectives' },
-  { id: 'audiences',      label: 'Target Audiences' },
-  { id: 'messages',       label: 'Key Messages' },
-  { id: 'channels',       label: 'Channel Approach' },
-  { id: 'pr_angles',      label: 'PR Angles & Media Targets' },
-  { id: 'social_pillars', label: 'Social Content Pillars' },
-  { id: 'paid_plan',      label: 'Paid Media Plan' },
-  { id: 'timeline',       label: 'Timeline & Phasing' },
-  { id: 'measurement',    label: 'Measurement & KPIs' },
+  // Foundation
+  { id: 'overview',      label: 'Overview & Situation',  group: 'Foundation' },
+  { id: 'strategy',      label: 'Strategic Approach',    group: 'Foundation' },
+  { id: 'audiences',     label: 'Target Audiences',      group: 'Foundation' },
+  { id: 'messages',      label: 'Key Messages',          group: 'Foundation' },
+  // Channels
+  { id: 'tactical_plan', label: 'Tactical Plan',         group: 'Channels' },
+  { id: 'pr',            label: 'PR Campaigns',          group: 'Channels' },
+  { id: 'social',        label: 'Social Media',          group: 'Channels' },
+  { id: 'content',       label: 'Content Pillars',       group: 'Channels' },
+  { id: 'events',        label: 'Events & Activations',  group: 'Channels' },
+  { id: 'partnerships',  label: 'Partnerships',          group: 'Channels' },
+  { id: 'email',         label: 'Email & CRM',           group: 'Channels' },
+  { id: 'paid',          label: 'Paid Media',            group: 'Channels' },
+  // Execution
+  { id: 'timeline',      label: 'Timeline & Phasing',    group: 'Execution' },
+  { id: 'measurement',   label: 'Measurement & KPIs',    group: 'Execution' },
 ];
 
 function rows(result) {
@@ -24,6 +32,18 @@ function rows(result) {
     Object.fromEntries(result[0].columns.map((c, i) => [c, row[i]]))
   );
 }
+
+// List all strategies (across all clients)
+router.get('/', async (req, res) => {
+  const db = await getDb();
+  const result = db.exec(`
+    SELECT s.id, s.client_id, s.title, s.status, s.updated_at, s.created_at,
+           cl.name as client_name
+    FROM strategies s
+    JOIN clients cl ON s.client_id = cl.id
+    ORDER BY s.updated_at DESC`);
+  res.json(rows(result));
+});
 
 // List strategies for a client
 router.get('/client/:clientId', async (req, res) => {
@@ -60,17 +80,17 @@ router.get('/share/:token', async (req, res) => {
 });
 
 const SERVICE_SECTION_MAP = {
-  'PR':                                       ['pr_angles', 'messages', 'audiences', 'channels', 'measurement'],
-  'PR Light':                                 ['pr_angles', 'messages', 'audiences', 'channels'],
-  'Content - Social':                         ['social_pillars', 'audiences', 'channels'],
-  'Content - eDM':                            ['audiences', 'channels'],
-  'Content - Web/Blogs/Other Copy':           ['audiences', 'channels'],
-  'Content - Influencer':                     ['social_pillars', 'audiences', 'channels'],
-  'Content - Shortform Capture':              ['social_pillars', 'channels'],
-  'Content - Video Production':               ['social_pillars', 'channels'],
-  'Brand Activation - Events & Partnerships': ['audiences', 'channels'],
-  'Awards':                                   ['pr_angles', 'messages'],
-  'Paid Media':                               ['paid_plan', 'audiences', 'channels', 'measurement'],
+  'PR':                                       ['strategy', 'audiences', 'messages', 'tactical_plan', 'pr', 'measurement'],
+  'PR Light':                                 ['strategy', 'audiences', 'messages', 'pr'],
+  'Content - Social':                         ['audiences', 'social', 'content'],
+  'Content - eDM':                            ['audiences', 'email'],
+  'Content - Web/Blogs/Other Copy':           ['audiences', 'messages'],
+  'Content - Influencer':                     ['audiences', 'social', 'content', 'partnerships'],
+  'Content - Shortform Capture':              ['social', 'content'],
+  'Content - Video Production':               ['social', 'content'],
+  'Brand Activation - Events & Partnerships': ['audiences', 'events', 'partnerships'],
+  'Awards':                                   ['pr', 'messages'],
+  'Paid Media':                               ['audiences', 'paid', 'measurement'],
   'Design':                                   [],
 };
 
@@ -85,7 +105,7 @@ router.post('/', async (req, res) => {
   const clientRow = clientRes.length && clientRes[0].values.length ? clientRes[0].values[0][0] : null;
   const services = clientRow ? clientRow.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-  const CORE = ['overview', 'timeline'];
+  const CORE = ['overview', 'strategy', 'audiences', 'messages', 'timeline'];
   const sectionSet = new Set(CORE);
   for (const svc of services) {
     for (const sec of (SERVICE_SECTION_MAP[svc] || [])) sectionSet.add(sec);
@@ -187,15 +207,20 @@ router.post('/:id/generate', async (req, res) => {
 
   // Format instructions per section type
   const formatGuide = {
-    overview: 'Write 2–3 short paragraphs. Use plain prose.',
-    audiences: 'List audience groups as: **Audience Name**: one-sentence description. One per line.',
-    messages: 'Write 3–4 key messages as: **Message Title**: Explanation of why this message matters. One per line.',
-    channels: 'Write a brief intro paragraph, then list channels as bullet points: - Channel name: how it will be used.',
-    pr_angles: 'Structure as 2–3 press angles. For each: ## Angle Title\nTiming note\nDetail paragraph\nKey messages:\n- message 1\n- message 2\nTarget media:\n- outlet 1\n- outlet 2',
-    social_pillars: 'Structure as 2–3 content pillars. For each: ## Pillar Name\nSubtitle / theme\nBody description\n- Content idea 1\n- Content idea 2',
-    paid_plan: 'Write a brief intro, then list platforms/tactics as: **Platform/Tactic**: budget approach and targeting detail.',
-    timeline: 'Structure as numbered phases: 1. Phase Name\n   Description of what happens in this phase\n2. Phase Name\n   Description',
-    measurement: 'List KPIs and metrics as bullet points: - Metric name: target or benchmark description.',
+    overview:      'Write 2–3 paragraphs covering the situation, context and campaign objectives. Use plain prose.',
+    strategy:      'Write 2 paragraphs outlining the strategic approach, then list 3–5 strategic pillars as: **Pillar Name**: explanation.',
+    audiences:     'List 3–5 audience segments as: **Audience Name**: demographics, mindset and why they matter.',
+    messages:      'Write 4–6 key messages as: **Message**: one sentence on why this message resonates.',
+    tactical_plan: 'Write an overview paragraph then list 4–6 tactical focus areas as: **Tactic**: how it supports the strategy.',
+    pr:            'List 3–5 press angles. For each: ## Angle Title\nTiming\nDetail paragraph\nTarget media:\n- outlet or vertical\nTarget journalists / contacts:\n- name / outlet',
+    social:        'Write a brief strategy overview then cover each active platform as: **Platform**: content approach, posting cadence, key messaging.',
+    content:       'List 3–4 content pillars. For each: ## Pillar Name\nTheme description\nContent ideas:\n- idea 1\n- idea 2',
+    events:        'Describe 2–4 event or activation concepts. For each: **Event/Activation**: concept, audience, timing and objectives.',
+    partnerships:  'List 3–5 partnership targets as: **Partner / Category**: approach, shared audience and benefit to campaign.',
+    email:         'Describe the email strategy: database segmentation, key campaign sequences, nurture logic, send cadence and lead-temperature triggers.',
+    paid:          'Write a brief paid media overview then cover each platform as: **Platform**: budget approach, ad formats, targeting and KPIs.',
+    timeline:      'Structure as numbered phases: 1. Phase Name\n   Key actions and what happens in this phase.\n2. Phase Name\n   Key actions.',
+    measurement:   'Group KPIs by channel. For each: - Metric: target or benchmark. End with a note on reporting cadence.',
   }[section_id] || 'Use clear headings (##) and bullet points (- item) where appropriate.';
 
   const prompt = `You are a senior strategist at Greenpoint Media, an Australian PR and media agency. Write the "${sectionDef.label}" section for a client strategy document.
@@ -213,7 +238,7 @@ Write only the content for the "${sectionDef.label}" section. Do not include the
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1200,
       messages: [{ role: 'user', content: prompt }],
     });

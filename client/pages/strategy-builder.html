@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
   <style>
-    /* Strategy header */
+    /* ── Page header ── */
     .strategy-header {
       display: flex;
       align-items: flex-start;
@@ -15,7 +15,6 @@
       margin-bottom: 24px;
       flex-wrap: wrap;
     }
-    .strategy-title-wrap { flex: 1; min-width: 200px; }
     .strategy-title-input {
       width: 100%;
       background: none;
@@ -28,185 +27,191 @@
       transition: border-color 0.2s;
       font-family: var(--font);
     }
-    .strategy-title-input:focus {
-      outline: none;
-      border-bottom-color: var(--accent);
-    }
-    .strategy-meta {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-    .strategy-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
+    .strategy-title-input:focus { outline: none; border-bottom-color: var(--accent); }
+    .strategy-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .strategy-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .save-indicator { font-size: 11px; color: var(--text-dim); }
 
-    /* Status badge */
+    /* ── Status pill ── */
     .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      padding: 3px 10px;
-      border-radius: 100px;
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .05em; padding: 3px 10px; border-radius: 100px;
     }
     .sp-draft     { background: var(--surface-2); color: var(--text-muted); }
     .sp-pending   { background: #3d2a00; color: var(--warning); }
     .sp-published { background: #0d3323; color: var(--success); }
 
-    /* Save indicator */
-    .save-indicator {
-      font-size: 11px;
-      color: var(--text-dim);
-      transition: opacity 0.3s;
+    /* ── Builder layout ── */
+    .sb-layout {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      gap: 0;
+      align-items: start;
     }
 
-    /* Section panel */
-    .section-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 10px;
-      overflow: hidden;
-      transition: border-color 0.15s;
+    /* ── Section nav ── */
+    .sb-nav {
+      border-right: 1px solid var(--border);
+      padding: 0 12px 0 0;
+      position: sticky;
+      top: 0;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
     }
-    .section-panel.active { border-color: var(--border); }
-    .section-panel.inactive { opacity: 0.5; }
-
-    .section-header {
+    .sb-nav-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--text-dim);
+      padding: 12px 10px 6px;
+    }
+    .sb-nav-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: var(--radius);
       cursor: pointer;
-      user-select: none;
-    }
-    .section-header:hover { background: var(--surface-2); }
-
-    .section-toggle {
-      width: 32px;
-      height: 18px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      flex-shrink: 0;
+      margin-bottom: 1px;
+      border-left: 2px solid transparent;
+      transition: background 0.1s;
       position: relative;
-      cursor: pointer;
-      transition: background 0.2s;
+    }
+    .sb-nav-item:hover { background: var(--surface-2); }
+    .sb-nav-item.active {
+      background: var(--surface-2);
+      border-left-color: var(--accent);
+    }
+    .sb-nav-item.inactive { opacity: 0.45; }
+    .sb-nav-label {
+      font-size: 12px; font-weight: 500; flex: 1;
+      min-width: 0; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .sb-nav-tick { font-size: 10px; color: var(--success); flex-shrink: 0; }
+    .sb-nav-edit {
+      display: none; background: none; border: none;
+      color: var(--text-dim); cursor: pointer; font-size: 11px;
+      padding: 0 2px; line-height: 1; flex-shrink: 0;
+    }
+    .sb-nav-item:hover .sb-nav-edit { display: block; }
+    .sb-nav-rename {
+      flex: 1; background: var(--surface);
+      border: 1px solid var(--accent); border-radius: 4px;
+      color: var(--text); font-size: 12px; padding: 2px 6px;
+    }
+    .sb-nav-rename:focus { outline: none; }
+
+    /* ── Section toggle ── */
+    .section-toggle {
+      width: 28px; height: 16px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; flex-shrink: 0;
+      position: relative; cursor: pointer; transition: background 0.2s;
     }
     .section-toggle::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--text-dim);
-      transition: left 0.2s, background 0.2s;
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--text-dim); transition: left 0.2s, background 0.2s;
     }
     .section-toggle.on { background: var(--accent); border-color: var(--accent); }
-    .section-toggle.on::after { left: 16px; background: #fff; }
+    .section-toggle.on::after { left: 14px; background: #fff; }
 
-    .section-name { font-size: 13px; font-weight: 600; flex: 1; }
-    .section-chevron { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
-    .section-panel.open .section-chevron { transform: rotate(180deg); }
+    /* ── Section content ── */
+    .sb-content { padding: 0 0 40px 28px; }
+    .sb-content-title-wrap { margin-bottom: 16px; }
+    .sb-content-title {
+      font-size: 20px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; width: fit-content;
+    }
+    .sb-content-title:hover .sb-rename-icon { opacity: 1; }
+    .sb-rename-icon {
+      font-size: 11px; color: var(--text-dim);
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .sb-content-title-input {
+      font-size: 20px; font-weight: 700;
+      background: none; border: none;
+      border-bottom: 2px solid var(--accent);
+      color: var(--text); font-family: var(--font);
+      padding: 0; width: 100%;
+    }
+    .sb-content-title-input:focus { outline: none; }
+    .sb-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
 
-    .section-body { display: none; padding: 0 16px 16px; }
-    .section-panel.open .section-body { display: block; }
-
+    /* ── Textarea / preview ── */
     .section-textarea {
-      width: 100%;
-      min-height: 120px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 13px;
-      line-height: 1.6;
-      padding: 10px 12px;
-      font-family: var(--font);
-      resize: vertical;
-      box-sizing: border-box;
-      transition: border-color 0.15s;
+      width: 100%; min-height: 280px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-size: 13px; line-height: 1.7; padding: 14px 16px;
+      font-family: var(--font); resize: vertical;
+      box-sizing: border-box; transition: border-color 0.15s;
     }
-    .section-textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
+    .section-textarea:focus { outline: none; border-color: var(--accent); }
     .section-textarea::placeholder { color: var(--text-dim); }
 
-    .section-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 8px;
-    }
-    .section-hint { font-size: 11px; color: var(--text-dim); }
+    .hidden { display: none !important; }
 
+    .section-preview {
+      min-height: 280px; padding: 14px 16px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); font-size: 13px;
+      line-height: 1.75; color: var(--text);
+      cursor: text; transition: border-color 0.15s;
+    }
+    .section-preview:hover { border-color: var(--accent); }
+    .section-preview h1,.section-preview h2,.section-preview h3 {
+      font-size: 13px; font-weight: 700; margin: 14px 0 5px;
+    }
+    .section-preview h1:first-child,.section-preview h2:first-child,.section-preview h3:first-child { margin-top: 0; }
+    .section-preview p { margin: 0 0 8px; }
+    .section-preview p:last-child { margin-bottom: 0; }
+    .section-preview ul,.section-preview ol { margin: 0 0 8px; padding-left: 18px; }
+    .section-preview li { margin-bottom: 3px; }
+    .section-preview strong { font-weight: 700; }
+    .section-preview em { font-style: italic; color: var(--text-muted); }
+
+    /* ── Generate button ── */
+    .sb-footer {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-top: 10px;
+    }
     .btn-generate {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      padding: 5px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; padding: 6px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text-muted);
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
     }
     .btn-generate:hover { border-color: var(--accent); color: var(--text); }
     .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-generate .spinner {
-      display: none;
-      width: 12px;
-      height: 12px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      display: none; width: 12px; height: 12px;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
     }
     .btn-generate.loading .spinner { display: block; }
     .btn-generate.loading .gen-icon { display: none; }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Section selector (top controls) */
-    .section-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+    /* ── Empty state ── */
+    .sb-empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 300px; color: var(--text-dim);
+      font-size: 13px; text-align: center; gap: 8px;
     }
-    .section-controls-label { font-size: 12px; color: var(--text-muted); }
 
-    /* Share link toast */
+    /* ── Toast ── */
     .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      font-size: 13px;
-      color: var(--text);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      opacity: 0;
-      transform: translateY(10px);
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 16px;
+      font-size: 13px; color: var(--text);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999;
+      display: flex; align-items: center; gap: 10px;
+      opacity: 0; transform: translateY(10px);
       transition: opacity 0.25s, transform 0.25s;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
@@ -226,30 +231,80 @@
 
   <div class="toast" id="toast">
     <span class="toast-icon">✓</span>
-    <span id="toast-msg">Link copied to clipboard</span>
+    <span id="toast-msg"></span>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="/components/shell.js"></script>
   <script>
     const strategyId = location.pathname.split('/')[2];
     let strategy = null;
     let sections = {};
+    let sectionLabels = {};
     let activeSections = [];
+    let currentSectionId = null;
     let saveTimer = null;
 
     const SECTION_DEFS = [
-      { id: 'overview',       label: 'Overview & Objectives',     hint: 'Campaign goals, context, and what success looks like' },
-      { id: 'audiences',      label: 'Target Audiences',          hint: 'Who we are trying to reach — demographics, psychographics, behaviours' },
-      { id: 'messages',       label: 'Key Messages',              hint: 'The core things we want audiences to understand, feel, or do' },
-      { id: 'channels',       label: 'Channel Approach',          hint: 'Which channels, platforms, and media types we will use and why' },
-      { id: 'pr_angles',      label: 'PR Angles & Media Targets', hint: 'Story angles, target publications, journalists, and pitch approach' },
-      { id: 'social_pillars', label: 'Social Content Pillars',    hint: 'Content categories, platform-specific approach, posting cadence' },
-      { id: 'paid_plan',      label: 'Paid Media Plan',           hint: 'Budget allocation, ad formats, targeting approach, bidding strategy' },
-      { id: 'timeline',       label: 'Timeline & Phasing',        hint: 'Key milestones, phases, and delivery dates' },
-      { id: 'measurement',    label: 'Measurement & KPIs',        hint: 'How we will measure success — metrics, targets, reporting cadence' },
+      // Foundation
+      { id: 'overview',      label: 'Overview & Situation',  group: 'Foundation', hint: 'Situation analysis, background context, and campaign objectives' },
+      { id: 'strategy',      label: 'Strategic Approach',    group: 'Foundation', hint: 'The overarching strategy — pillars, positioning, and rationale' },
+      { id: 'audiences',     label: 'Target Audiences',      group: 'Foundation', hint: 'Who we are reaching — demographics, psychographics, and priorities' },
+      { id: 'messages',      label: 'Key Messages',          group: 'Foundation', hint: 'Core messages each audience should understand, feel, or act on' },
+      // Channels
+      { id: 'tactical_plan', label: 'Tactical Plan',         group: 'Channels',   hint: 'Channel mix and tactical overview — how we bring the strategy to life' },
+      { id: 'pr',            label: 'PR Campaigns',          group: 'Channels',   hint: 'Press angles, story hooks, target media, journalists, and pitch timing' },
+      { id: 'social',        label: 'Social Media',          group: 'Channels',   hint: 'Organic social strategy — platforms, content approach, posting cadence' },
+      { id: 'content',       label: 'Content Pillars',       group: 'Channels',   hint: 'Content categories, themes, shoot plan, and brand voice guidelines' },
+      { id: 'events',        label: 'Events & Activations',  group: 'Channels',   hint: 'Event concepts, launch moments, display suite, public activations' },
+      { id: 'partnerships',  label: 'Partnerships',          group: 'Channels',   hint: 'Brand partners, influencers, collaborations, and co-marketing targets' },
+      { id: 'paid',          label: 'Paid Media',            group: 'Channels',   hint: 'Paid channel plan — platforms, budget approach, ad formats, targeting' },
+      { id: 'design',        label: 'Design',                group: 'Channels',   hint: 'Design direction, brand assets, visual identity, and creative deliverables' },
+      // Execution
+      { id: 'timeline',      label: 'Timeline & Phasing',    group: 'Execution',  hint: 'Campaign phases, key milestones, and delivery schedule' },
+      { id: 'measurement',   label: 'Measurement & KPIs',    group: 'Execution',  hint: 'Success metrics, targets, benchmarks, and reporting cadence' },
     ];
 
-    const DEFAULT_ACTIVE = ['overview','audiences','messages','channels','timeline','measurement'];
+    const DEFAULT_ACTIVE = ['overview','strategy','audiences','messages','timeline'];
+
+    const TEMPLATES = {
+      overview: `## Background\n_Who is the client, what do they do, and why is this campaign happening now?_\n\n## Situation\n_What's the current landscape — market context, competitors, and timing?_\n\n## Objectives\n_What does success look like? Define 2–3 clear outcomes._\n\n- Objective one\n- Objective two\n- Objective three`,
+
+      strategy: `## Strategic Approach\n_In one paragraph, describe the overarching strategy — the big idea that holds everything together._\n\n## Strategic Pillars\n\n**Pillar One**: Describe the first pillar and why it matters.\n\n**Pillar Two**: Describe the second pillar and why it matters.\n\n**Pillar Three**: Describe the third pillar and why it matters.`,
+
+      audiences: `**Primary Audience**: Describe the primary target — demographics, mindset, what they care about.\n\n**Secondary Audience**: Describe the secondary target — who else are we reaching and why.\n\n**Media Audience**: The journalists, editors, and publications we are trying to influence.`,
+
+      messages: `1. First key message\n   The core idea we want every audience member to walk away with.\n\n2. Second key message\n   Supporting message that reinforces the first.\n\n3. Third key message\n   A proof point, differentiator, or emotional hook.`,
+
+      tactical_plan: `## Channel Mix\n_Overview of the channels we are activating and how they work together._\n\n- PR Campaigns\n- Social Media\n- Content\n- Events\n\n## Phasing\n\n**Phase 1 — Foundation**: Set up, brief, strategy, assets.\n\n**Phase 2 — Launch**: Campaign activation, pitching, posting.\n\n**Phase 3 — Sustain**: Follow-up, monitoring, reporting.`,
+
+      pr: `## Campaign Angle One\n_Describe the story angle, why it's newsworthy, and the hook._\n\n- Target media category / publication type\n- Target media category / publication type\n\n## Campaign Angle Two\n_Describe the second angle._\n\n- Target media category / publication type`,
+
+      social: `## Platforms\n_Which platforms are we active on and why?_\n\n- Platform one — rationale\n- Platform two — rationale\n\n## Content Approach\n_How are we showing up — tone, style, format?_\n\n## Posting Cadence\n\n**Platform One**: X posts per week — content type, timing.\n\n**Platform Two**: X posts per week — content type, timing.\n\n## Content Examples\n_Add example images below using the image button._`,
+
+      content: `## Content Pillars\n\n### Pillar One — [Name]\n_What is this pillar about and what content does it produce?_\n\n- Content idea\n- Content idea\n\n### Pillar Two — [Name]\n_What is this pillar about?_\n\n- Content idea\n- Content idea\n\n### Pillar Three — [Name]\n_Brand voice / lifestyle / culture content._\n\n- Content idea\n- Content idea`,
+
+      events: `## Events & Activations\n_What events or activations are planned and what is the objective of each?_\n\n**Event One**: Description, format, timing, expected outcomes.\n\n**Event Two**: Description, format, timing, expected outcomes.\n\n## Display Suite / Showroom\n_Is there a permanent or semi-permanent activation space to leverage?_`,
+
+      partnerships: `## Partnership Targets\n\n**Partner One**: Who they are, why they're a fit, what the collaboration looks like.\n\n**Partner Two**: Who they are, why they're a fit, what the collaboration looks like.\n\n## Influencer Strategy\n_Are we working with influencers? What tier, what categories, what brief?_\n\n- Influencer category / tier\n- Content format / brief direction`,
+
+      paid: `## Paid Strategy Overview\n_What role does paid media play in this campaign?_\n\n## Platforms & Budget\n\n**Platform One**: Objective, budget range, targeting approach, ad format.\n\n**Platform Two**: Objective, budget range, targeting approach, ad format.\n\n## Targeting\n\n- Audience segment\n- Retargeting approach\n- Lookalike strategy`,
+
+      design: `## Design Direction\n_Describe the visual direction — mood, aesthetic, references._\n\n## Brand Assets\n_What assets exist and what needs to be created?_\n\n- Asset one\n- Asset two\n\n## Creative Deliverables\n\n**Deliverable One**: Format, specs, usage, timeline.\n\n**Deliverable Two**: Format, specs, usage, timeline.\n\n## Visual References\n_Add reference images below using the image button._`,
+
+      timeline: `## Phase 1 — Foundation\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two\n\n## Phase 2 — Launch\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two\n\n## Phase 3 — Sustain\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two`,
+
+      measurement: `## Key Metrics\n\n**Metric One**: What we're measuring and why.\n\n**Metric Two**: What we're measuring and why.\n\n## Targets\n\n- Target one\n- Target two\n- Target three\n\n## Reporting Cadence\n\n- Monthly PR update — coverage log, metrics, recommendations\n- Quarterly report — full campaign performance review`,
+    };
+
+    function getLabelFor(id) {
+      return sectionLabels[id] || SECTION_DEFS.find(d => d.id === id)?.label || id;
+    }
+    function getHintFor(id) {
+      return SECTION_DEFS.find(d => d.id === id)?.hint || '';
+    }
+
+    // ── Load ──────────────────────────────────────────────────────────────────
 
     async function load() {
       const res = await fetch(`/api/strategies/${strategyId}`);
@@ -258,11 +313,16 @@
         return;
       }
       strategy = await res.json();
-      sections = strategy.sections ? JSON.parse(strategy.sections) : {};
+      const rawSections = strategy.sections ? JSON.parse(strategy.sections) : {};
+      sectionLabels = rawSections._labels || {};
+      sections = Object.fromEntries(Object.entries(rawSections).filter(([k]) => k !== '_labels'));
       activeSections = strategy.active_sections ? JSON.parse(strategy.active_sections) : [...DEFAULT_ACTIVE];
+      currentSectionId = activeSections[0] || SECTION_DEFS[0].id;
       renderShell({ pageId: 'clients', title: strategy.title });
       render();
     }
+
+    // ── Render ────────────────────────────────────────────────────────────────
 
     function render() {
       const chipMap = {
@@ -271,37 +331,6 @@
         approved:          { cls: 'sp-published', label: 'Approved' },
       };
       const { cls: chipClass, label: chipLabel } = chipMap[strategy.status] || chipMap.draft;
-
-      const sectionsHtml = SECTION_DEFS.map(def => {
-        const isActive = activeSections.includes(def.id);
-        const content = sections[def.id] || '';
-        const isOpen = isActive;
-        return `
-          <div class="section-panel ${isActive ? 'open active' : 'inactive'}" id="panel-${def.id}">
-            <div class="section-header" onclick="toggleSection('${def.id}')">
-              <div class="section-toggle ${isActive ? 'on' : ''}" onclick="event.stopPropagation();toggleActive('${def.id}')"></div>
-              <div class="section-name">${def.label}</div>
-              <span class="section-chevron">▼</span>
-            </div>
-            <div class="section-body">
-              <textarea
-                class="section-textarea"
-                id="ta-${def.id}"
-                placeholder="${def.hint}…"
-                oninput="onSectionInput('${def.id}')"
-              >${escHtml(content)}</textarea>
-              <div class="section-footer">
-                <span class="section-hint">${def.hint}</span>
-                <button class="btn-generate" id="gen-${def.id}" onclick="generateSection('${def.id}')">
-                  <span class="spinner"></span>
-                  <span class="gen-icon">✦</span>
-                  Generate with AI
-                </button>
-              </div>
-            </div>
-          </div>`;
-      }).join('');
-
       const statusActions = {
         draft: `<button class="btn btn-primary" style="font-size:12px;" onclick="submitForApproval()">Submit for Approval</button>`,
         awaiting_approval: `
@@ -322,17 +351,10 @@
             <div style="margin-bottom:8px;">
               <a href="/clients/${strategy.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← ${strategy.client_name || 'Client'}</a>
             </div>
-            <input
-              class="strategy-title-input"
-              id="strategy-title"
-              type="text"
+            <input class="strategy-title-input" id="strategy-title" type="text"
               value="${escAttr(strategy.title)}"
-              onchange="saveTitle(this.value)"
-              onblur="saveTitle(this.value)"
-            >
-            <div class="strategy-meta">
-              ${strategy.client_name || ''}
-            </div>
+              onchange="saveTitle(this.value)" onblur="saveTitle(this.value)">
+            <div class="strategy-meta">${strategy.client_name || ''}</div>
           </div>
           <div class="strategy-actions">
             <span class="save-indicator" id="save-status"></span>
@@ -341,43 +363,250 @@
             <button class="btn btn-danger" style="font-size:12px;" onclick="deleteStrategy()">Delete</button>
           </div>
         </div>
-        ${sectionsHtml}
+
+        <div class="sb-layout">
+          <nav class="sb-nav" id="sb-nav"></nav>
+          <div class="sb-content" id="sb-content"></div>
+        </div>
+      `;
+
+      renderNav();
+      renderContent();
+    }
+
+    // ── Nav ───────────────────────────────────────────────────────────────────
+
+    function renderNav() {
+      const el = document.getElementById('sb-nav');
+      if (!el) return;
+      let html = '';
+      let lastGroup = null;
+      for (const def of SECTION_DEFS) {
+        if (def.group !== lastGroup) {
+          lastGroup = def.group;
+          html += `<div class="sb-nav-section-label">${escHtml(def.group)}</div>`;
+        }
+        const isActive = activeSections.includes(def.id);
+        const hasContent = !!(sections[def.id]?.trim());
+        const isCurrent = def.id === currentSectionId;
+        const label = getLabelFor(def.id);
+        html += `
+          <div class="sb-nav-item ${isCurrent ? 'active' : ''} ${!isActive ? 'inactive' : ''}"
+               id="nav-item-${def.id}" onclick="selectSection('${def.id}')">
+            <div class="section-toggle ${isActive ? 'on' : ''}"
+                 onclick="event.stopPropagation(); toggleActive('${def.id}')"></div>
+            <span class="sb-nav-label" id="nav-label-${def.id}">${escHtml(label)}</span>
+            ${hasContent ? '<span class="sb-nav-tick">✓</span>' : ''}
+            <button class="sb-nav-edit" onclick="event.stopPropagation(); startNavRename('${def.id}')" title="Rename">✎</button>
+          </div>`;
+      }
+      el.innerHTML = html;
+    }
+
+    function refreshNavItem(id) {
+      const item = document.getElementById(`nav-item-${id}`);
+      if (!item) return;
+      const isActive = activeSections.includes(id);
+      const hasContent = !!(sections[id]?.trim());
+      const isCurrent = id === currentSectionId;
+      item.className = `sb-nav-item ${isCurrent ? 'active' : ''} ${!isActive ? 'inactive' : ''}`;
+      const toggle = item.querySelector('.section-toggle');
+      if (toggle) toggle.className = `section-toggle ${isActive ? 'on' : ''}`;
+      const labelEl = item.querySelector('.sb-nav-label');
+      if (labelEl) labelEl.textContent = getLabelFor(id);
+      const tick = item.querySelector('.sb-nav-tick');
+      if (hasContent && !tick) {
+        item.querySelector('.sb-nav-edit')?.insertAdjacentHTML('beforebegin', '<span class="sb-nav-tick">✓</span>');
+      } else if (!hasContent && tick) {
+        tick.remove();
+      }
+    }
+
+    // ── Section select ────────────────────────────────────────────────────────
+
+    function selectSection(id) {
+      // Persist textarea content before switching
+      const prevTa = document.getElementById(`ta-${currentSectionId}`);
+      if (prevTa) sections[currentSectionId] = prevTa.value;
+
+      // Update active item in nav
+      document.querySelectorAll('.sb-nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById(`nav-item-${id}`)?.classList.add('active');
+
+      currentSectionId = id;
+      renderContent();
+    }
+
+    // ── Content area ──────────────────────────────────────────────────────────
+
+    function renderContent() {
+      const el = document.getElementById('sb-content');
+      if (!el) return;
+      const id = currentSectionId;
+      const def = SECTION_DEFS.find(d => d.id === id);
+      if (!def) { el.innerHTML = '<div class="sb-empty">Select a section to begin.</div>'; return; }
+
+      const isActive = activeSections.includes(id);
+      const content = sections[id] || '';
+      const hasContent = content.trim().length > 0;
+      const label = getLabelFor(id);
+      const hint = getHintFor(id);
+
+      if (!isActive) {
+        el.innerHTML = `
+          <div class="sb-empty">
+            <div style="font-size:32px;margin-bottom:8px;">○</div>
+            <div><strong>${escHtml(label)}</strong> is turned off.</div>
+            <div style="margin-top:8px;">
+              <button class="btn btn-ghost" onclick="toggleActive('${id}')">Turn on</button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      el.innerHTML = `
+        <div class="sb-content-title-wrap">
+          <div class="sb-content-title" id="content-title-${id}" onclick="startContentRename('${id}')">
+            ${escHtml(label)}
+            <span class="sb-rename-icon">✎</span>
+          </div>
+        </div>
+        <div class="sb-hint">${escHtml(hint)}</div>
+        <div class="section-preview ${hasContent ? '' : 'hidden'}" id="preview-${id}"
+             onclick="editSection('${id}')" title="Click to edit">${hasContent ? marked.parse(content) : ''}</div>
+        <textarea class="section-textarea ${hasContent ? 'hidden' : ''}" id="ta-${id}"
+          placeholder="${escAttr(hint)}…"
+          oninput="onSectionInput('${id}')"
+          onblur="previewSection('${id}')"
+        >${escHtml(content)}</textarea>
+        <div class="sb-footer">
+          <span style="font-size:11px;color:var(--text-dim);">Click content to edit</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-generate" onclick="triggerImageUpload('${id}')" title="Add image">
+              <span style="font-size:13px;">🖼</span>
+              Add Image
+            </button>
+            <button class="btn-generate" id="gen-${id}" onclick="generateSection('${id}')">
+              <span class="spinner"></span>
+              <span class="gen-icon">✦</span>
+              Generate with AI
+            </button>
+          </div>
+        </div>
+        <input type="file" id="img-input-${id}" accept="image/*" style="display:none;"
+          onchange="uploadImage('${id}', this)">
       `;
     }
 
-    // ── Section toggle ─────────────────────────────────────────────────────────
+    // ── Rename ────────────────────────────────────────────────────────────────
 
-    function toggleSection(id) {
-      const panel = document.getElementById(`panel-${id}`);
-      if (!activeSections.includes(id)) return;
-      panel.classList.toggle('open');
+    function startNavRename(id) {
+      const labelEl = document.getElementById(`nav-label-${id}`);
+      if (!labelEl) return;
+      const current = getLabelFor(id);
+      const input = document.createElement('input');
+      input.className = 'sb-nav-rename';
+      input.value = current;
+      labelEl.replaceWith(input);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const val = input.value.trim();
+        if (val && val !== (SECTION_DEFS.find(d => d.id === id)?.label)) {
+          sectionLabels[id] = val;
+        } else {
+          delete sectionLabels[id];
+        }
+        const span = document.createElement('span');
+        span.className = 'sb-nav-label';
+        span.id = `nav-label-${id}`;
+        span.textContent = getLabelFor(id);
+        input.replaceWith(span);
+        if (id === currentSectionId) {
+          const titleEl = document.getElementById(`content-title-${id}`);
+          if (titleEl) titleEl.firstChild.textContent = getLabelFor(id);
+        }
+        scheduleSave();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { input.value = current; input.blur(); } });
     }
+
+    function startContentRename(id) {
+      const titleEl = document.getElementById(`content-title-${id}`);
+      if (!titleEl) return;
+      const current = getLabelFor(id);
+      const wrap = titleEl.parentElement;
+      const input = document.createElement('input');
+      input.className = 'sb-content-title-input';
+      input.value = current;
+      titleEl.replaceWith(input);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const val = input.value.trim();
+        if (val && val !== (SECTION_DEFS.find(d => d.id === id)?.label)) {
+          sectionLabels[id] = val;
+        } else {
+          delete sectionLabels[id];
+        }
+        const div = document.createElement('div');
+        div.className = 'sb-content-title';
+        div.id = `content-title-${id}`;
+        div.setAttribute('onclick', `startContentRename('${id}')`);
+        div.innerHTML = `${escHtml(getLabelFor(id))} <span class="sb-rename-icon">✎</span>`;
+        input.replaceWith(div);
+        refreshNavItem(id);
+        scheduleSave();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { input.value = current; input.blur(); } });
+    }
+
+    // ── Toggle active ─────────────────────────────────────────────────────────
 
     function toggleActive(id) {
       if (activeSections.includes(id)) {
         activeSections = activeSections.filter(s => s !== id);
       } else {
         activeSections.push(id);
+        if (!sections[id] && TEMPLATES[id]) sections[id] = TEMPLATES[id];
       }
-      const panel = document.getElementById(`panel-${id}`);
-      const toggle = panel.querySelector('.section-toggle');
-      toggle.classList.toggle('on', activeSections.includes(id));
-      panel.classList.toggle('active', activeSections.includes(id));
-      panel.classList.toggle('inactive', !activeSections.includes(id));
-      if (activeSections.includes(id)) {
-        panel.classList.add('open');
-      } else {
-        panel.classList.remove('open');
-      }
+      refreshNavItem(id);
+      if (currentSectionId === id) renderContent();
       scheduleSave();
     }
 
-    // ── Section input ──────────────────────────────────────────────────────────
+    // ── Preview / edit ────────────────────────────────────────────────────────
+
+    function editSection(id) {
+      document.getElementById(`preview-${id}`)?.classList.add('hidden');
+      const ta = document.getElementById(`ta-${id}`);
+      if (ta) { ta.classList.remove('hidden'); ta.focus(); }
+    }
+
+    function previewSection(id) {
+      const ta = document.getElementById(`ta-${id}`);
+      if (!ta) return;
+      const content = ta.value.trim();
+      if (!content) return;
+      const preview = document.getElementById(`preview-${id}`);
+      if (preview) {
+        preview.innerHTML = marked.parse(content);
+        preview.classList.remove('hidden');
+        ta.classList.add('hidden');
+      }
+      refreshNavItem(id);
+    }
+
+    // ── Section input ─────────────────────────────────────────────────────────
 
     function onSectionInput(id) {
-      sections[id] = document.getElementById(`ta-${id}`).value;
+      sections[id] = document.getElementById(`ta-${id}`)?.value || '';
       scheduleSave();
     }
+
+    // ── Save ──────────────────────────────────────────────────────────────────
 
     function scheduleSave() {
       setSaveStatus('Saving…');
@@ -386,10 +615,11 @@
     }
 
     async function save() {
+      const payload = { ...sections, _labels: sectionLabels };
       await fetch(`/api/strategies/${strategyId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sections, active_sections: activeSections })
+        body: JSON.stringify({ sections: payload, active_sections: activeSections })
       });
       setSaveStatus('Saved');
       setTimeout(() => setSaveStatus(''), 2000);
@@ -405,32 +635,29 @@
       if (title === strategy.title) return;
       strategy.title = title;
       await fetch(`/api/strategies/${strategyId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title })
       });
     }
 
-    // ── AI generate ────────────────────────────────────────────────────────────
+    // ── AI generate ───────────────────────────────────────────────────────────
 
     async function generateSection(id) {
       const btn = document.getElementById(`gen-${id}`);
-      btn.classList.add('loading');
-      btn.disabled = true;
-
-      sections[id] = document.getElementById(`ta-${id}`).value;
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+      const ta = document.getElementById(`ta-${id}`);
+      if (ta) sections[id] = ta.value;
 
       try {
         const res = await fetch(`/api/strategies/${strategyId}/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ section_id: id, sections })
         });
         const data = await res.json();
         if (data.content) {
           sections[id] = data.content;
-          const ta = document.getElementById(`ta-${id}`);
           if (ta) ta.value = data.content;
+          previewSection(id);
           scheduleSave();
         } else {
           showToast('AI generation failed — please try again', true);
@@ -439,11 +666,10 @@
         showToast('AI generation failed — please try again', true);
       }
 
-      btn.classList.remove('loading');
-      btn.disabled = false;
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     }
 
-    // ── Approval flow ──────────────────────────────────────────────────────────
+    // ── Approval flow ─────────────────────────────────────────────────────────
 
     async function submitForApproval() {
       await save();
@@ -478,9 +704,7 @@
       try {
         await navigator.clipboard.writeText(link);
         showToast('Link copied to clipboard');
-      } catch {
-        prompt('Copy this link:', link);
-      }
+      } catch { prompt('Copy this link:', link); }
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
@@ -500,6 +724,39 @@
       el.querySelector('.toast-icon').style.color = isError ? 'var(--danger)' : 'var(--success)';
       el.classList.add('show');
       setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ── Image upload ──────────────────────────────────────────────────────────
+
+    function triggerImageUpload(id) {
+      const input = document.getElementById(`img-input-${id}`);
+      if (input) input.click();
+    }
+
+    async function uploadImage(id, input) {
+      if (!input.files.length) return;
+      const file = input.files[0];
+      input.value = '';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      showToast('Uploading image…');
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (!res.ok) { showToast('Upload failed', true); return; }
+      const { url } = await res.json();
+
+      const ta = document.getElementById(`ta-${id}`);
+      if (!ta) { editSection(id); }
+      const target = document.getElementById(`ta-${id}`);
+      if (target) {
+        const insert = `\n![image](${url})\n`;
+        const pos = target.selectionStart ?? target.value.length;
+        target.value = target.value.slice(0, pos) + insert + target.value.slice(pos);
+        sections[id] = target.value;
+        scheduleSave();
+        showToast('Image added');
+      }
     }
 
     // ── Utils ─────────────────────────────────────────────────────────────────

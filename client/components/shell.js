@@ -1,14 +1,17 @@
 const NAV_ITEMS = [
-  { id: 'overview',   label: 'Overview',    icon: '◈',  href: '/' },
-  { id: 'campaigns',  label: 'Campaigns',   icon: '◆',  href: '/campaigns' },
-  { id: 'social',     label: 'Social',      icon: '◉',  href: '/social' },
-  { id: 'approvals',  label: 'Approvals',   icon: '◇',  href: '/approvals' },
-  { id: 'reports',    label: 'Reports',     icon: '▦',  href: '/reports' },
+  { id: 'overview',    label: 'Overview',    icon: '◈',  href: '/' },
+  { id: 'campaigns',   label: 'PR Campaigns', icon: '◆',  href: '/campaigns' },
+  { id: 'strategies',  label: 'Strategies',  icon: '◐',  href: '/strategies' },
+  { id: 'social',      label: 'Social',      icon: '◉',  href: '/social' },
+  { id: 'approvals',   label: 'Approvals',   icon: '◇',  href: '/approvals' },
+  { id: 'reports',     label: 'Reports',     icon: '▦',  href: '/reports' },
 ];
 
 function renderShell({ pageId, title }) {
   const sidebar = document.getElementById('sidebar');
   const header  = document.getElementById('header');
+
+  const teamCollapsed = localStorage.getItem('sidebar-team-collapsed') === 'true';
 
   // Sidebar
   sidebar.innerHTML = `
@@ -17,16 +20,20 @@ function renderShell({ pageId, title }) {
       <span class="logo-text">Command Center</span>
     </div>
     <nav class="sidebar-nav">
+      <div class="nav-section-label">Clients</div>
+      <div id="sidebar-clients"><span style="font-size:11px;color:var(--text-dim);padding:4px 16px;">Loading…</span></div>
+      <div class="nav-section-label" style="margin-top:8px;">Workspace</div>
       ${NAV_ITEMS.map(item => `
         <a class="nav-item ${item.id === pageId ? 'active' : ''}" href="${item.href}">
           <span class="nav-icon">${item.icon}</span>
           <span class="nav-label">${item.label}</span>
         </a>
       `).join('')}
-      <div class="nav-section-label">Clients</div>
-      <div id="sidebar-clients"><span style="font-size:11px;color:var(--text-dim);padding:4px 16px;">Loading…</span></div>
-      <div class="nav-section-label" style="margin-top:8px;">Team</div>
-      <div id="sidebar-team"></div>
+      <div class="nav-section-label nav-section-toggle" id="team-section-label" style="margin-top:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding-right:12px;" onclick="toggleSidebarTeam()">
+        Team
+        <span id="team-chevron" style="font-size:9px;color:var(--text-dim);transition:transform 0.2s;${teamCollapsed ? 'transform:rotate(-90deg)' : ''}"">▼</span>
+      </div>
+      <div id="sidebar-team" style="${teamCollapsed ? 'display:none' : ''}"></div>
     </nav>
     <div class="sidebar-footer">
       <a class="nav-item ${'clients' === pageId ? 'active' : ''}" href="/clients">
@@ -69,6 +76,16 @@ function renderShell({ pageId, title }) {
       sidebar.classList.toggle('collapsed');
     }
   });
+
+  // Team section collapse toggle
+  window.toggleSidebarTeam = function() {
+    const teamEl = document.getElementById('sidebar-team');
+    const chevron = document.getElementById('team-chevron');
+    const isCollapsed = teamEl.style.display === 'none';
+    teamEl.style.display = isCollapsed ? '' : 'none';
+    chevron.style.transform = isCollapsed ? '' : 'rotate(-90deg)';
+    localStorage.setItem('sidebar-team-collapsed', isCollapsed ? 'false' : 'true');
+  };
 
   // Load client list into sidebar
   fetch('/api/clients')

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PR Campaigns — Greenpoint</title>
+  <title>Strategies — Greenpoint</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
   <style>
@@ -48,14 +48,14 @@
     }
     .filter-btn.active .filter-count { background: var(--accent); color: #000; }
 
-    /* ── Campaign cards grid ── */
-    .camp-list {
+    /* ── Strategy cards grid ── */
+    .strat-list {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
 
-    .camp-card {
+    .strat-card {
       display: flex;
       flex-direction: column;
       padding: 18px 20px;
@@ -67,32 +67,29 @@
       transition: border-color 0.15s, background 0.15s;
       min-width: 0;
     }
-    .camp-card:hover { border-color: var(--accent); background: var(--surface-2); }
+    .strat-card:hover { border-color: var(--accent); background: var(--surface-2); }
 
-    .camp-card-top {
+    .strat-card-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
       margin-bottom: 12px;
     }
-    .camp-client {
+    .strat-client {
       font-size: 10px; color: var(--text-dim); font-weight: 600;
       text-transform: uppercase; letter-spacing: .06em;
       display: flex; align-items: center; gap: 5px;
     }
-    .camp-client-dot {
+    .strat-client-dot {
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--accent); flex-shrink: 0;
     }
-    .camp-title {
+    .strat-title {
       font-size: 15px; font-weight: 700; line-height: 1.35;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
-    .camp-type {
-      font-size: 11px; color: var(--text-dim);
-    }
-    .camp-card-footer {
+    .strat-card-footer {
       margin-top: auto;
       padding-top: 14px;
       display: flex;
@@ -100,24 +97,22 @@
       justify-content: space-between;
       border-top: 1px solid var(--border);
     }
-    .camp-dates { font-size: 11px; color: var(--text-dim); }
-    .camp-open {
+    .strat-updated { font-size: 11px; color: var(--text-dim); }
+    .strat-open {
       font-size: 11px; color: var(--text-muted);
       display: flex; align-items: center; gap: 3px;
     }
-    .camp-open::after { content: '→'; }
+    .strat-open::after { content: '→'; }
 
     /* ── Status pills ── */
     .status-pill {
       display: inline-flex; align-items: center;
       font-size: 10px; font-weight: 600; text-transform: uppercase;
       letter-spacing: .05em; padding: 2px 8px; border-radius: 100px;
-      white-space: nowrap;
     }
     .sp-draft     { background: var(--surface-2); color: var(--text-muted); }
-    .sp-active    { background: #0d3323; color: var(--success); }
-    .sp-paused    { background: #3d2a00; color: var(--warning); }
-    .sp-completed { background: #1a1a2e; color: #8888cc; }
+    .sp-pending   { background: #3d2a00; color: var(--warning); }
+    .sp-approved  { background: #0d3323; color: var(--success); }
 
     /* ── Empty state ── */
     .empty-state {
@@ -164,54 +159,35 @@
     </div>
   </div>
 
-  <!-- New Campaign Modal -->
-  <div class="modal-overlay" id="new-camp-overlay">
+  <!-- New Strategy Modal -->
+  <div class="modal-overlay" id="new-strat-overlay">
     <div class="modal">
-      <div class="modal-title">New PR Campaign</div>
+      <div class="modal-title">New Strategy</div>
       <div class="form-row">
         <label class="form-label">Client</label>
-        <select class="form-select" id="nc-client"></select>
+        <select class="form-select" id="ns-client"></select>
       </div>
       <div class="form-row">
-        <label class="form-label">Campaign Name</label>
-        <input class="form-input" id="nc-name" type="text" placeholder="e.g. Q3 2026 Launch">
-      </div>
-      <div class="form-row">
-        <label class="form-label">Type</label>
-        <select class="form-select" id="nc-type">
-          <option value="PR">PR</option>
-          <option value="PR Light">PR Light</option>
-        </select>
+        <label class="form-label">Title</label>
+        <input class="form-input" id="ns-title" type="text" placeholder="e.g. Q3 2026 Campaign Strategy">
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" id="nc-create-btn" onclick="createCampaign()">Create & Open</button>
+        <button class="btn btn-primary" id="ns-create-btn" onclick="createStrategy()">Create & Open Builder</button>
       </div>
     </div>
   </div>
 
   <script src="/components/shell.js"></script>
   <script>
-    const STAGES = [
-      { id: 'all',       label: 'All' },
-      { id: 'strategy',  label: 'Strategy' },
-      { id: 'research',  label: 'Research' },
-      { id: 'drafting',  label: 'Drafting' },
-      { id: 'review',    label: 'Review' },
-      { id: 'pitching',  label: 'Pitching' },
-      { id: 'monitoring',label: 'Monitoring' },
-      { id: 'reporting', label: 'Reporting' },
-    ];
-
-    let allCampaigns = [];
+    let allStrategies = [];
     let activeFilter = 'all';
 
     async function load() {
-      renderShell({ pageId: 'campaigns', title: 'PR Campaigns' });
+      renderShell({ pageId: 'strategies', title: 'Strategies' });
 
-      const res = await fetch('/api/campaigns');
-      const data = res.ok ? await res.json() : [];
-      allCampaigns = data.filter(c => c.type === 'PR' || c.type === 'PR Light');
+      const res = await fetch('/api/strategies');
+      allStrategies = res.ok ? await res.json() : [];
 
       renderPage();
     }
@@ -219,25 +195,32 @@
     function renderPage() {
       const el = document.getElementById('page-content');
 
+      const counts = {
+        all: allStrategies.length,
+        draft: allStrategies.filter(s => s.status === 'draft').length,
+        awaiting_approval: allStrategies.filter(s => s.status === 'awaiting_approval').length,
+        approved: allStrategies.filter(s => s.status === 'approved').length,
+      };
+
       const filtered = activeFilter === 'all'
-        ? allCampaigns
-        : allCampaigns.filter(c => c.current_stage === activeFilter);
+        ? allStrategies
+        : allStrategies.filter(s => s.status === activeFilter);
 
       el.innerHTML = `
         <div class="page-header">
-          <div class="page-title">PR Campaigns</div>
-          <button class="btn btn-primary" onclick="openModal()">+ New Campaign</button>
+          <div class="page-title">Strategies</div>
+          <button class="btn btn-primary" onclick="openModal()">+ New Strategy</button>
         </div>
 
         <div class="filter-bar">
-          ${STAGES.map(s => {
-            const count = s.id === 'all' ? allCampaigns.length : allCampaigns.filter(c => c.current_stage === s.id).length;
-            return filterBtn(s.id, s.label, count);
-          }).join('')}
+          ${filterBtn('all',               'All',               counts.all)}
+          ${filterBtn('draft',             'Draft',             counts.draft)}
+          ${filterBtn('awaiting_approval', 'Awaiting Approval', counts.awaiting_approval)}
+          ${filterBtn('approved',          'Approved',          counts.approved)}
         </div>
 
-        <div class="camp-list" id="camp-list">
-          ${filtered.length ? filtered.map(campCardHtml).join('') : emptyState()}
+        <div class="strat-list" id="strat-list">
+          ${filtered.length ? filtered.map(stratRowHtml).join('') : emptyState()}
         </div>
       `;
     }
@@ -249,50 +232,46 @@
       </button>`;
     }
 
-    function campCardHtml(c) {
-      const stageLabel = STAGES.find(s => s.id === c.current_stage)?.label || 'Strategy';
-      const stageCls   = c.current_stage === 'reporting' ? 'sp-approved'
-                       : c.current_stage ? 'sp-pending' : 'sp-draft';
-
-      const statusMap = { active: 'Active', draft: 'Draft', paused: 'Paused', completed: 'Completed' };
-      const statusLabel = statusMap[c.status] || 'Draft';
-
-      const fmt = d => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
-      const start = fmt(c.start_date);
-      const end   = fmt(c.end_date);
-      const dates = start && end ? `${start} – ${end}` : start || end || '—';
+    function stratRowHtml(s) {
+      const statusMap = {
+        draft:             { cls: 'sp-draft',    label: 'Draft' },
+        awaiting_approval: { cls: 'sp-pending',  label: 'Awaiting Approval' },
+        approved:          { cls: 'sp-approved', label: 'Approved' },
+      };
+      const { cls, label } = statusMap[s.status] || statusMap.draft;
+      const updated = s.updated_at
+        ? new Date(s.updated_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '—';
 
       return `
-        <a class="camp-card" href="/campaigns/${c.id}">
-          <div class="camp-card-top">
-            <div class="camp-client">
-              <span class="camp-client-dot"></span>
-              ${escHtml(c.client_name || 'Unknown Client')}
+        <a class="strat-card" href="/strategy/${s.id}">
+          <div class="strat-card-top">
+            <div class="strat-client">
+              <span class="strat-client-dot"></span>
+              ${escHtml(s.client_name || 'Unknown Client')}
             </div>
-            <span class="status-pill ${stageCls}">${stageLabel}</span>
+            <span class="status-pill ${cls}">${label}</span>
           </div>
-          <div class="camp-title">${escHtml(c.name)}</div>
-          <div class="camp-type">${escHtml(c.type || 'PR')} · ${statusLabel}</div>
-          <div class="camp-card-footer">
-            <span class="camp-dates">${dates}</span>
-            <span class="camp-open">Open</span>
+          <div class="strat-title">${escHtml(s.title)}</div>
+          <div class="strat-card-footer">
+            <span class="strat-updated">Updated ${updated}</span>
+            <span class="strat-open">Open</span>
           </div>
         </a>`;
     }
 
     function emptyState() {
-      if (activeFilter === 'all') {
-        return `<div class="empty-state" style="grid-column:1/-1;">
-          <div class="empty-icon">◆</div>
-          <div class="empty-title">No PR campaigns yet</div>
-          <div>Create your first campaign to get started.</div>
-        </div>`;
-      }
-      const stage = STAGES.find(s => s.id === activeFilter);
+      const msgs = {
+        all:               { icon: '◐', title: 'No strategies yet', sub: 'Create your first strategy to get started.' },
+        draft:             { icon: '○', title: 'No drafts', sub: 'Strategies in progress will appear here.' },
+        awaiting_approval: { icon: '◇', title: 'Nothing awaiting approval', sub: 'Strategies submitted for review will appear here.' },
+        approved:          { icon: '◈', title: 'No approved strategies', sub: 'Approved strategies will appear here.' },
+      };
+      const m = msgs[activeFilter] || msgs.all;
       return `<div class="empty-state" style="grid-column:1/-1;">
-        <div class="empty-icon">○</div>
-        <div class="empty-title">No campaigns in ${stage?.label || activeFilter}</div>
-        <div>Campaigns at this stage will appear here.</div>
+        <div class="empty-icon">${m.icon}</div>
+        <div class="empty-title">${m.title}</div>
+        <div>${m.sub}</div>
       </div>`;
     }
 
@@ -304,42 +283,42 @@
     // ── Modal ──────────────────────────────────────────────────────────────────
 
     async function openModal() {
+      // Load clients
       const res = await fetch('/api/clients');
       const clients = res.ok ? await res.json() : [];
-      const sel = document.getElementById('nc-client');
+      const sel = document.getElementById('ns-client');
       sel.innerHTML = clients.length
         ? clients.map(c => `<option value="${c.id}">${escAttr(c.name)}</option>`).join('')
         : '<option value="">No clients yet</option>';
-      document.getElementById('nc-name').value = '';
-      document.getElementById('nc-type').value = 'PR';
-      document.getElementById('new-camp-overlay').classList.add('open');
-      document.getElementById('nc-name').focus();
+      document.getElementById('ns-title').value = '';
+      document.getElementById('new-strat-overlay').classList.add('open');
+      document.getElementById('ns-title').focus();
     }
 
     function closeModal() {
-      document.getElementById('new-camp-overlay').classList.remove('open');
+      document.getElementById('new-strat-overlay').classList.remove('open');
     }
 
-    async function createCampaign() {
-      const clientId = document.getElementById('nc-client').value;
-      const name     = document.getElementById('nc-name').value.trim();
-      const type     = document.getElementById('nc-type').value;
-      if (!clientId || !name) return;
+    async function createStrategy() {
+      const clientId = document.getElementById('ns-client').value;
+      const title    = document.getElementById('ns-title').value.trim();
+      if (!clientId) return;
 
-      const btn = document.getElementById('nc-create-btn');
+      const btn = document.getElementById('ns-create-btn');
       btn.disabled = true;
       btn.textContent = 'Creating…';
 
-      const res = await fetch('/api/campaigns', {
+      const res = await fetch('/api/strategies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: clientId, name, type, status: 'draft' }),
+        body: JSON.stringify({ client_id: clientId, title: title || 'Untitled Strategy' }),
       });
       const data = await res.json();
-      window.location = `/campaigns/${data.id}`;
+      window.location = `/strategy/${data.id}`;
     }
 
-    document.getElementById('new-camp-overlay').addEventListener('click', e => {
+    // Close overlay on backdrop click
+    document.getElementById('new-strat-overlay').addEventListener('click', e => {
       if (e.target === e.currentTarget) closeModal();
     });
 
