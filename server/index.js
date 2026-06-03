@@ -14,6 +14,7 @@ const contactsRouter = require('./routes/contacts');
 const campaignsRouter = require('./routes/campaigns');
 const teamPlannerRouter = require('./routes/team-planner');
 const teamMembersRouter = require('./routes/team-members');
+const { router: strategiesRouter } = require('./routes/strategies');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +39,7 @@ app.use('/api/clients', contactsRouter);
 app.use('/api/campaigns', campaignsRouter);
 app.use('/api/team-planner', teamPlannerRouter);
 app.use('/api/team-members', teamMembersRouter);
+app.use('/api/strategies', strategiesRouter);
 
 const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin'];
 PAGES.forEach(page => {
@@ -64,6 +66,14 @@ app.get('/clients/:id/board', (req, res) => {
 
 app.get('/clients/:id', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/client-profile.html'));
+});
+
+app.get('/strategy/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/strategy-builder.html'));
+});
+
+app.get('/s/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/strategy-view.html'));
 });
 
 app.get('*', (req, res) => {

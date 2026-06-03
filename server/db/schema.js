@@ -112,6 +112,22 @@ async function initSchema() {
     )
   `);
 
+  d.run(`
+    CREATE TABLE IF NOT EXISTS strategies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+      title TEXT NOT NULL DEFAULT 'Untitled Strategy',
+      sections TEXT DEFAULT '{}',
+      active_sections TEXT DEFAULT '["overview","audiences","messages","channels","timeline","measurement"]',
+      share_token TEXT UNIQUE,
+      status TEXT DEFAULT 'draft',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  try { d.run(`ALTER TABLE strategies ADD COLUMN client_id INTEGER`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE strategies DROP COLUMN campaign_id`); db.saveDb(); } catch {}
+
   // Add columns that may not exist in older DBs
   try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN assignee TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaigns ADD COLUMN scope TEXT`); db.saveDb(); } catch {}

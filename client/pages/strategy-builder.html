@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy Builder — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    /* Strategy header */
+    .strategy-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .strategy-title-wrap { flex: 1; min-width: 200px; }
+    .strategy-title-input {
+      width: 100%;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text);
+      font-size: 22px;
+      font-weight: 700;
+      padding: 2px 0;
+      transition: border-color 0.2s;
+      font-family: var(--font);
+    }
+    .strategy-title-input:focus {
+      outline: none;
+      border-bottom-color: var(--accent);
+    }
+    .strategy-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .strategy-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Status badge */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+    .sp-draft     { background: var(--surface-2); color: var(--text-muted); }
+    .sp-pending   { background: #3d2a00; color: var(--warning); }
+    .sp-published { background: #0d3323; color: var(--success); }
+
+    /* Save indicator */
+    .save-indicator {
+      font-size: 11px;
+      color: var(--text-dim);
+      transition: opacity 0.3s;
+    }
+
+    /* Section panel */
+    .section-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .section-panel.active { border-color: var(--border); }
+    .section-panel.inactive { opacity: 0.5; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header:hover { background: var(--surface-2); }
+
+    .section-toggle {
+      width: 32px;
+      height: 18px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .section-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: left 0.2s, background 0.2s;
+    }
+    .section-toggle.on { background: var(--accent); border-color: var(--accent); }
+    .section-toggle.on::after { left: 16px; background: #fff; }
+
+    .section-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .section-chevron { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
+    .section-panel.open .section-chevron { transform: rotate(180deg); }
+
+    .section-body { display: none; padding: 0 16px 16px; }
+    .section-panel.open .section-body { display: block; }
+
+    .section-textarea {
+      width: 100%;
+      min-height: 120px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 10px 12px;
+      font-family: var(--font);
+      resize: vertical;
+      box-sizing: border-box;
+      transition: border-color 0.15s;
+    }
+    .section-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .section-textarea::placeholder { color: var(--text-dim); }
+
+    .section-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .section-hint { font-size: 11px; color: var(--text-dim); }
+
+    .btn-generate {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 5px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-generate:hover { border-color: var(--accent); color: var(--text); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-generate .spinner {
+      display: none;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .btn-generate.loading .spinner { display: block; }
+    .btn-generate.loading .gen-icon { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Section selector (top controls) */
+    .section-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .section-controls-label { font-size: 12px; color: var(--text-muted); }
+
+    /* Share link toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-icon { color: var(--success); font-size: 16px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content" id="page-content">
+        <p style="color:var(--text-muted);">Loading…</p>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <span class="toast-icon">✓</span>
+    <span id="toast-msg">Link copied to clipboard</span>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    const strategyId = location.pathname.split('/')[2];
+    let strategy = null;
+    let sections = {};
+    let activeSections = [];
+    let saveTimer = null;
+
+    const SECTION_DEFS = [
+      { id: 'overview',       label: 'Overview & Objectives',     hint: 'Campaign goals, context, and what success looks like' },
+      { id: 'audiences',      label: 'Target Audiences',          hint: 'Who we are trying to reach — demographics, psychographics, behaviours' },
+      { id: 'messages',       label: 'Key Messages',              hint: 'The core things we want audiences to understand, feel, or do' },
+      { id: 'channels',       label: 'Channel Approach',          hint: 'Which channels, platforms, and media types we will use and why' },
+      { id: 'pr_angles',      label: 'PR Angles & Media Targets', hint: 'Story angles, target publications, journalists, and pitch approach' },
+      { id: 'social_pillars', label: 'Social Content Pillars',    hint: 'Content categories, platform-specific approach, posting cadence' },
+      { id: 'paid_plan',      label: 'Paid Media Plan',           hint: 'Budget allocation, ad formats, targeting approach, bidding strategy' },
+      { id: 'timeline',       label: 'Timeline & Phasing',        hint: 'Key milestones, phases, and delivery dates' },
+      { id: 'measurement',    label: 'Measurement & KPIs',        hint: 'How we will measure success — metrics, targets, reporting cadence' },
+    ];
+
+    const DEFAULT_ACTIVE = ['overview','audiences','messages','channels','timeline','measurement'];
+
+    async function load() {
+      const res = await fetch(`/api/strategies/${strategyId}`);
+      if (!res.ok) {
+        document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Strategy not found.</p>';
+        return;
+      }
+      strategy = await res.json();
+      sections = strategy.sections ? JSON.parse(strategy.sections) : {};
+      activeSections = strategy.active_sections ? JSON.parse(strategy.active_sections) : [...DEFAULT_ACTIVE];
+      renderShell({ pageId: 'clients', title: strategy.title });
+      render();
+    }
+
+    function render() {
+      const chipMap = {
+        draft:             { cls: 'sp-draft',    label: 'Draft' },
+        awaiting_approval: { cls: 'sp-pending',  label: 'Awaiting Approval' },
+        approved:          { cls: 'sp-published', label: 'Approved' },
+      };
+      const { cls: chipClass, label: chipLabel } = chipMap[strategy.status] || chipMap.draft;
+
+      const sectionsHtml = SECTION_DEFS.map(def => {
+        const isActive = activeSections.includes(def.id);
+        const content = sections[def.id] || '';
+        const isOpen = isActive;
+        return `
+          <div class="section-panel ${isActive ? 'open active' : 'inactive'}" id="panel-${def.id}">
+            <div class="section-header" onclick="toggleSection('${def.id}')">
+              <div class="section-toggle ${isActive ? 'on' : ''}" onclick="event.stopPropagation();toggleActive('${def.id}')"></div>
+              <div class="section-name">${def.label}</div>
+              <span class="section-chevron">▼</span>
+            </div>
+            <div class="section-body">
+              <textarea
+                class="section-textarea"
+                id="ta-${def.id}"
+                placeholder="${def.hint}…"
+                oninput="onSectionInput('${def.id}')"
+              >${escHtml(content)}</textarea>
+              <div class="section-footer">
+                <span class="section-hint">${def.hint}</span>
+                <button class="btn-generate" id="gen-${def.id}" onclick="generateSection('${def.id}')">
+                  <span class="spinner"></span>
+                  <span class="gen-icon">✦</span>
+                  Generate with AI
+                </button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      const statusActions = {
+        draft: `<button class="btn btn-primary" style="font-size:12px;" onclick="submitForApproval()">Submit for Approval</button>`,
+        awaiting_approval: `
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="copyShareLink()">Copy Link</button>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="viewShared()">View</button>
+          <button class="btn btn-primary" style="font-size:12px;" onclick="approve()">Mark Approved</button>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="recall()">Recall</button>`,
+        approved: `
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="copyShareLink()">Copy Link</button>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="viewShared()">View</button>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="recall()">Recall to Draft</button>`,
+      };
+      const publishBtn = statusActions[strategy.status] || statusActions.draft;
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="strategy-header">
+          <div style="flex:1;">
+            <div style="margin-bottom:8px;">
+              <a href="/clients/${strategy.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← ${strategy.client_name || 'Client'}</a>
+            </div>
+            <input
+              class="strategy-title-input"
+              id="strategy-title"
+              type="text"
+              value="${escAttr(strategy.title)}"
+              onchange="saveTitle(this.value)"
+              onblur="saveTitle(this.value)"
+            >
+            <div class="strategy-meta">
+              ${strategy.client_name || ''}
+            </div>
+          </div>
+          <div class="strategy-actions">
+            <span class="save-indicator" id="save-status"></span>
+            <span class="status-pill ${chipClass}">${chipLabel}</span>
+            ${publishBtn}
+            <button class="btn btn-danger" style="font-size:12px;" onclick="deleteStrategy()">Delete</button>
+          </div>
+        </div>
+        ${sectionsHtml}
+      `;
+    }
+
+    // ── Section toggle ─────────────────────────────────────────────────────────
+
+    function toggleSection(id) {
+      const panel = document.getElementById(`panel-${id}`);
+      if (!activeSections.includes(id)) return;
+      panel.classList.toggle('open');
+    }
+
+    function toggleActive(id) {
+      if (activeSections.includes(id)) {
+        activeSections = activeSections.filter(s => s !== id);
+      } else {
+        activeSections.push(id);
+      }
+      const panel = document.getElementById(`panel-${id}`);
+      const toggle = panel.querySelector('.section-toggle');
+      toggle.classList.toggle('on', activeSections.includes(id));
+      panel.classList.toggle('active', activeSections.includes(id));
+      panel.classList.toggle('inactive', !activeSections.includes(id));
+      if (activeSections.includes(id)) {
+        panel.classList.add('open');
+      } else {
+        panel.classList.remove('open');
+      }
+      scheduleSave();
+    }
+
+    // ── Section input ──────────────────────────────────────────────────────────
+
+    function onSectionInput(id) {
+      sections[id] = document.getElementById(`ta-${id}`).value;
+      scheduleSave();
+    }
+
+    function scheduleSave() {
+      setSaveStatus('Saving…');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(save, 1200);
+    }
+
+    async function save() {
+      await fetch(`/api/strategies/${strategyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sections, active_sections: activeSections })
+      });
+      setSaveStatus('Saved');
+      setTimeout(() => setSaveStatus(''), 2000);
+    }
+
+    function setSaveStatus(msg) {
+      const el = document.getElementById('save-status');
+      if (el) el.textContent = msg;
+    }
+
+    async function saveTitle(val) {
+      const title = val.trim() || 'Untitled Strategy';
+      if (title === strategy.title) return;
+      strategy.title = title;
+      await fetch(`/api/strategies/${strategyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+    }
+
+    // ── AI generate ────────────────────────────────────────────────────────────
+
+    async function generateSection(id) {
+      const btn = document.getElementById(`gen-${id}`);
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      sections[id] = document.getElementById(`ta-${id}`).value;
+
+      try {
+        const res = await fetch(`/api/strategies/${strategyId}/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_id: id, sections })
+        });
+        const data = await res.json();
+        if (data.content) {
+          sections[id] = data.content;
+          const ta = document.getElementById(`ta-${id}`);
+          if (ta) ta.value = data.content;
+          scheduleSave();
+        } else {
+          showToast('AI generation failed — please try again', true);
+        }
+      } catch {
+        showToast('AI generation failed — please try again', true);
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    // ── Approval flow ──────────────────────────────────────────────────────────
+
+    async function submitForApproval() {
+      await save();
+      const res = await fetch(`/api/strategies/${strategyId}/submit`, { method: 'POST' });
+      const data = await res.json();
+      strategy.status = 'awaiting_approval';
+      strategy.share_token = data.token;
+      render();
+      await copyShareLink();
+      showToast('Submitted for approval — link copied');
+    }
+
+    async function approve() {
+      await fetch(`/api/strategies/${strategyId}/approve`, { method: 'POST' });
+      strategy.status = 'approved';
+      render();
+      showToast('Strategy marked as approved');
+    }
+
+    async function recall() {
+      await fetch(`/api/strategies/${strategyId}/recall`, { method: 'POST' });
+      strategy.status = 'draft';
+      render();
+    }
+
+    async function viewShared() {
+      window.open(`/s/${strategy.share_token}`, '_blank');
+    }
+
+    async function copyShareLink() {
+      const link = `${location.origin}/s/${strategy.share_token}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        showToast('Link copied to clipboard');
+      } catch {
+        prompt('Copy this link:', link);
+      }
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+
+    async function deleteStrategy() {
+      if (!confirm('Delete this strategy? This cannot be undone.')) return;
+      await fetch(`/api/strategies/${strategyId}`, { method: 'DELETE' });
+      window.location = `/clients/${strategy.client_id}/board`;
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+
+    function showToast(msg, isError = false) {
+      const el = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      el.querySelector('.toast-icon').textContent = isError ? '✕' : '✓';
+      el.querySelector('.toast-icon').style.color = isError ? 'var(--danger)' : 'var(--success)';
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ── Utils ─────────────────────────────────────────────────────────────────
+
+    function escHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function escAttr(str) {
+      return (str || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    load();
+  </script>
+</body>
+</html>

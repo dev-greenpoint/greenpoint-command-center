@@ -4,7 +4,8 @@ const GENERAL_CHECKLIST = [
   'Brand assets received (logos, fonts, colours)',
   'Account lead assigned and introduced to client',
   'Reporting cadence agreed',
-  'Shared folder set up',
+  'Slack channel created',
+  'Google Drive folder set up',
 ];
 
 const SERVICE_CHECKLIST = {

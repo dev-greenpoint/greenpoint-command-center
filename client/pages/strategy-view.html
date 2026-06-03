@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy — Greenpoint Media</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1C1C1A;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.10);
+      --border-soft: rgba(255,255,255,0.06);
+      --accent: #738C7B;
+      --accent-light: #9CAA98;
+      --text: #fff;
+      --text-70: rgba(255,255,255,0.70);
+      --text-60: rgba(255,255,255,0.60);
+      --text-40: rgba(255,255,255,0.40);
+      --text-25: rgba(255,255,255,0.25);
+      --tab-bg: #191917;
+      --radius: 8px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .outer { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+    @media (min-width: 768px) { .outer { padding: 0 40px; } }
+    @media (min-width: 1024px) { .outer { padding: 0 64px; } }
+
+    /* ── Top bar ── */
+    .topbar {
+      padding: 20px 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .gp-logo { height: 18px; width: auto; }
+    .topbar-badge {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-60);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 48px 0 40px;
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--accent-light);
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-size: clamp(2.2rem, 6vw, 5rem);
+      font-weight: 300;
+      line-height: 1.08;
+      letter-spacing: -.02em;
+      margin-bottom: 24px;
+    }
+    .hero-desc {
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--text-70);
+      max-width: 680px;
+    }
+
+    /* ── Tab bar ── */
+    .tab-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--bg);
+      padding-bottom: 0;
+      padding-top: 8px;
+    }
+    .tab-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      background: var(--tab-bg);
+      border-radius: var(--radius);
+      padding: 6px;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-60);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-family: var(--font);
+    }
+    .tab-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+    .tab-btn.active { background: var(--accent); color: #fff; }
+
+    /* ── Section content area ── */
+    .content-area {
+      min-height: 60vh;
+      padding: 48px 0 120px;
+    }
+
+    /* ── Section header ── */
+    .section-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.7rem);
+      font-weight: 300;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .section-body-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-70);
+      max-width: 680px;
+      margin-bottom: 40px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* Numbered objective card */
+    .obj-num {
+      font-size: 2.2rem;
+      font-weight: 300;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .obj-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+    .obj-body { font-size: 13px; line-height: 1.7; color: var(--text-60); }
+
+    /* Message card */
+    .msg-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+    .msg-body { font-size: 13px; line-height: 1.7; color: var(--text-60); }
+
+    /* Pillar card */
+    .pillar-wrap {
+      display: grid;
+      gap: 24px;
+    }
+    .pillar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .pillar-tag { font-size: 14px; font-weight: 500; color: var(--text); }
+    .pillar-sub { font-size: 12px; color: var(--accent-light); margin-top: 2px; margin-bottom: 12px; }
+    .pillar-body { font-size: 13px; line-height: 1.7; color: var(--text-60); }
+    .pillar-meta { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .pillar-meta-row { display: flex; flex-direction: column; gap: 3px; }
+    .meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+    .meta-val { font-size: 12px; color: var(--text-60); }
+
+    /* Bullet chip list */
+    .chip-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 12px;
+      color: var(--text-60);
+    }
+
+    /* Check bullet list */
+    .check-list { display: flex; flex-direction: column; gap: 12px; }
+    .check-item { display: flex; gap: 10px; font-size: 13px; line-height: 1.6; color: var(--text-70); }
+    .check-icon { color: var(--accent-light); flex-shrink: 0; margin-top: 2px; }
+
+    /* PR campaign card */
+    .pr-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+    .pr-card-grid { display: grid; gap: 24px; }
+    @media (min-width: 1024px) { .pr-card-grid { grid-template-columns: 2fr 1fr; } }
+    .pr-title { font-size: 20px; font-weight: 300; color: var(--text); margin-bottom: 4px; }
+    .pr-timing { font-size: 12px; color: var(--accent-light); margin-bottom: 16px; }
+    .pr-detail { font-size: 13px; line-height: 1.7; color: var(--text-60); }
+    .pr-targets { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .pr-target { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 12px; font-size: 12px; color: var(--text-60); }
+
+    /* Next steps cards */
+    .steps-grid { display: grid; gap: 16px; }
+    @media (min-width: 1024px) { .steps-grid { grid-template-columns: repeat(2, 1fr); } }
+    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .step-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .step-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--accent); display: flex; align-items: center;
+      justify-content: center; font-size: 16px; flex-shrink: 0;
+    }
+    .step-label { font-size: 14px; font-weight: 500; }
+    .step-sublabel { font-size: 12px; color: var(--text-40); }
+
+    /* Plain text content */
+    .rich-text { font-size: 14px; line-height: 1.8; color: var(--text-70); }
+    .rich-text p { margin-bottom: 14px; }
+    .rich-text h3 { font-size: 16px; font-weight: 500; color: var(--text); margin: 20px 0 8px; }
+    .rich-text ul { padding-left: 1.2em; margin-bottom: 14px; }
+    .rich-text li { margin-bottom: 5px; }
+    .rich-text strong { color: var(--text); font-weight: 600; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      background: rgba(28, 28, 26, 0.95);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+    }
+    .bottom-nav-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+    }
+    @media (min-width: 768px) { .bottom-nav-inner { padding: 0 40px; } }
+    @media (min-width: 1024px) { .bottom-nav-inner { padding: 0 64px; } }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-60);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font);
+      padding: 8px 0;
+      transition: color 0.15s;
+    }
+    .nav-btn:hover { color: var(--text); }
+    .nav-btn:disabled { visibility: hidden; }
+    .nav-arrow { font-size: 14px; }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 24px 0 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    .footer-text { font-size: 12px; color: var(--text-25); }
+
+    /* ── Error / loading ── */
+    .center-msg {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+    }
+    .center-msg h2 { font-size: 22px; font-weight: 300; }
+    .center-msg p { font-size: 14px; color: var(--text-60); }
+  </style>
+</head>
+<body>
+  <div class="outer">
+    <div class="topbar">
+      <img
+        src="https://res.cloudinary.com/dfers76ex/image/upload/v1778739088/Greenpoint-Logo-White_gz5g4m.svg"
+        alt="Greenpoint Media"
+        class="gp-logo"
+        onerror="this.style.display='none';document.getElementById('gp-fallback').style.display='flex'"
+      >
+      <div id="gp-fallback" style="display:none;align-items:center;gap:8px;">
+        <div style="width:28px;height:28px;background:#738C7B;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;">G</div>
+        <span style="font-size:13px;font-weight:600;">Greenpoint Media</span>
+      </div>
+      <div class="topbar-badge" id="topbar-badge"></div>
+    </div>
+  </div>
+
+  <div id="app-shell" style="display:none;">
+    <div class="outer">
+      <div class="hero">
+        <div class="hero-eyebrow" id="hero-eyebrow"></div>
+        <h1 class="hero-title" id="hero-title"></h1>
+        <p class="hero-desc" id="hero-desc"></p>
+      </div>
+    </div>
+
+    <div class="tab-wrap">
+      <div class="outer">
+        <div class="tab-bar" id="tab-bar"></div>
+      </div>
+    </div>
+
+    <div class="outer">
+      <div class="content-area" id="content-area"></div>
+
+      <div class="footer">
+        <p class="footer-text" id="footer-text"></p>
+        <img
+          src="https://res.cloudinary.com/dfers76ex/image/upload/v1778739088/Greenpoint-Logo-White_gz5g4m.svg"
+          alt="Greenpoint"
+          style="height:12px;opacity:0.25;"
+          onerror="this.style.display='none'"
+        >
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="outer">
+    <div class="center-msg" style="color:rgba(255,255,255,0.3);">
+      <p>Loading strategy…</p>
+    </div>
+  </div>
+
+  <div class="bottom-nav" id="bottom-nav" style="display:none;">
+    <div class="bottom-nav-inner">
+      <button class="nav-btn" id="nav-prev" onclick="goTab(-1)">
+        <span class="nav-arrow">←</span>
+        <span id="nav-prev-label"></span>
+      </button>
+      <button class="nav-btn" id="nav-next" onclick="goTab(1)">
+        <span id="nav-next-label"></span>
+        <span class="nav-arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const token = location.pathname.replace('/s/', '').replace(/\/$/, '');
+    let activeSectionIndex = 0;
+    let sectionDefs = [];
+    let sections = {};
+    let strategyData = null;
+
+    const ALL_SECTION_DEFS = [
+      { id: 'overview',       label: 'Overview',          renderFn: renderOverview },
+      { id: 'audiences',      label: 'Target Audiences',  renderFn: renderAudiences },
+      { id: 'messages',       label: 'Key Messages',      renderFn: renderMessages },
+      { id: 'channels',       label: 'Channel Approach',  renderFn: renderChannels },
+      { id: 'pr_angles',      label: 'PR Strategy',       renderFn: renderPR },
+      { id: 'social_pillars', label: 'Content Strategy',  renderFn: renderContentStrategy },
+      { id: 'paid_plan',      label: 'Paid Media',        renderFn: renderGeneric },
+      { id: 'timeline',       label: 'Timeline',          renderFn: renderTimeline },
+      { id: 'measurement',    label: 'Measurement',       renderFn: renderGeneric },
+    ];
+
+    // ── Parse text into structured blocks ────────────────────────────────────────
+
+    function parseText(text) {
+      if (!text) return [];
+      const lines = text.split('\n');
+      const blocks = [];
+      let i = 0;
+
+      while (i < lines.length) {
+        const line = lines[i].trim();
+        if (!line) { i++; continue; }
+
+        // ## Heading → card title
+        if (line.startsWith('## ')) {
+          blocks.push({ type: 'heading', text: line.replace(/^## /, '') });
+          i++;
+          continue;
+        }
+
+        // ### Sub-heading
+        if (line.startsWith('### ')) {
+          blocks.push({ type: 'subheading', text: line.replace(/^### /, '') });
+          i++;
+          continue;
+        }
+
+        // Numbered items: "1. Title\n   body" or "01. Title"
+        const numMatch = line.match(/^(\d+)[.)]\s+(.+)/);
+        if (numMatch) {
+          const num = numMatch[1].padStart(2, '0');
+          const title = numMatch[2];
+          const bodyLines = [];
+          i++;
+          while (i < lines.length && lines[i].match(/^\s{2,}/) ) {
+            bodyLines.push(lines[i].trim());
+            i++;
+          }
+          blocks.push({ type: 'numbered', num, title, body: bodyLines.join(' ') });
+          continue;
+        }
+
+        // Bold title format: "**Title**: body" or "**Title**\nbody"
+        const boldMatch = line.match(/^\*\*(.+?)\*\*[:\s]*(.*)/);
+        if (boldMatch) {
+          const title = boldMatch[1];
+          let body = boldMatch[2].trim();
+          i++;
+          while (i < lines.length && lines[i].trim() && !lines[i].match(/^[-*•]|^\d+[.)]|\*\*/) ) {
+            body += ' ' + lines[i].trim();
+            i++;
+          }
+          blocks.push({ type: 'titled', title, body: body.trim() });
+          continue;
+        }
+
+        // Bullet list — collect consecutive bullets
+        if (line.match(/^[-*•]\s/)) {
+          const items = [];
+          while (i < lines.length && lines[i].trim().match(/^[-*•]\s/)) {
+            items.push(lines[i].trim().replace(/^[-*•]\s/, ''));
+            i++;
+          }
+          blocks.push({ type: 'bullets', items });
+          continue;
+        }
+
+        // Plain paragraph — collect consecutive non-special lines
+        const paraLines = [line];
+        i++;
+        while (i < lines.length && lines[i].trim() && !lines[i].match(/^[-*•\d#]/) && !lines[i].match(/^\*\*/)) {
+          paraLines.push(lines[i].trim());
+          i++;
+        }
+        blocks.push({ type: 'paragraph', text: paraLines.join(' ') });
+      }
+
+      return blocks;
+    }
+
+    // ── Renderers ─────────────────────────────────────────────────────────────────
+
+    function esc(str) {
+      return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderOverview(content) {
+      const blocks = parseText(content);
+      const paras = blocks.filter(b => b.type === 'paragraph' || b.type === 'heading');
+      const bullets = blocks.filter(b => b.type === 'bullets');
+
+      let html = `<div style="display:grid;gap:16px;grid-template-columns:1fr;" class="overview-grid">`;
+
+      const textBlocks = blocks.filter(b => b.type === 'paragraph');
+      if (textBlocks.length) {
+        // Split into up to 2 cards
+        const mid = Math.ceil(textBlocks.length / 2);
+        const left = textBlocks.slice(0, mid);
+        const right = textBlocks.slice(mid);
+
+        html += `<div style="display:grid;gap:16px;">`;
+        html += `<div class="card"><div class="rich-text">${left.map(b => `<p>${esc(b.text)}</p>`).join('')}</div></div>`;
+        if (right.length) {
+          html += `<div class="card"><div class="rich-text">${right.map(b => `<p>${esc(b.text)}</p>`).join('')}</div></div>`;
+        }
+        html += `</div>`;
+      }
+
+      if (bullets.length) {
+        bullets.forEach(b => {
+          html += `<div class="card"><div class="check-list">${b.items.map(item => `
+            <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>
+          `).join('')}</div></div>`;
+        });
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    function renderAudiences(content) {
+      const blocks = parseText(content);
+      const bullets = blocks.filter(b => b.type === 'bullets');
+      const titled = blocks.filter(b => b.type === 'titled');
+      const headings = blocks.filter(b => b.type === 'heading');
+
+      if (titled.length) {
+        return `<div class="card-grid">${titled.map(b => `
+          <div class="card">
+            <div class="msg-title">${esc(b.title)}</div>
+            ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
+          </div>`).join('')}</div>`;
+      }
+
+      if (bullets.length) {
+        let html = `<div class="card-grid">`;
+        bullets.forEach((b, i) => {
+          const heading = headings[i];
+          html += `<div class="card">`;
+          if (heading) html += `<div class="section-eyebrow" style="margin-bottom:16px;">${esc(heading.text)}</div>`;
+          html += b.items.map(item => `
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text-70);">${esc(item)}</div>
+          `).join('');
+          html += `</div>`;
+        });
+        html += `</div>`;
+        return html;
+      }
+
+      return renderGeneric(content);
+    }
+
+    function renderMessages(content) {
+      const blocks = parseText(content);
+      const items = blocks.filter(b => b.type === 'titled' || b.type === 'numbered' || b.type === 'heading');
+
+      if (items.length) {
+        return `<div class="card-grid">${items.map((b, i) => {
+          if (b.type === 'numbered') return `
+            <div class="card">
+              <div class="obj-num">${b.num}</div>
+              <div class="obj-title">${esc(b.title)}</div>
+              ${b.body ? `<div class="obj-body">${esc(b.body)}</div>` : ''}
+            </div>`;
+          return `
+            <div class="card">
+              <div class="msg-title">${esc(b.title || b.text)}</div>
+              ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
+            </div>`;
+        }).join('')}</div>`;
+      }
+
+      return renderGeneric(content);
+    }
+
+    function renderChannels(content) {
+      const blocks = parseText(content);
+      const bullets = blocks.filter(b => b.type === 'bullets');
+      const titled = blocks.filter(b => b.type === 'titled');
+      const paras = blocks.filter(b => b.type === 'paragraph');
+
+      if (titled.length) {
+        return `<div class="card-grid">${titled.map(b => `
+          <div class="card">
+            <div class="msg-title">${esc(b.title)}</div>
+            ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
+          </div>`).join('')}</div>`;
+      }
+
+      if (bullets.length) {
+        let html = '';
+        if (paras.length) html += `<div class="card" style="margin-bottom:16px;"><div class="rich-text">${paras.map(b=>`<p>${esc(b.text)}</p>`).join('')}</div></div>`;
+        html += `<div class="chip-grid">${bullets.flatMap(b => b.items).map(item =>
+          `<div class="chip">${esc(item)}</div>`).join('')}</div>`;
+        return html;
+      }
+
+      return renderGeneric(content);
+    }
+
+    function renderContentStrategy(content) {
+      const blocks = parseText(content);
+      const headings = blocks.filter(b => b.type === 'heading' || b.type === 'subheading');
+
+      if (headings.length === 0) return renderGeneric(content);
+
+      // Group blocks by heading
+      const pillars = [];
+      let current = null;
+      for (const b of blocks) {
+        if (b.type === 'heading' || b.type === 'subheading') {
+          if (current) pillars.push(current);
+          current = { tag: b.text, body: '', bullets: [] };
+        } else if (current) {
+          if (b.type === 'paragraph') current.body += (current.body ? ' ' : '') + b.text;
+          if (b.type === 'bullets') current.bullets = [...current.bullets, ...b.items];
+        }
+      }
+      if (current) pillars.push(current);
+
+      return `<div class="pillar-wrap">${pillars.map(p => `
+        <div class="pillar-card">
+          <div class="pillar-tag">${esc(p.tag)}</div>
+          ${p.body ? `<div class="pillar-body" style="margin-top:10px;">${esc(p.body)}</div>` : ''}
+          ${p.bullets.length ? `
+            <div class="pillar-meta">
+              <div class="check-list">${p.bullets.map(item => `
+                <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>
+              `).join('')}</div>
+            </div>` : ''}
+        </div>`).join('')}</div>`;
+    }
+
+    function renderPR(content) {
+      const blocks = parseText(content);
+      const headings = blocks.filter(b => b.type === 'heading');
+
+      if (headings.length === 0) return renderGeneric(content);
+
+      // Group into PR campaigns by heading
+      const campaigns = [];
+      let current = null;
+      for (const b of blocks) {
+        if (b.type === 'heading') {
+          if (current) campaigns.push(current);
+          current = { title: b.text, detail: '', bullets: [], targets: [] };
+        } else if (current) {
+          if (b.type === 'paragraph') current.detail += (current.detail ? ' ' : '') + b.text;
+          if (b.type === 'bullets') {
+            if (!current.detail) current.targets.push(...b.items);
+            else current.bullets.push(...b.items);
+          }
+        }
+      }
+      if (current) campaigns.push(current);
+
+      return `<div>${campaigns.map(c => `
+        <div class="pr-card">
+          <div class="pr-card-grid">
+            <div>
+              <div class="pr-title">${esc(c.title)}</div>
+              ${c.detail ? `<div class="pr-detail" style="margin-top:12px;">${esc(c.detail)}</div>` : ''}
+              ${c.bullets.length ? `
+                <div style="margin-top:16px;">
+                  <div class="section-eyebrow" style="margin-bottom:10px;">Key Messages</div>
+                  <div class="check-list">${c.bullets.map(item => `
+                    <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>
+                  `).join('')}</div>
+                </div>` : ''}
+            </div>
+            ${c.targets.length ? `
+              <div>
+                <div class="section-eyebrow" style="margin-bottom:10px;">Target Media</div>
+                <div class="pr-targets">${c.targets.map(t => `<div class="pr-target">${esc(t)}</div>`).join('')}</div>
+              </div>` : ''}
+          </div>
+        </div>`).join('')}
+        <div style="border:1px dashed rgba(255,255,255,0.12);border-radius:8px;padding:20px;text-align:center;margin-top:8px;">
+          <p style="font-size:12px;color:rgba(255,255,255,0.25);">Additional PR angles will be added as campaigns develop.</p>
+        </div>
+      </div>`;
+    }
+
+    function renderTimeline(content) {
+      const blocks = parseText(content);
+      const numbered = blocks.filter(b => b.type === 'numbered');
+      const headings = blocks.filter(b => b.type === 'heading');
+
+      if (numbered.length) {
+        return `<div class="card-grid">${numbered.map(b => `
+          <div class="card">
+            <div class="obj-num">${b.num}</div>
+            <div class="obj-title">${esc(b.title)}</div>
+            ${b.body ? `<div class="obj-body">${esc(b.body)}</div>` : ''}
+          </div>`).join('')}</div>`;
+      }
+
+      if (headings.length) {
+        // Group blocks by heading for phase cards
+        const phases = [];
+        let cur = null;
+        for (const b of blocks) {
+          if (b.type === 'heading') {
+            if (cur) phases.push(cur);
+            cur = { title: b.text, items: [], body: '' };
+          } else if (cur) {
+            if (b.type === 'bullets') cur.items.push(...b.items);
+            if (b.type === 'paragraph') cur.body += (cur.body ? ' ' : '') + b.text;
+          }
+        }
+        if (cur) phases.push(cur);
+
+        return `<div class="card-grid">${phases.map((p, i) => `
+          <div class="card">
+            <div class="obj-num">${String(i+1).padStart(2,'0')}</div>
+            <div class="obj-title">${esc(p.title)}</div>
+            ${p.body ? `<div class="obj-body" style="margin-bottom:12px;">${esc(p.body)}</div>` : ''}
+            ${p.items.length ? `<div class="check-list">${p.items.map(item => `
+              <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
+          </div>`).join('')}</div>`;
+      }
+
+      return renderGeneric(content);
+    }
+
+    function renderGeneric(content) {
+      const blocks = parseText(content);
+      let html = '';
+      const numbered = blocks.filter(b => b.type === 'numbered');
+      const titled = blocks.filter(b => b.type === 'titled');
+
+      if (numbered.length) {
+        html += `<div class="card-grid" style="margin-bottom:24px;">${numbered.map(b => `
+          <div class="card">
+            <div class="obj-num">${b.num}</div>
+            <div class="obj-title">${esc(b.title)}</div>
+            ${b.body ? `<div class="obj-body">${esc(b.body)}</div>` : ''}
+          </div>`).join('')}</div>`;
+      }
+
+      if (titled.length) {
+        html += `<div class="card-grid" style="margin-bottom:24px;">${titled.map(b => `
+          <div class="card">
+            <div class="msg-title">${esc(b.title)}</div>
+            ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
+          </div>`).join('')}</div>`;
+      }
+
+      const remaining = blocks.filter(b => b.type !== 'numbered' && b.type !== 'titled');
+      if (remaining.length) {
+        let richHtml = '';
+        remaining.forEach(b => {
+          if (b.type === 'paragraph') richHtml += `<p>${esc(b.text)}</p>`;
+          else if (b.type === 'heading') richHtml += `<h3>${esc(b.text)}</h3>`;
+          else if (b.type === 'subheading') richHtml += `<h3 style="font-size:14px;">${esc(b.text)}</h3>`;
+          else if (b.type === 'bullets') richHtml += `<ul>${b.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`;
+        });
+        if (richHtml) html += `<div class="card"><div class="rich-text">${richHtml}</div></div>`;
+      }
+
+      return html || `<p style="color:rgba(255,255,255,0.3);font-size:14px;">No content yet.</p>`;
+    }
+
+    // ── Tab navigation ────────────────────────────────────────────────────────────
+
+    function renderTabBar() {
+      const bar = document.getElementById('tab-bar');
+      bar.innerHTML = sectionDefs.map((s, i) => `
+        <button class="tab-btn ${i===activeSectionIndex?'active':''}" onclick="setTab(${i})">${s.label}</button>
+      `).join('');
+    }
+
+    function updateBottomNav() {
+      const prev = document.getElementById('nav-prev');
+      const next = document.getElementById('nav-next');
+      const prevLabel = document.getElementById('nav-prev-label');
+      const nextLabel = document.getElementById('nav-next-label');
+
+      const hasPrev = activeSectionIndex > 0;
+      const hasNext = activeSectionIndex < sectionDefs.length - 1;
+
+      prev.disabled = !hasPrev;
+      next.disabled = !hasNext;
+      prevLabel.textContent = hasPrev ? sectionDefs[activeSectionIndex - 1].label : '';
+      nextLabel.textContent = hasNext ? sectionDefs[activeSectionIndex + 1].label : '';
+    }
+
+    function setTab(i) {
+      activeSectionIndex = i;
+      renderTabBar();
+      renderSection();
+      updateBottomNav();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goTab(dir) {
+      const next = activeSectionIndex + dir;
+      if (next >= 0 && next < sectionDefs.length) setTab(next);
+    }
+
+    function renderSection() {
+      const def = sectionDefs[activeSectionIndex];
+      const content = sections[def.id] || '';
+      const area = document.getElementById('content-area');
+
+      area.innerHTML = `
+        <div class="section-eyebrow">${def.label}</div>
+        <h2 class="section-title">${esc(def.sectionTitle || def.label)}</h2>
+        <div style="margin-top:32px;">${def.renderFn(content)}</div>
+      `;
+    }
+
+    // ── Load ─────────────────────────────────────────────────────────────────────
+
+    async function load() {
+      const res = await fetch(`/api/strategies/share/${token}`);
+
+      document.getElementById('loading').style.display = 'none';
+
+      if (!res.ok) {
+        document.body.innerHTML += `<div class="outer"><div class="center-msg"><h2>Strategy not found</h2><p>This link may be invalid or the strategy has been unpublished.</p></div></div>`;
+        return;
+      }
+
+      strategyData = await res.json();
+      sections = strategyData.sections ? JSON.parse(strategyData.sections) : {};
+      const activeSectionIds = strategyData.active_sections ? JSON.parse(strategyData.active_sections) : [];
+
+      sectionDefs = ALL_SECTION_DEFS.filter(s =>
+        activeSectionIds.includes(s.id) && sections[s.id] && sections[s.id].trim()
+      );
+
+      if (!sectionDefs.length) {
+        document.body.innerHTML += `<div class="outer"><div class="center-msg"><h2>No content yet</h2><p>This strategy is still being prepared.</p></div></div>`;
+        return;
+      }
+
+      document.title = `${strategyData.title} — Greenpoint Media`;
+
+      // Populate hero
+      const now = new Date();
+      const monthYear = now.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+      const clientPart = strategyData.client_name ? `${strategyData.client_name} · ` : '';
+      document.getElementById('hero-eyebrow').textContent = `${clientPart}${monthYear}`;
+      document.getElementById('hero-title').textContent = strategyData.title;
+      document.getElementById('topbar-badge').textContent = `Greenpoint × ${strategyData.client_name || strategyData.campaign_name || 'Client'}`;
+
+      if (strategyData.campaign_name) {
+        document.getElementById('hero-desc').textContent = strategyData.campaign_name;
+      } else {
+        document.getElementById('hero-desc').style.display = 'none';
+      }
+
+      document.getElementById('footer-text').textContent = `${strategyData.title}, ${monthYear}`;
+
+      document.getElementById('app-shell').style.display = 'block';
+      document.getElementById('bottom-nav').style.display = 'block';
+
+      renderTabBar();
+      renderSection();
+      updateBottomNav();
+    }
+
+    function esc(str) {
+      return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    load();
+  </script>
+</body>
+</html>

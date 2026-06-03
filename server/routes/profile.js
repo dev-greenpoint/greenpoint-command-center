@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { getDb, saveDb } = require('../db/database');
-const { TASK_TEMPLATES } = require('../db/taskTemplates');
 const { GENERAL_CHECKLIST, SERVICE_CHECKLIST } = require('../db/checklistTemplates');
 
 function rows(result) {
@@ -46,14 +45,8 @@ router.post('/:id/reset-tasks', async (req, res) => {
   const client = rows(clientResult)[0];
   const services = (client.services || '').split(',').map(s => s.trim()).filter(Boolean);
 
-  db.run('DELETE FROM tasks WHERE client_id=?', [req.params.id]);
   db.run('DELETE FROM onboarding_checklist WHERE client_id=?', [req.params.id]);
 
-  for (const service of services) {
-    for (const title of (TASK_TEMPLATES[service] || [])) {
-      db.run('INSERT INTO tasks (client_id, title, service, status) VALUES (?, ?, ?, ?)', [req.params.id, title, service, 'todo']);
-    }
-  }
   for (const item of GENERAL_CHECKLIST) {
     db.run('INSERT INTO onboarding_checklist (client_id, item, category) VALUES (?, ?, ?)', [req.params.id, item, 'general']);
   }

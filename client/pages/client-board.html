@@ -67,6 +67,15 @@
     .chip-completed { background:#1a1a2e;color:#8888cc; }
     .chip-onboarding{ background:#3d2a00;color:var(--warning); }
     .chip-inactive  { background:var(--surface-2);color:var(--text-muted); }
+    .chip-setup     { background:#0a1a2e;color:#5599dd; }
+
+    /* Campaign status dropdown */
+    .camp-status-wrap { position:relative; }
+    .camp-status-chip { cursor:pointer; }
+    .camp-status-drop { display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 6px 16px rgba(0,0,0,0.35);padding:4px;min-width:150px; }
+    .camp-status-drop.open { display:block; }
+    .camp-status-opt { padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap; }
+    .camp-status-opt:hover { background:var(--surface-2); }
 
     .section-label {
       font-size: 11px;
@@ -270,8 +279,15 @@
     const clientId = location.pathname.split('/')[2];
 
     const STAGES = {
-      PR: ['Strategy','Newsroom Research','Angle Development','Draft Release','Internal Review','Client Approval','Media List','Pitch Copy','Pitching','Follow-up','Coverage Tracking','Reporting'],
-      default: ['Planning','In Progress','Review','Wrap-up'],
+      'PR':                                       ['Campaign Prep','Campaign Development','Awaiting Approval','Set up Public Address','Pitch!','Campaign Complete'],
+      'PR Light':                                 ['Campaign Prep','Campaign Development','Awaiting Approval','Set up Public Address','Pitch!','Campaign Complete'],
+      'Social Media':                             ['Schedule Prep','Content Creation','Content Scheduling & Boosting'],
+      'Content':                                  ['Schedule Prep','Content Creation','Content Scheduling & Boosting'],
+      'Events & Partnerships':                    ['Event Deck & Budget','Event Planning','Event Day'],
+      'Awards':                                   ['Submission'],
+      'Paid Media':                               ['Planning','In Progress','Review','Wrap-up'],
+      'Design':                                   ['Briefing','Design','Revisions','Final Delivery'],
+      default:                                    ['Planning','In Progress','Review','Wrap-up'],
     };
 
     // Map client service names → campaign section labels
@@ -308,6 +324,7 @@
     };
 
     let campaigns = [];
+    let clientStrategies = [];
     let client = null;
     const selectedStages = {};
     const expandedCamps = new Set();
@@ -338,7 +355,7 @@
       if (!isOpen && drop) drop.classList.add('open');
     }
     document.addEventListener('click', () => {
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      document.querySelectorAll('.av-dropdown.open, .camp-status-drop.open').forEach(d => d.classList.remove('open'));
     });
 
     function progressClass(p) {
@@ -384,19 +401,20 @@
     // ── Main load ──────────────────────────────────────────────────────────────
 
     async function load() {
-      const [profileRes, campaignsRes] = await Promise.all([
+      const [profileRes, campaignsRes, strategiesRes] = await Promise.all([
         fetch(`/api/clients/${clientId}/profile`),
-        fetch(`/api/campaigns/client/${clientId}`)
+        fetch(`/api/campaigns/client/${clientId}`),
+        fetch(`/api/strategies/client/${clientId}`)
       ]);
       if (!profileRes.ok) {
         document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Client not found.</p>';
         return;
       }
       campaigns = campaignsRes.ok ? await campaignsRes.json() : [];
-      const { client: clientData, tasks, team, contacts } = await profileRes.json();
+      clientStrategies = strategiesRes.ok ? await strategiesRes.json() : [];
+      const { client: clientData, checklist, tasks, team, contacts } = await profileRes.json();
       client = clientData;
       clientTeam = (team || []).map(m => m.name).filter(Boolean);
-
       renderShell({ pageId: 'client-' + clientId, title: client.name });
 
       const statusClass = client.status === 'active' ? 'chip-active' : client.status === 'onboarding' ? 'chip-onboarding' : 'chip-inactive';
@@ -439,8 +457,18 @@
           <button class="tab-btn" onclick="switchTab('two', this)">Two</button>
         </div>
 
-        <!-- Tab One — Campaigns -->
+        <!-- Tab One — Strategy + Campaigns -->
         <div class="tab-panel active" id="tab-one">
+          <!-- Strategy card -->
+          <div class="card" style="margin-bottom:16px;" id="strategy-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Strategy</div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" id="strategy-new-btn" onclick="newStrategy()">+ New</button>
+            </div>
+            <div id="strategy-list">
+              <p style="font-size:13px;color:var(--text-dim);">Loading…</p>
+            </div>
+          </div>
           <div id="campaigns-sections"></div>
         </div>
 
@@ -547,6 +575,35 @@
               </div>
             </div>` : ''}
 
+            ${(() => {
+              const serviceItems = checklist.filter(i => (i.category || 'general') !== 'general');
+              if (!serviceItems.length) return '';
+              const grouped = {};
+              serviceItems.forEach(i => { if (!grouped[i.category]) grouped[i.category] = []; grouped[i.category].push(i); });
+              const totalSvc = serviceItems.length;
+              const doneSvc = serviceItems.filter(i => i.completed).length;
+              return `
+              <div class="card">
+                <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
+                  <span>Service Setup <span style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneSvc}/${totalSvc}</span></span>
+                  <span class="toggle-icon">▼</span>
+                </div>
+                <div class="brief-body collapsed" style="margin-top:12px;">
+                  ${Object.entries(grouped).map(([cat, items]) => `
+                    <div style="margin-bottom:12px;">
+                      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:4px 0 6px;">${cat}</div>
+                      ${items.map(item => `
+                        <label style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;${item.completed ? 'color:var(--text-muted);text-decoration:line-through;' : ''}">
+                          <input type="checkbox" data-svc-id="${item.id}" ${item.completed ? 'checked' : ''} style="width:13px;height:13px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;" onchange="toggleServiceItem(${item.id}, this.checked, this)">
+                          ${item.item}
+                        </label>
+                      `).join('')}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>`;
+            })()}
+
             <div class="card">
               <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
                 <span>Tasks <span style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneTasks}/${totalTasks} done</span></span>
@@ -606,6 +663,7 @@
       `;
 
       renderCampaigns();
+      renderStrategyCard(clientStrategies);
     }
 
     function switchTab(name, btn) {
@@ -668,8 +726,16 @@
       const currentStage = c.current_stage || 0;
       const selStage = selectedStages[c.id] !== undefined ? selectedStages[c.id] : currentStage;
       const isExpanded = expandedCamps.has(c.id);
-      const chipClass = { active: 'chip-active', draft: 'chip-draft', paused: 'chip-paused', completed: 'chip-completed' }[c.status] || 'chip-draft';
-      const statusLabel = c.status.charAt(0).toUpperCase() + c.status.slice(1);
+      const CAMP_STATUSES = [
+        { value: 'to_be_set_up', label: 'To Be Set Up', chip: 'chip-setup' },
+        { value: 'draft',        label: 'Draft',         chip: 'chip-draft' },
+        { value: 'active',       label: 'Active',        chip: 'chip-active' },
+        { value: 'paused',       label: 'Paused',        chip: 'chip-paused' },
+        { value: 'completed',    label: 'Completed',     chip: 'chip-completed' },
+      ];
+      const statusDef = CAMP_STATUSES.find(s => s.value === c.status) || CAMP_STATUSES[1];
+      const chipClass = statusDef.chip;
+      const statusLabel = statusDef.label;
       const currentStageName = stages[currentStage] || 'Complete';
 
       const stageListHtml = stages.map((s, i) => {
@@ -731,7 +797,12 @@
               ${c.type ? `<div style="font-size:11px;color:var(--text-muted);margin-top:1px;">${c.type} · ${currentStageName}</div>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <span class="status-chip ${chipClass}">${statusLabel}</span>
+              <div class="camp-status-wrap" onclick="event.stopPropagation()">
+                <span class="status-chip ${chipClass} camp-status-chip" onclick="toggleCampStatusDrop(${c.id}, this)">${statusLabel}</span>
+                <div class="camp-status-drop" id="camp-status-drop-${c.id}">
+                  ${CAMP_STATUSES.map(s => `<div class="camp-status-opt" onclick="setCampStatus(${c.id}, '${s.value}')">${s.label}</div>`).join('')}
+                </div>
+              </div>
               <span class="camp-item-arrow" style="font-size:11px;color:var(--text-dim);">${isExpanded ? '▲' : '▼'}</span>
             </div>
           </div>
@@ -972,6 +1043,117 @@
       const type = document.getElementById('cd-type').value;
       window.location.href = type === 'Social Media' ? `/social/${id}` : `/campaigns/${id}`;
     });
+
+    // ── Strategy card ──────────────────────────────────────────────────────────
+
+    function strategyChip(status) {
+      const map = {
+        draft:              'background:var(--surface-2);color:var(--text-muted);',
+        awaiting_approval:  'background:#3d2a00;color:#f5a623;',
+        approved:           'background:#0d3323;color:#3ecf6e;',
+      };
+      const labels = { draft: 'Draft', awaiting_approval: 'Awaiting Approval', approved: 'Approved' };
+      return { style: map[status] || map.draft, label: labels[status] || status };
+    }
+
+    function renderStrategyCard(strategies) {
+      const el = document.getElementById('strategy-list');
+      const newBtn = document.getElementById('strategy-new-btn');
+      if (!el) return;
+
+      // Hide "+ New" once a strategy exists
+      if (newBtn) newBtn.style.display = strategies.length ? 'none' : '';
+
+      if (!strategies.length) {
+        el.innerHTML = '<p style="font-size:13px;color:var(--text-dim);">No strategy yet.</p>';
+        return;
+      }
+
+      el.innerHTML = strategies.map(s => {
+        const { style, label } = strategyChip(s.status);
+        const date = s.updated_at ? new Date(s.updated_at).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '';
+        const hasLink = s.status !== 'draft' && s.share_token;
+        return `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.title}</div>
+              ${date ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Updated ${date}</div>` : ''}
+            </div>
+            <span style="${style}font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:100px;white-space:nowrap;">${label}</span>
+            ${hasLink ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;white-space:nowrap;" onclick="viewStrategy('${s.share_token}')">View</button>` : ''}
+            ${hasLink ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;" onclick="copyStrategyLink('${s.share_token}', this)" title="Copy link">⎘</button>` : ''}
+            <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;" onclick="window.location='/strategy/${s.id}'">Edit</button>
+          </div>`;
+      }).join('');
+    }
+
+    function viewStrategy(token) {
+      window.open(`/s/${token}`, '_blank');
+    }
+
+    async function copyStrategyLink(token, btn) {
+      const link = `${location.origin}/s/${token}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        const orig = btn.textContent;
+        btn.textContent = '✓';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      } catch {
+        prompt('Copy this link:', link);
+      }
+    }
+
+    async function newStrategy() {
+      const btn = document.querySelector('#strategy-card .btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+      await fetch('/api/strategies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, title: 'Untitled Strategy' })
+      });
+      const res = await fetch(`/api/strategies/client/${clientId}`);
+      clientStrategies = res.ok ? await res.json() : [];
+      renderStrategyCard(clientStrategies);
+    }
+
+    function toggleCampStatusDrop(campId, chipEl) {
+      const drop = document.getElementById(`camp-status-drop-${campId}`);
+      const isOpen = drop.classList.contains('open');
+      document.querySelectorAll('.camp-status-drop.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen) drop.classList.add('open');
+    }
+    const CAMP_STATUS_MAP = [
+      { value: 'to_be_set_up', label: 'To Be Set Up', chip: 'chip-setup' },
+      { value: 'draft',        label: 'Draft',         chip: 'chip-draft' },
+      { value: 'active',       label: 'Active',        chip: 'chip-active' },
+      { value: 'paused',       label: 'Paused',        chip: 'chip-paused' },
+      { value: 'completed',    label: 'Completed',     chip: 'chip-completed' },
+    ];
+
+    async function setCampStatus(campId, status) {
+      document.querySelectorAll('.camp-status-drop.open').forEach(d => d.classList.remove('open'));
+      await fetch(`/api/campaigns/${campId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const camp = campaigns.find(c => c.id === campId);
+      if (camp) camp.status = status;
+      renderCampaigns();
+    }
+
+    async function toggleServiceItem(itemId, completed, el) {
+      await fetch(`/api/clients/${clientId}/checklist/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      const label = el.closest('label');
+      if (label) {
+        label.style.color = completed ? 'var(--text-muted)' : '';
+        label.style.textDecoration = completed ? 'line-through' : '';
+      }
+    }
 
     load();
   </script>

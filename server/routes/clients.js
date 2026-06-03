@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { getDb, saveDb } = require('../db/database');
-const { TASK_TEMPLATES } = require('../db/taskTemplates');
 const { GENERAL_CHECKLIST, SERVICE_CHECKLIST } = require('../db/checklistTemplates');
 const { runResearch } = require('../db/runResearch');
 
@@ -39,20 +38,6 @@ router.post('/', async (req, res) => {
 
   const idResult = db.exec('SELECT last_insert_rowid() as id');
   const clientId = idResult[0].values[0][0];
-
-  // Auto-generate placeholder tasks from selected services
-  if (services) {
-    const selectedServices = services.split(',').map(s => s.trim()).filter(Boolean);
-    for (const service of selectedServices) {
-      const templates = TASK_TEMPLATES[service] || [];
-      for (const title of templates) {
-        db.run(
-          `INSERT INTO tasks (client_id, title, service, status) VALUES (?, ?, ?, 'todo')`,
-          [clientId, title, service]
-        );
-      }
-    }
-  }
 
   // Auto-generate onboarding checklist
   for (const item of GENERAL_CHECKLIST) {

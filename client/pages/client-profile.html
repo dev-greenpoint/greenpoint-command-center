@@ -110,6 +110,16 @@
   <script>
     const clientId = location.pathname.split('/').pop();
 
+    function avatarColor(name) {
+      const palette = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
+      let h = 0;
+      for (let i = 0; i < (name||'').length; i++) h = (name.charCodeAt(i) + ((h << 5) - h)) | 0;
+      return palette[Math.abs(h) % palette.length];
+    }
+    function initials(name) {
+      return (name||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    }
+
     function calcEndDate(startDate, months) {
       if (!startDate || !months) return '';
       const d = new Date(startDate);
@@ -132,17 +142,11 @@
 
       renderShell({ pageId: 'clients', title: client.name });
 
-      const completed = checklist.filter(i => i.completed).length;
-      const total = checklist.length;
-      const pct = total ? Math.round((completed / total) * 100) : 0;
-
-      // Group checklist by category
-      const categories = {};
-      checklist.forEach(item => {
-        const cat = item.category || 'general';
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(item);
-      });
+      // Only show general onboarding items on this page
+      const onboardingItems = checklist.filter(i => (i.category || 'general') === 'general');
+      const completed = onboardingItems.filter(i => i.completed).length;
+      const total = onboardingItems.length;
+      const pct = total ? Math.round((completed / total) * 100) : 100;
 
       const statusClass = client.status === 'active' ? 'chip-active' : client.status === 'onboarding' ? 'chip-onboarding' : 'chip-inactive';
       const statusLabel = client.status.charAt(0).toUpperCase() + client.status.slice(1);
@@ -160,104 +164,103 @@
 
         <div class="profile-grid">
 
-          <!-- Left: Services + Details + Research + Tasks -->
+          <!-- Left column -->
           <div style="display:flex;flex-direction:column;gap:16px;">
 
-            ${client.services ? `
-            <div class="card">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Services in Scope</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                ${client.services.split(',').map(s => s.trim()).filter(Boolean).map(s => `
-                  <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:5px 12px;font-size:13px;font-weight:500;">${s}</span>
-                `).join('')}
-              </div>
-            </div>` : ''}
-
-            ${team.length ? `
-            <div class="card">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Team</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                ${team.map(m => `
-                  <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;">
-                    <div style="font-size:13px;font-weight:500;">${m.name}</div>
-                    ${m.role ? `<div style="font-size:11px;color:var(--text-muted);">${m.role}</div>` : ''}
-                  </div>
-                `).join('')}
-              </div>
-            </div>` : ''}
-
-            ${contacts.length ? `
-            <div class="card">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Client Contacts</div>
-              <div style="display:flex;flex-direction:column;gap:10px;">
-                ${contacts.map(c => `
-                  <div style="display:flex;flex-direction:column;gap:2px;">
-                    <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
-                    ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
-                    ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
-                  </div>
-                `).join('<hr style="border:none;border-top:1px solid var(--border);">')}
-              </div>
-            </div>` : ''}
-
-            <div class="card">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Client Details</div>
-              ${client.website ? `<div class="detail-row"><span class="detail-label">Website</span><a href="${client.website}" target="_blank" style="color:var(--accent);">${client.website}</a></div>` : ''}
-              ${client.contact_name ? `<div class="detail-row"><span class="detail-label">Contact</span>${client.contact_name}</div>` : ''}
-              ${client.contact_email ? `<div class="detail-row"><span class="detail-label">Email</span>${client.contact_email}</div>` : ''}
-              ${client.contact_phone ? `<div class="detail-row"><span class="detail-label">Phone</span>${client.contact_phone}</div>` : ''}
-              ${client.start_date ? `<div class="detail-row"><span class="detail-label">Start Date</span>${client.start_date}</div>` : ''}
-              ${client.campaign_length ? `<div class="detail-row"><span class="detail-label">Campaign Length</span>${client.campaign_length} month${client.campaign_length > 1 ? 's' : ''}</div>` : ''}
-              <div class="detail-row">
-                <span class="detail-label">End Date</span>
-                <input type="date" id="end-date-input" value="${client.end_date || calcEndDate(client.start_date, client.campaign_length)}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;padding:0;cursor:pointer;" onchange="saveEndDate(this.value)">
-              </div>
-              ${client.notes ? `<div class="detail-row"><span class="detail-label">Notes</span>${client.notes}</div>` : ''}
-            </div>
-
+            <!-- Research -->
             ${client.research ? `
             <div class="card">
               <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px;">Research</div>
               <p style="font-size:13px;line-height:1.7;color:var(--text);">${client.research}</p>
             </div>` : ''}
 
-            ${tasks.length ? `
-            <div class="card">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Tasks (${tasks.length})</div>
-              ${tasks.map(t => `
-                <div class="task-item">
-                  <span style="font-size:11px;color:var(--text-dim);width:80px;flex-shrink:0;">${t.service || ''}</span>
-                  <span>${t.title}</span>
-                  <select data-task-id="${t.id}" onchange="updateTask(${t.id}, this.value)">
-                    <option value="todo" ${t.status==='todo'?'selected':''}>To Do</option>
-                    <option value="in_progress" ${t.status==='in_progress'?'selected':''}>In Progress</option>
-                    <option value="done" ${t.status==='done'?'selected':''}>Done</option>
-                  </select>
+            <!-- Services + Details side by side -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+
+              <!-- Services in Scope -->
+              <div class="card">
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Services in Scope</div>
+                ${client.services ? `
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  ${client.services.split(',').map(s => s.trim()).filter(Boolean).map(s => `
+                    <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:12px;font-weight:500;">${s}</span>
+                  `).join('')}
+                </div>` : '<p style="font-size:13px;color:var(--text-dim);">None selected</p>'}
+                ${client.platforms ? `
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Platforms</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                    ${client.platforms.split(',').map(p => p.trim()).filter(Boolean).map(p => `
+                      <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 9px;font-size:11px;color:var(--text-muted);">${p}</span>
+                    `).join('')}
+                  </div>
+                </div>` : ''}
+              </div>
+
+              <!-- Client Details -->
+              <div class="card">
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Client Details</div>
+                ${client.website ? `<div class="detail-row"><span class="detail-label">Website</span><a href="${client.website}" target="_blank" style="color:var(--accent);font-size:13px;">${client.website}</a></div>` : ''}
+                ${client.monthly_hours ? `<div class="detail-row"><span class="detail-label">Monthly Hours</span>${client.monthly_hours} hrs</div>` : ''}
+                ${client.start_date ? `<div class="detail-row"><span class="detail-label">Start Date</span>${client.start_date}</div>` : ''}
+                ${client.campaign_length ? `<div class="detail-row"><span class="detail-label">Campaign Length</span>${client.campaign_length} month${client.campaign_length > 1 ? 's' : ''}</div>` : ''}
+                <div class="detail-row">
+                  <span class="detail-label">End Date</span>
+                  <input type="date" id="end-date-input" value="${client.end_date || calcEndDate(client.start_date, client.campaign_length)}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;padding:0;cursor:pointer;" onchange="saveEndDate(this.value)">
                 </div>
-              `).join('')}
-            </div>` : ''}
+                ${contacts.length ? `
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Contacts</div>
+                  ${contacts.map(c => `
+                    <div style="margin-bottom:8px;">
+                      <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
+                      ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
+                      ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
+                    </div>
+                  `).join('')}
+                </div>` : ''}
+                ${client.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted);line-height:1.6;">${client.notes}</div>` : ''}
+              </div>
+
+            </div>
 
           </div>
 
-          <!-- Right: Onboarding Checklist -->
-          <div class="card" style="position:sticky;top:24px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Onboarding</div>
-              <span style="font-size:12px;color:var(--text-muted);">${completed}/${total}</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:${pct}%"></div></div>
+          <!-- Right: Onboarding Checklist + Team -->
+          <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:24px;align-self:start;">
 
-            <div id="checklist">
-              ${Object.entries(categories).map(([cat, items]) => `
-                ${cat !== 'general' ? `<div class="category-label">${cat}</div>` : ''}
-                ${items.map(item => `
+            <div class="card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Onboarding</div>
+                <span style="font-size:12px;color:var(--text-muted);">${completed}/${total}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:${pct}%"></div></div>
+              <div id="checklist">
+                ${onboardingItems.map(item => `
                   <label class="checklist-item ${item.completed ? 'done' : ''}">
                     <input type="checkbox" data-id="${item.id}" ${item.completed ? 'checked' : ''} onchange="toggleItem(${item.id}, this.checked, this)">
                     ${item.item}
                   </label>
                 `).join('')}
-              `).join('')}
+              </div>
             </div>
+
+            ${team.length ? `
+            <div class="card">
+              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Account Team</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                ${team.map(m => `
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor(m.name)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${initials(m.name)}</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;">${m.name}</div>
+                      ${m.role ? `<div style="font-size:11px;color:var(--text-muted);">${m.role}</div>` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>` : ''}
+
           </div>
 
         </div>
@@ -291,14 +294,6 @@
 
       const completeBtn = document.getElementById('complete-btn');
       if (completeBtn) completeBtn.disabled = pct < 100;
-    }
-
-    async function updateTask(taskId, status) {
-      await fetch(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
     }
 
     load();
