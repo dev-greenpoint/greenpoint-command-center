@@ -1,3 +1,4 @@
 node_modules/
 .env
 server/db/greenpoint.db
+client/uploads/
