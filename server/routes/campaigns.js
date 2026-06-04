@@ -56,8 +56,7 @@ router.post('/', async (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [client_id || null, name, status || 'draft', type || null, start_date || null, end_date || null, budget || null, notes || null, scope ? JSON.stringify(scope) : null, setup ? JSON.stringify(setup) : null]
   );
-  const idResult = db.exec('SELECT last_insert_rowid() as id');
-  const id = Number(idResult[0].values[0][0]);
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
 
   const taskTemplate = CAMPAIGN_TASK_TEMPLATES[type] || null;
   if (taskTemplate) {
@@ -120,8 +119,7 @@ router.post('/:id/tasks', async (req, res) => {
     `INSERT INTO campaign_tasks (campaign_id, stage_index, title, assignee, due_date) VALUES (?, ?, ?, ?, ?)`,
     [req.params.id, stage_index, title, assignee || null, due_date || null]
   );
-  const idResult = db.exec('SELECT last_insert_rowid() as id');
-  const id = Number(idResult[0].values[0][0]);
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   saveDb();
   res.status(201).json({ id });
 });
@@ -205,6 +203,8 @@ router.patch('/:id/social-admin', async (req, res) => {
 // Update sked/slack links
 router.patch('/:id/links', async (req, res) => {
   const db = await getDb();
+  const existing = db.exec('SELECT id FROM campaigns WHERE id=?', [req.params.id]);
+  if (!existing.length || !existing[0].values.length) return res.status(404).json({ error: 'Not found' });
   const { sked_link, slack_channel } = req.body;
   db.run('UPDATE campaigns SET sked_link=?, slack_channel=? WHERE id=?', [sked_link||null, slack_channel||null, req.params.id]);
   saveDb();
@@ -230,8 +230,7 @@ router.post('/:id/posts', async (req, res) => {
     'INSERT INTO social_posts (campaign_id, month, platform, format, caption, title, status, assignee, post_date, content_pillar, sked_link, published_link, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [req.params.id, month, platform, format || 'Post', caption || null, title || null, status || 'draft', assignee || null, post_date || null, content_pillar || null, sked_link || null, published_link || null, notes || null]
   );
-  const idResult = db.exec('SELECT last_insert_rowid() as id');
-  const id = Number(idResult[0].values[0][0]);
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   saveDb();
   res.status(201).json({ id });
 });

@@ -20,8 +20,7 @@ router.get('/client/:clientId', async (req, res) => {
 
   if (!hub) {
     db.run('INSERT INTO media_hubs (client_id, year) VALUES (?, ?)', [clientId, year]);
-    const idRes = db.exec('SELECT last_insert_rowid() as id');
-    const newId = Number(idRes[0].values[0][0]);
+    const newId = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
     saveDb();
     hub = rows(db.exec('SELECT * FROM media_hubs WHERE id=?', [newId]))[0];
   }
@@ -150,9 +149,8 @@ router.post('/:id/coverage', async (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [req.params.id, month, date||null, campaign_id||null, campaign_name||null, publication||null, author||null, headline||null, page_num||null, tone||'Neutral', stakeholder_mentions?1:0, images_included?1:0, ctas?1:0, circulation||0, hit!==false?1:0, asr||0, media_type||'Online']
   );
-  const idRes = db.exec('SELECT last_insert_rowid() as id');
   saveDb();
-  res.status(201).json({ id: Number(idRes[0].values[0][0]) });
+  res.status(201).json({ id: Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id) });
 });
 
 // Update coverage entry
@@ -190,9 +188,8 @@ router.post('/:id/top-coverage', async (req, res) => {
     `INSERT INTO media_top_coverage (hub_id, month, title, description, publisher, media_type, audience, image_url, article_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [req.params.id, month, title||null, description||null, publisher||null, media_type||null, audience||null, image_url||null, article_url||null]
   );
-  const idRes = db.exec('SELECT last_insert_rowid() as id');
   saveDb();
-  res.status(201).json({ id: Number(idRes[0].values[0][0]) });
+  res.status(201).json({ id: Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id) });
 });
 
 // Update top coverage card

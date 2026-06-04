@@ -56,8 +56,7 @@ router.post('/', async (req, res) => {
     [name, industry || null, status || 'onboarding', account_lead || null, website || null, contact_name || null, contact_email || null, contact_phone || null, services || null, platforms || null, start_date || null, campaign_length || null, end_date || null, monthly_hours || null, notes || null, code]
   );
 
-  const idResult = db.exec('SELECT last_insert_rowid() as id');
-  const clientId = Number(idResult[0].values[0][0]);
+  const clientId = Number(rowsFromResult(db.exec('SELECT last_insert_rowid() as id'))[0].id);
 
   // Seed 7-stage onboarding tasks (parent row per stage + subtasks)
   const selectedServices = services ? services.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -72,8 +71,7 @@ router.post('/', async (req, res) => {
        VALUES (?, ?, 'onboarding', ?, ?, 'Onboarding', 'Medium', 'Not Assigned', NULL)`,
       [clientId, parentName, stage.index, stage.name]
     );
-    const parentIdResult = db.exec('SELECT last_insert_rowid() as id');
-    const parentId = Number(parentIdResult[0].values[0][0]);
+    const parentId = Number(rowsFromResult(db.exec('SELECT last_insert_rowid() as id'))[0].id);
 
     // Subtasks
     for (const task of stage.tasks) {
@@ -148,6 +146,13 @@ router.delete('/:id', async (req, res) => {
   db.run('DELETE FROM tasks WHERE client_id=?', [id]);
   db.run('DELETE FROM onboarding_checklist WHERE client_id=?', [id]);
   db.run('DELETE FROM strategies WHERE client_id=?', [id]);
+  const hubIds = rowsFromResult(db.exec('SELECT id FROM media_hubs WHERE client_id=?', [id])).map(r => r.id);
+  hubIds.forEach(hid => {
+    db.run('DELETE FROM media_coverage WHERE hub_id=?', [hid]);
+    db.run('DELETE FROM media_top_coverage WHERE hub_id=?', [hid]);
+    db.run('DELETE FROM media_reports WHERE hub_id=?', [hid]);
+  });
+  db.run('DELETE FROM media_hubs WHERE client_id=?', [id]);
   db.run('DELETE FROM client_contacts WHERE client_id=?', [id]);
   db.run('DELETE FROM client_team WHERE client_id=?', [id]);
   db.run('DELETE FROM clients WHERE id=?', [id]);

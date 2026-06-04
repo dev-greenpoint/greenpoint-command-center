@@ -118,8 +118,7 @@ router.post('/', async (req, res) => {
     'INSERT INTO strategies (client_id, title, active_sections) VALUES (?, ?, ?)',
     [client_id, title || 'Untitled Strategy', JSON.stringify(activeSections)]
   );
-  const idRes = db.exec('SELECT last_insert_rowid() as id');
-  const id = Number(idRes[0].values[0][0]);
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   saveDb();
   res.json({ id });
 });

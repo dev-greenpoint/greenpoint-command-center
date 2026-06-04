@@ -13,6 +13,8 @@ router.post('/', async (req, res) => {
   const db = await getDb();
   const { client_id, title, service, assignee, due_date, estimated_time, approver, task_type, priority, progress, notes } = req.body;
   if (!client_id || !title) return res.status(400).json({ error: 'client_id and title required' });
+  if (due_date && isNaN(Date.parse(due_date))) return res.status(400).json({ error: 'Invalid due_date format' });
+  if (estimated_time && isNaN(Number(estimated_time))) return res.status(400).json({ error: 'Invalid estimated_time' });
   db.run(
     `INSERT INTO tasks (client_id, title, service, assignee, due_date, estimated_time, approver, task_type, priority, progress, notes)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

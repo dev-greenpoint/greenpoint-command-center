@@ -739,9 +739,15 @@
     renderContent();
   }
 
-  function copyShareLink() {
+  async function copyShareLink() {
     const inp = document.getElementById('share-link-input');
-    if (inp) { inp.select(); document.execCommand('copy'); }
+    if (!inp) return;
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(inp.value);
+    } else {
+      inp.select();
+      document.execCommand('copy');
+    }
   }
 
   load();

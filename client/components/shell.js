@@ -25,6 +25,7 @@ function renderShell({ pageId, title }) {
   const header  = document.getElementById('header');
 
   const teamCollapsed = localStorage.getItem('sidebar-team-collapsed') === 'true';
+  const typesCollapsed = localStorage.getItem('sidebar-types-collapsed') === 'true';
 
   // Sidebar
   sidebar.innerHTML = `
@@ -45,9 +46,9 @@ function renderShell({ pageId, title }) {
 
       <div class="nav-section-label nav-section-toggle" id="types-section-label" style="margin-top:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding-right:12px;" onclick="toggleSidebarTypes()">
         Campaign Types
-        <span id="types-chevron" style="font-size:9px;color:var(--text-dim);transition:transform 0.2s;">▼</span>
+        <span id="types-chevron" style="font-size:9px;color:var(--text-dim);transition:transform 0.2s;${typesCollapsed ? 'transform:rotate(-90deg)' : ''}">▼</span>
       </div>
-      <div id="sidebar-types">
+      <div id="sidebar-types" style="${typesCollapsed ? 'display:none' : ''}">
         ${CAMPAIGN_TYPE_STATUS.map(t => {
           const dot = t.status === 'built' ? `<span style="color:var(--success);font-size:9px;">●</span>`
                     : t.status === 'partial' ? `<span style="color:var(--warning);font-size:9px;">●</span>`
@@ -115,6 +116,7 @@ function renderShell({ pageId, title }) {
     const isCollapsed = el.style.display === 'none';
     el.style.display = isCollapsed ? '' : 'none';
     chevron.style.transform = isCollapsed ? '' : 'rotate(-90deg)';
+    localStorage.setItem('sidebar-types-collapsed', isCollapsed ? 'false' : 'true');
   };
 
   // Team section collapse toggle
