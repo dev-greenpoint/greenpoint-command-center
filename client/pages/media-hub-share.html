@@ -91,10 +91,7 @@
   }
 
   async function load() {
-    const [hubRes, overviewRes] = await Promise.all([
-      fetch(`/api/media-hubs/share/${token}`).then(r => r.json()),
-      fetch(`/api/media-hubs/share/${token}`).then(r => r.json()),
-    ]);
+    const hubRes = await fetch(`/api/media-hubs/share/${token}`).then(r => r.json());
 
     if (hubRes.error) {
       document.getElementById('page-content').innerHTML = `<p style="color:var(--danger);">This hub is not available.</p>`;
@@ -102,7 +99,7 @@
     }
 
     hub = hubRes.hub;
-    overviewData = await fetch(`/api/media-hubs/${hub.id}/overview`).then(r => r.json());
+    overviewData = await fetch(`/api/media-hubs/share/${token}/overview`).then(r => r.json());
     months = buildMonthRange(null); // will use coverage months
     // derive months from overview data
     const covMonths = overviewData.by_month?.map(r => r.month) || [];

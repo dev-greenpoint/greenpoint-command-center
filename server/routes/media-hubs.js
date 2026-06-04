@@ -102,9 +102,37 @@ router.get('/share/:token', async (req, res) => {
   res.json(result);
 });
 
+// Overview totals via share token (public — validates token before returning data)
+router.get('/share/:token/overview', async (req, res) => {
+  const db = await getDb();
+  const hub = rows(db.exec('SELECT id FROM media_hubs WHERE share_token=?', [req.params.token]))[0];
+  if (!hub) return res.status(404).json({ error: 'Not found' });
+  const id = hub.id;
+
+  const totals = rows(db.exec(
+    `SELECT COUNT(*) as total_hits, COALESCE(SUM(asr),0) as total_asr FROM media_coverage WHERE hub_id=? AND hit=1`,
+    [id]
+  ))[0];
+  const byType = rows(db.exec(
+    `SELECT media_type, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY media_type ORDER BY count DESC`,
+    [id]
+  ));
+  const byMonth = rows(db.exec(
+    `SELECT month, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY month ORDER BY month ASC`,
+    [id]
+  ));
+  const byCampaign = rows(db.exec(
+    `SELECT campaign_name, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 AND campaign_name IS NOT NULL GROUP BY campaign_name ORDER BY count DESC`,
+    [id]
+  ));
+  res.json({ totals, by_type: byType, by_month: byMonth, by_campaign: byCampaign });
+});
+
 // Generate / regenerate share token
 router.post('/:id/share', async (req, res) => {
   const db = await getDb();
+  const hub = rows(db.exec('SELECT id FROM media_hubs WHERE id=?', [req.params.id]))[0];
+  if (!hub) return res.status(404).json({ error: 'Not found' });
   const token = crypto.randomBytes(16).toString('hex');
   db.run('UPDATE media_hubs SET share_token=? WHERE id=?', [token, req.params.id]);
   saveDb();
