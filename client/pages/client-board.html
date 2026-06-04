@@ -567,13 +567,12 @@
     }
 
     function avDropdownHtml(dropId, callPrefix) {
-      // callPrefix e.g. "selectClientAssignee(5," or "selectCampAssignee(7,5,"
-      return `<div class="av-dropdown" id="${dropId}">
+      return `<div class="av-dropdown" id="${escAttr(dropId)}">
         <div class="av-option" onclick="event.stopPropagation();${callPrefix}null)">
           <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
         </div>
-        ${clientTeam.map(name => `<div class="av-option" onclick="event.stopPropagation();${callPrefix}'${name.replace(/'/g,"\\'")}')">
-          ${avatarHtml(name)} ${name}</div>`).join('')}
+        ${clientTeam.map(name => `<div class="av-option" onclick="event.stopPropagation();${callPrefix}${JSON.stringify(name)})">
+          ${avatarHtml(name)} ${escHtml(name)}</div>`).join('')}
       </div>`;
     }
     async function selectClientAssignee(taskId, name) {
@@ -653,7 +652,7 @@
       // 4 — Media Hub
       const hasPR = (client.services||'').split(',').map(s=>s.trim()).some(s=>s==='PR'||s==='PR Light');
       const mediaCard = quickCard('Media Hub',
-        hasPR ? `${client.code||client.name} Coverage` : '<span style="color:var(--text-dim);">Not available</span>',
+        hasPR ? `${escHtml(client.code||client.name)} Coverage` : '<span style="color:var(--text-dim);">Not available</span>',
         hasPR ? new Date().getFullYear() + ' media coverage' : 'Add PR service to enable',
         '', hasPR ? `<a href="/media-hub/${clientId}" style="font-size:11px;color:var(--accent);font-weight:500;">Open →</a>` : '');
 
@@ -734,10 +733,10 @@
       document.getElementById('page-content').innerHTML = `
         <div class="board-header">
           <h1 style="font-size:20px;font-weight:700;">
-            ${client.code ? `<span style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:.08em;margin-right:6px;">${client.code}</span><span style="color:var(--text-dim);font-weight:400;margin-right:6px;">—</span>` : ''}${client.name}
+            ${client.code ? `<span style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:.08em;margin-right:6px;">${escHtml(client.code)}</span><span style="color:var(--text-dim);font-weight:400;margin-right:6px;">—</span>` : ''}${escHtml(client.name)}
           </h1>
           <span class="status-chip ${statusClass}">${statusLabel}</span>
-          ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${client.industry}</span>` : ''}
+          ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${escHtml(client.industry)}</span>` : ''}
           <div style="flex:1;"></div>
           ${client.status === 'onboarding' ? `<button class="btn btn-primary" style="font-size:12px;" id="complete-onboarding-btn" onclick="completeOnboarding()">Complete Onboarding</button>` : ''}
           <a href="/clients/${clientId}" class="btn btn-ghost" style="font-size:12px;">Edit Profile</a>
@@ -1109,10 +1108,10 @@
       const item = onboardingData?.items.find(i => i.id === itemId);
       if (item) {
         item[field] = sanitized || null;
-        if (field === 'progress' && sanitized === 'Complete') item.completed = 1;
+        if (field === 'progress') item.completed = sanitized === 'Complete' ? 1 : 0;
       }
       const payload = { [field]: sanitized || null };
-      if (field === 'progress' && sanitized === 'Complete') payload.completed = true;
+      if (field === 'progress') payload.completed = sanitized === 'Complete';
       await fetch(`/api/onboarding/${clientId}/items/${itemId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1332,17 +1331,23 @@
           else if (field === 'assignee' || field === 'approver') span.innerHTML = assigneeDisplay(sanitized);
           else span.innerHTML = escHtml(sanitized) || '<span style=color:var(--text-dim)>—</span>';
         }
-        if (field === 'progress' && sanitized === 'Complete') {
-          row.classList.add('done');
+        if (field === 'progress') {
+          const isDone = sanitized === 'Complete';
+          row.classList.toggle('done', isDone);
           const cb = row.querySelector('input[type=checkbox]');
-          if (cb) cb.checked = true;
+          if (cb) cb.checked = isDone;
         }
       }
       const item = onboardingData?.items.find(i => i.id === taskId);
-      if (item) item[field] = sanitized || null;
+      if (item) {
+        item[field] = sanitized || null;
+        if (field === 'progress') item.completed = sanitized === 'Complete' ? 1 : 0;
+      }
+      const body = { [field]: sanitized || null };
+      if (field === 'progress') body.completed = sanitized === 'Complete';
       await fetch(`/api/onboarding/${clientId}/items/${taskId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: sanitized || null })
+        body: JSON.stringify(body)
       });
     }
 
@@ -1711,10 +1716,15 @@
       }
       const tasks = campTasksData[campId] || [];
       const task = tasks.find(t => t.id === taskId);
-      if (task) task[field] = sanitized || null;
+      if (task) {
+        task[field] = sanitized || null;
+        if (field === 'progress') task.done = sanitized === 'Complete' ? 1 : 0;
+      }
+      const campBody = { [field]: sanitized || null };
+      if (field === 'progress') campBody.done = sanitized === 'Complete' ? 1 : 0;
       await fetch(`/api/campaigns/${campId}/tasks/${taskId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: sanitized || null })
+        body: JSON.stringify(campBody)
       });
     }
 
@@ -1729,15 +1739,13 @@
         if (span) {
           if (field === 'progress') {
             span.innerHTML = `<span class="progress-chip ${progressClass(sanitized)}">${escHtml(sanitized||'Not Assigned')}</span>`;
+            const isDone = sanitized === 'Complete';
+            row.classList.toggle('done', isDone);
+            const cb = row.querySelector('input[type=checkbox]');
+            if (cb) cb.checked = isDone;
             const t = clientTasksAll.find(x => x.id === taskId);
-            if (t) t.progress = sanitized;
-            if (sanitized === 'Complete') {
-              row.classList.add('done');
-              const cb = row.querySelector('input[type=checkbox]');
-              if (cb) cb.checked = true;
-              if (t) t.status = 'done';
-              updateClientTaskCount();
-            }
+            if (t) { t.progress = sanitized; t.status = isDone ? 'done' : 'todo'; }
+            updateClientTaskCount();
           } else if (field === 'assignee' || field === 'approver') {
             span.innerHTML = assigneeDisplay(sanitized);
           } else {
@@ -1745,9 +1753,11 @@
           }
         }
       }
+      const body = { [field]: sanitized || null };
+      if (field === 'progress') body.status = sanitized === 'Complete' ? 'done' : 'todo';
       await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: sanitized || null })
+        body: JSON.stringify(body)
       });
     }
 
@@ -2080,9 +2090,10 @@
       card.style.display = '';
       wrap.innerHTML = '<p style="font-size:13px;color:var(--text-dim);">Loading…</p>';
 
-      const hub = await fetch(`/api/media-hubs/client/${clientId}`).then(r => r.json());
+      const hubRes = await fetch(`/api/media-hubs/client/${clientId}`);
+      const hub = hubRes.ok ? await hubRes.json() : {};
       const year = hub.year || new Date().getFullYear();
-      const name = `${client.name}_MediaCoverage_${year}`;
+      const name = `${escHtml(client.name)}_MediaCoverage_${year}`;
 
       wrap.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
