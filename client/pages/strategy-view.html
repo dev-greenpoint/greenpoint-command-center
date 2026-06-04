@@ -548,6 +548,9 @@
     function esc(str) {
       return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+    function escAttr(str) {
+      return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
 
     function renderOverview(content) {
       const blocks = parseText(content);
