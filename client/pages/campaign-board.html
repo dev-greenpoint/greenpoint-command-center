@@ -27,112 +27,29 @@
     .chip-paused     { background: #3d2a00; color: var(--warning); }
     .chip-completed  { background: #1a1a2e; color: #8888cc; }
 
-    /* Progress track */
-    .progress-track {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    /* Stage tabs */
+    .stage-tabs-wrap { border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+    .stage-tabs { display: flex; gap: 2px; min-width: max-content; }
+    .stage-tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; font-size: 13px; font-weight: 500;
+      color: var(--text-muted); background: none; border: none;
+      border-radius: 8px 8px 0 0; cursor: pointer;
+      transition: color .15s, background .15s; white-space: nowrap;
+      margin-bottom: -1px;
     }
-    .progress-center { flex: 1; }
-    .progress-bar-wrap {
-      height: 5px;
-      background: var(--surface-2);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 8px;
+    .stage-tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
+    .stage-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .stage-tab.done { color: var(--success); }
+    .stage-tab .tab-count {
+      font-size: 10px; font-weight: 700; padding: 1px 6px;
+      border-radius: 100px; background: var(--surface-2); color: var(--text-dim);
     }
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 3px;
-      transition: width 0.3s ease;
-    }
-    .progress-dots {
-      display: flex;
-      justify-content: space-between;
-    }
-    .progress-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      font-weight: 700;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-    .progress-dot.done  { background: var(--success); color: #000; border-color: var(--success); }
-    .progress-dot.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .stage-tab.active .tab-count { background: rgba(0,0,0,.2); color: #fff; }
+    .stage-tab.done .tab-count { background: rgba(72,187,120,.15); color: var(--success); }
 
-    /* Stage sections */
-    .stage-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 10px;
-      overflow: hidden;
-    }
-    .stage-section.is-current {
-      border-color: var(--accent);
-    }
-    .stage-section.is-done {
-      opacity: 0.7;
-    }
-    .stage-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      user-select: none;
-    }
-    .stage-section.is-done .stage-header { border-bottom-color: transparent; }
-    .stage-section.is-done.open .stage-header { border-bottom-color: var(--border); }
-    .stage-num {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
-    .stage-section.is-current .stage-num { background: var(--accent); color: #000; border-color: var(--accent); }
-    .stage-section.is-done .stage-num { background: var(--success); color: #000; border-color: var(--success); }
-    .stage-name { font-size: 13px; font-weight: 600; flex: 1; }
-    .stage-badge {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      padding: 2px 8px;
-      border-radius: 100px;
-    }
-    .badge-current { background: var(--accent); color: #000; }
-    .badge-done { background: var(--success); color: #000; }
-    .stage-task-count { font-size: 11px; color: var(--text-muted); }
-    .stage-chevron { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
-    .stage-section.open .stage-chevron { transform: rotate(180deg); }
-
-    .stage-body { display: none; padding: 8px 12px 10px; }
-    .stage-section.open .stage-body { display: block; }
+    /* Stage panel */
+    .stage-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 
     /* Task list — Asana-style rows */
     .task-list { width: 100%; }
@@ -338,17 +255,24 @@
     let teamMembers = [];
 
     const STAGES = {
-      PR: ['Strategy','Newsroom Research','Angle Development','Draft Release','Internal Review','Client Approval','Media List','Pitch Copy','Pitching','Follow-up','Coverage Tracking','Reporting'],
-      default: ['Planning','In Progress','Review','Wrap-up'],
+      PR:       ['Campaign Prep','Campaign Development','Awaiting Client Approval','Set up Public Address','Pitch','Campaign Complete'],
+      'PR Light': ['Campaign Prep','Campaign Development','Awaiting Client Approval','Set up Public Address','Pitch','Campaign Complete'],
+      default:  ['Planning','In Progress','Review','Wrap-up'],
     };
     function getStages(type) { return STAGES[type] || STAGES.default; }
 
     const GROUPS = {
       PR: [
-        { label: 'Brief & Strategy', stages: [0, 1, 2] },
-        { label: 'Content',          stages: [3, 4, 5] },
-        { label: 'Outreach',         stages: [6, 7, 8, 9] },
-        { label: 'Reporting',        stages: [10, 11] },
+        { label: 'Preparation',  stages: [0, 1] },
+        { label: 'Approval',     stages: [2] },
+        { label: 'Outreach',     stages: [3, 4] },
+        { label: 'Complete',     stages: [5] },
+      ],
+      'PR Light': [
+        { label: 'Preparation',  stages: [0, 1] },
+        { label: 'Approval',     stages: [2] },
+        { label: 'Outreach',     stages: [3, 4] },
+        { label: 'Complete',     stages: [5] },
       ],
     };
     function getGroups(type) { return GROUPS[type] || null; }
@@ -372,118 +296,127 @@
       render();
     }
 
+    let activeStageTab = 0;
+
     function render() {
-      const stages = getStages(campaign.type);
-      const groups = getGroups(campaign.type);
-      const chipClass = { active: 'chip-active', draft: 'chip-draft', paused: 'chip-paused', completed: 'chip-completed' }[campaign.status] || 'chip-draft';
+      const stages   = getStages(campaign.type);
+      const chipClass  = { active:'chip-active', draft:'chip-draft', paused:'chip-paused', completed:'chip-completed' }[campaign.status] || 'chip-draft';
       const statusLabel = campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1);
+      const currentStage = campaign.current_stage || 0;
 
-      const stageHtml = (s, i) => {
+      // Clamp active tab to valid range
+      if (activeStageTab >= stages.length) activeStageTab = currentStage;
+
+      const tabsHtml = stages.map((s, i) => {
         const stageTasks = allTasks.filter(t => t.stage_index === i);
-        const doneCount = stageTasks.filter(t => t.done).length;
-        const taskCountLabel = stageTasks.length ? `${doneCount}/${stageTasks.length}` : '';
-
-        const colHeader = stageTasks.length ? `
-          <div class="task-cols">
-            <div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div>
-          </div>` : '';
-
-        const tasksHtml = stageTasks.map(t => {
-          const prog = t.progress || 'Not Assigned';
-          const progClass = progressClass(prog);
-          return `
-          <div class="task-row ${t.done ? 'done' : ''}" id="task-row-${t.id}">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleDone(${t.id}, this.checked)">
-            <div class="task-cell task-cell-title" onclick="editCell(this, ${t.id}, 'title')">
-              <span>${t.title}</span>
-              <input type="text" value="${t.title.replace(/"/g, '&quot;')}"
-                onblur="saveField(${t.id}, 'title', this.value)"
-                onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelCell(this.parentElement)">
-            </div>
-            <div class="task-cell task-cell-progress" onclick="editCell(this, ${t.id}, 'progress')">
-              <span><span class="progress-chip ${progClass}">${prog}</span></span>
-              <select onchange="saveField(${t.id}, 'progress', this.value)" onblur="cancelCell(this.parentElement)">
-                ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o => `<option${o===prog?' selected':''}>${o}</option>`).join('')}
-              </select>
-            </div>
-            <div class="task-cell task-cell-assignee" onclick="openAssigneeSelector(event, ${t.id})">
-              <span>${assigneeDisplay(t.assignee)}</span>
-              <div class="av-dropdown" id="av-drop-${t.id}">
-                <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, null)">
-                  <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
-                </div>
-                ${teamMembers.map(name => `
-                  <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, '${name.replace(/'/g, "\\'")}')">
-                    ${avatarHtml(name)} ${name}
-                  </div>`).join('')}
-              </div>
-            </div>
-            <div class="task-cell task-cell-due" onclick="editCell(this, ${t.id}, 'due_date')">
-              <span>${t.due_date || '<span style=color:var(--text-dim)>—</span>'}</span>
-              <input type="date" value="${t.due_date || ''}"
-                onchange="saveField(${t.id}, 'due_date', this.value)"
-                onblur="saveField(${t.id}, 'due_date', this.value)"
-                onkeydown="if(event.key==='Escape')cancelCell(this.parentElement)">
-            </div>
-            <button class="task-del" onclick="deleteTask(${t.id})" title="Delete">×</button>
-          </div>`;
-        }).join('');
-
-        return `
-          <div class="stage-section open" id="stage-section-${i}">
-            <div class="stage-header" onclick="toggleSection(${i})">
-              <div class="stage-num">${i + 1}</div>
-              <div class="stage-name">${s}</div>
-              ${taskCountLabel ? `<span class="stage-task-count">${taskCountLabel}</span>` : ''}
-              <span class="stage-chevron">▼</span>
-            </div>
-            <div class="stage-body">
-              <div class="task-list">
-                ${colHeader}
-                ${tasksHtml}
-              </div>
-              <div class="add-task-row">
-                <div></div>
-                <div class="add-task-trigger" id="add-trigger-${i}" onclick="showAddForm(${i})">+ Add task</div>
-              </div>
-              <div class="add-task-inline" id="add-form-${i}">
-                <input type="text" id="add-title-${i}" placeholder="Task title…" onkeydown="if(event.key==='Enter')submitTask(${i});if(event.key==='Escape')hideAddForm(${i})">
-                <input type="text" id="add-assignee-${i}" placeholder="Assignee">
-                <input type="date" id="add-due-${i}">
-                <button class="btn btn-primary" style="font-size:12px;padding:4px 10px;white-space:nowrap;" onclick="submitTask(${i})">Add</button>
-                <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px;" onclick="hideAddForm(${i})">✕</button>
-              </div>
-            </div>
-          </div>`;
-      };
-
-      const sectionsHtml = groups
-        ? groups.map(g => `
-            <div style="margin-bottom:6px;margin-top:20px;">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);padding:0 2px 8px;">${g.label}</div>
-              ${g.stages.map(i => stageHtml(stages[i], i)).join('')}
-            </div>`).join('')
-        : stages.map((s, i) => stageHtml(s, i)).join('');
+        const doneCount  = stageTasks.filter(t => t.done).length;
+        const allDone    = stageTasks.length > 0 && doneCount === stageTasks.length;
+        const isDone     = i < currentStage || allDone;
+        const isActive   = i === activeStageTab;
+        const countBadge = stageTasks.length ? `<span class="tab-count">${doneCount}/${stageTasks.length}</span>` : '';
+        const tick       = isDone ? '✓ ' : '';
+        return `<button class="stage-tab ${isActive?'active':''} ${isDone&&!isActive?'done':''}" onclick="switchStageTab(${i})">${tick}${s}${countBadge}</button>`;
+      }).join('');
 
       document.getElementById('page-content').innerHTML = `
         <div class="board-header">
           <a href="/campaigns" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Campaigns</a>
-          ${campaign.client_name ? `<span style="color:var(--text-dim);">›</span><a href="/clients/${campaign.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">${campaign.client_name}</a>` : ''}
-          <h1 style="font-size:20px;font-weight:700;">${campaign.name}</h1>
+          ${campaign.client_name ? `<span style="color:var(--text-dim);">›</span><a href="/clients/${campaign.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">${escHtml(campaign.client_name)}</a>` : ''}
+          <h1 style="font-size:20px;font-weight:700;">${escHtml(campaign.name)}</h1>
           <span class="status-chip ${chipClass}">${statusLabel}</span>
-          ${campaign.type ? `<span style="font-size:12px;color:var(--text-muted);">${campaign.type}</span>` : ''}
+          ${campaign.type ? `<span style="font-size:12px;color:var(--text-muted);">${escHtml(campaign.type)}</span>` : ''}
           <div style="flex:1;"></div>
           <button class="btn btn-ghost" style="font-size:12px;" onclick="openEditDrawer()">Edit</button>
         </div>
-        <div id="stages-list">${sectionsHtml}</div>
+        <div class="stage-tabs-wrap"><div class="stage-tabs">${tabsHtml}</div></div>
+        <div class="stage-panel" id="stage-panel"></div>
       `;
+      renderStagePanel();
     }
 
-    // ── Stage toggle ───────────────────────────────────────────────────────────
+    function renderStagePanel() {
+      const stages     = getStages(campaign.type);
+      const stageName  = stages[activeStageTab] || '';
+      const stageTasks = allTasks.filter(t => t.stage_index === activeStageTab);
+      const doneCount  = stageTasks.filter(t => t.done).length;
 
-    function toggleSection(index) {
-      const section = document.getElementById(`stage-section-${index}`);
-      section.classList.toggle('open');
+      const colHeader = stageTasks.length ? `
+        <div class="task-cols">
+          <div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div>
+        </div>` : '';
+
+      const tasksHtml = stageTasks.map(t => {
+        const prog = t.progress || 'Not Assigned';
+        const progClass = progressClass(prog);
+        return `
+        <div class="task-row ${t.done ? 'done' : ''}" id="task-row-${t.id}">
+          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleDone(${t.id}, this.checked)">
+          <div class="task-cell task-cell-title" onclick="editCell(this, ${t.id}, 'title')">
+            <span>${escHtml(t.title)}</span>
+            <input type="text" value="${escAttr(t.title)}"
+              onblur="saveField(${t.id}, 'title', this.value)"
+              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelCell(this.parentElement)">
+          </div>
+          <div class="task-cell task-cell-progress" onclick="editCell(this, ${t.id}, 'progress')">
+            <span><span class="progress-chip ${progClass}">${prog}</span></span>
+            <select onchange="saveField(${t.id}, 'progress', this.value)" onblur="cancelCell(this.parentElement)">
+              ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o => `<option${o===prog?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="task-cell task-cell-assignee" onclick="openAssigneeSelector(event, ${t.id})">
+            <span>${assigneeDisplay(t.assignee)}</span>
+            <div class="av-dropdown" id="av-drop-${t.id}">
+              <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, null)">
+                <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
+              </div>
+              ${teamMembers.map(name => `
+                <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, '${name.replace(/'/g,"\\'")}')">
+                  ${avatarHtml(name)} ${escHtml(name)}
+                </div>`).join('')}
+            </div>
+          </div>
+          <div class="task-cell task-cell-due" onclick="editCell(this, ${t.id}, 'due_date')">
+            <span>${t.due_date || '<span style=color:var(--text-dim)>—</span>'}</span>
+            <input type="date" value="${t.due_date || ''}"
+              onchange="saveField(${t.id}, 'due_date', this.value)"
+              onblur="saveField(${t.id}, 'due_date', this.value)"
+              onkeydown="if(event.key==='Escape')cancelCell(this.parentElement)">
+          </div>
+          <button class="task-del" onclick="deleteTask(${t.id})" title="Delete">×</button>
+        </div>`;
+      }).join('');
+
+      const emptyMsg = `<div style="padding:24px 16px;font-size:13px;color:var(--text-dim);">No tasks in this stage yet.</div>`;
+
+      document.getElementById('stage-panel').innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;font-weight:600;">${escHtml(stageName)}</span>
+          <span style="font-size:12px;color:var(--text-muted);">${doneCount}/${stageTasks.length} done</span>
+        </div>
+        <div style="padding:8px 20px 12px;">
+          <div class="task-list">
+            ${colHeader}
+            ${stageTasks.length ? tasksHtml : emptyMsg}
+          </div>
+          <div class="add-task-row">
+            <div></div>
+            <div class="add-task-trigger" id="add-trigger-${activeStageTab}" onclick="showAddForm(${activeStageTab})">+ Add task</div>
+          </div>
+          <div class="add-task-inline" id="add-form-${activeStageTab}">
+            <input type="text" id="add-title-${activeStageTab}" placeholder="Task title…"
+              onkeydown="if(event.key==='Enter')submitTask(${activeStageTab});if(event.key==='Escape')hideAddForm(${activeStageTab})">
+            <input type="text" id="add-assignee-${activeStageTab}" placeholder="Assignee">
+            <input type="date" id="add-due-${activeStageTab}">
+            <button class="btn btn-primary" style="font-size:12px;padding:4px 10px;white-space:nowrap;" onclick="submitTask(${activeStageTab})">Add</button>
+            <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px;" onclick="hideAddForm(${activeStageTab})">✕</button>
+          </div>
+        </div>`;
+    }
+
+    function switchStageTab(i) {
+      activeStageTab = i;
+      document.querySelectorAll('.stage-tab').forEach((el, idx) => el.classList.toggle('active', idx === i));
+      renderStagePanel();
     }
 
     // ── Add task ───────────────────────────────────────────────────────────────
@@ -517,8 +450,6 @@
     // ── Toggle done ────────────────────────────────────────────────────────────
 
     async function toggleDone(taskId, done) {
-      const card = document.getElementById(`task-card-${taskId}`);
-      if (card) card.classList.toggle('done', done);
       await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -526,9 +457,26 @@
       });
       const task = allTasks.find(t => t.id === taskId);
       if (task) task.done = done ? 1 : 0;
+      // Refresh tab badges and panel
+      const stages     = getStages(campaign.type);
+      const currentStage = campaign.current_stage || 0;
+      document.querySelectorAll('.stage-tab').forEach((el, i) => {
+        const stageTasks = allTasks.filter(t => t.stage_index === i);
+        const doneCount  = stageTasks.filter(t => t.done).length;
+        const allDone    = stageTasks.length > 0 && doneCount === stageTasks.length;
+        const isDone     = i < currentStage || allDone;
+        el.classList.toggle('done', isDone && i !== activeStageTab);
+        const badge = el.querySelector('.tab-count');
+        if (badge) badge.textContent = `${doneCount}/${stageTasks.length}`;
+        const tick = isDone ? '✓ ' : '';
+        el.childNodes[0].textContent = tick + stages[i];
+      });
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return escHtml(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
     function avatarColor(name) {
       const palette = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];

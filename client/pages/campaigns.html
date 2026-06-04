@@ -308,7 +308,7 @@
       const clients = res.ok ? await res.json() : [];
       const sel = document.getElementById('nc-client');
       sel.innerHTML = clients.length
-        ? clients.map(c => `<option value="${c.id}">${escAttr(c.name)}</option>`).join('')
+        ? clients.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('')
         : '<option value="">No clients yet</option>';
       document.getElementById('nc-name').value = '';
       document.getElementById('nc-type').value = 'PR';
@@ -335,6 +335,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: clientId, name, type, status: 'draft' }),
       });
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Create & Open';
+        alert('Failed to create campaign');
+        return;
+      }
       const data = await res.json();
       window.location = `/campaigns/${data.id}`;
     }

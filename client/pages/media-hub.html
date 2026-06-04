@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Hub — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .hub-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .hub-title { font-size: 20px; font-weight: 700; }
+    .hub-title span { color: var(--text-muted); font-weight: 400; }
+
+    /* Month tab bar */
+    .month-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .month-bar::-webkit-scrollbar { display: none; }
+    .month-tab {
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .15s, background .15s;
+    }
+    .month-tab:hover { color: var(--text); background: var(--surface-2); }
+    .month-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* Sub-tabs */
+    .sub-bar {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sub-tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .15s, background .15s;
+      margin-bottom: -1px;
+    }
+    .sub-tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
+    .sub-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* Media log table */
+    .log-wrap { overflow-x: auto; }
+    .log-table {
+      width: 100%;
+      min-width: 1100px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .log-table th {
+      text-align: left;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .log-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: var(--surface-2); }
+    .log-cell-edit {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      width: 100%;
+      min-width: 60px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      cursor: text;
+    }
+    .log-cell-edit:focus { outline: none; background: var(--surface-2); }
+    .log-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      padding: 2px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .log-select:focus { outline: none; }
+    .log-checkbox { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent); }
+    .log-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
+    .log-del:hover { color: var(--danger); background: rgba(200,50,50,.1); }
+
+    /* Type chip */
+    .type-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .chip-print      { background: #1a2636; color: #6aabff; }
+    .chip-online     { background: #0d3323; color: var(--success); }
+    .chip-social     { background: #3d1a5a; color: #cc88ff; }
+    .chip-edms       { background: #3d2a00; color: var(--warning); }
+    .chip-influencers{ background: #3d1f1f; color: #ff8888; }
+    .chip-broadcast  { background: #1a1a1a; color: var(--text-muted); }
+
+    /* Tone chip */
+    .tone-pos { color: var(--success); }
+    .tone-neu { color: var(--text-muted); }
+    .tone-neg { color: var(--danger); }
+
+    /* Top coverage cards */
+    .top-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .top-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .top-card-img { width: 100%; height: 140px; object-fit: cover; background: var(--surface-2); }
+    .top-card-body { padding: 14px; }
+    .top-card-publisher { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 6px; }
+    .top-card-title { font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
+    .top-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+    .top-card-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .top-card-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+    /* Overview stats */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .stat-box-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 6px; }
+    .stat-box-value { font-size: 22px; font-weight: 700; }
+    .stat-box-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .breakdown-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .breakdown-table th { text-align: left; padding: 6px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+    .breakdown-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .breakdown-table tr:last-child td { border-bottom: none; }
+    .breakdown-table tr:hover td { background: var(--surface-2); }
+
+    /* Report textareas */
+    .report-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 8px; }
+    .report-ta { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; font-family: inherit; line-height: 1.7; padding: 10px 12px; resize: vertical; min-height: 120px; box-sizing: border-box; }
+    .report-ta:focus { outline: none; border-color: var(--accent); }
+
+    /* Add row */
+    .add-row-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); background: none; border: 1px dashed var(--border); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; margin-top: 10px; transition: color .15s, border-color .15s; }
+    .add-row-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* New coverage form row */
+    .new-log-row td { background: var(--surface-2); }
+    .log-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 12px; font-family: inherit; padding: 4px 6px; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    .log-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Top coverage modal */
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; }
+    .drawer-overlay.open { display: flex; align-items: center; justify-content: center; }
+    .drawer-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 480px; max-width: 96vw; max-height: 90vh; overflow-y: auto; }
+    .drawer-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+    .form-row { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 6px; }
+    .form-input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; font-family: inherit; padding: 8px 10px; box-sizing: border-box; }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-ta { resize: vertical; min-height: 80px; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    .share-bar { display: flex; align-items: center; gap: 8px; }
+    .share-link-input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 12px; padding: 6px 10px; }
+  </style>
+</head>
+<body>
+<div id="shell"></div>
+<script src="/components/shell.js"></script>
+
+<div class="page-content" id="page-content">
+  <p style="color:var(--text-muted);font-size:13px;">Loading…</p>
+</div>
+
+<!-- Top coverage drawer -->
+<div class="drawer-overlay" id="top-drawer">
+  <div class="drawer-box">
+    <div class="drawer-title" id="drawer-title">Add Top Coverage</div>
+    <div class="form-row">
+      <div class="form-label">Publication / Publisher</div>
+      <input class="form-input" id="tc-publisher" placeholder="e.g. The Sydney Morning Herald">
+    </div>
+    <div class="form-row">
+      <div class="form-label">Headline / Title</div>
+      <input class="form-input" id="tc-title" placeholder="Article headline">
+    </div>
+    <div class="form-row">
+      <div class="form-label">Description</div>
+      <textarea class="form-input form-ta" id="tc-description" placeholder="Brief summary of the coverage…"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-row">
+        <div class="form-label">Media Type</div>
+        <select class="form-input" id="tc-media-type">
+          <option value="">— Select —</option>
+          <option>Print</option><option>Online</option><option>Social</option>
+          <option>eDMs</option><option>Influencers</option><option>Broadcast</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Audience / Circulation</div>
+        <input class="form-input" id="tc-audience" placeholder="e.g. 1.2M">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Article URL</div>
+      <input class="form-input" id="tc-url" placeholder="https://…" type="url">
+    </div>
+    <div class="form-row">
+      <div class="form-label">Image URL (optional)</div>
+      <input class="form-input" id="tc-img" placeholder="https://…" type="url">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeTopDrawer()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTopCoverage()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const clientId = location.pathname.split('/').pop();
+  let hub = null;
+  let overviewData = null;
+  let activeMonth = 'overview';
+  let activeSubTab = 'log';
+  let months = [];
+  let monthData = {};
+  let editingTopId = null;
+  let prCampaigns = [];
+
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function load() {
+    const [hubRes, campsRes] = await Promise.all([
+      fetch(`/api/media-hubs/client/${clientId}`).then(r => r.json()),
+      fetch(`/api/campaigns?clientId=${clientId}`).then(r => r.json()),
+    ]);
+
+    hub = hubRes;
+    prCampaigns = (Array.isArray(campsRes) ? campsRes : []).filter(c => c.type === 'PR' || c.type === 'PR Light');
+
+    // Build month list from first PR campaign start_date to now
+    months = buildMonthRange(hub.first_campaign_date);
+
+    // Load overview
+    overviewData = await fetch(`/api/media-hubs/${hub.id}/overview`).then(r => r.json());
+
+    activeMonth = 'overview';
+    render();
+  }
+
+  function buildMonthRange(firstDate) {
+    const result = [];
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+    let start;
+    if (firstDate) {
+      const d = new Date(firstDate);
+      start = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    } else {
+      // fallback: start of this year
+      start = `${now.getFullYear()}-01`;
+    }
+
+    let cur = start;
+    while (cur <= nowYM) {
+      result.push(cur);
+      const [y, m] = cur.split('-').map(Number);
+      const next = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
+      cur = next;
+    }
+    return result;
+  }
+
+  function monthLabel(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    return new Date(y, m-1, 1).toLocaleString('en-AU', { month: 'short', year: '2-digit' });
+  }
+
+  async function switchMonth(m) {
+    activeMonth = m;
+    activeSubTab = 'log';
+    if (m !== 'overview' && !monthData[m]) {
+      await loadMonthData(m);
+    }
+    renderContent();
+  }
+
+  async function loadMonthData(m) {
+    const d = await fetch(`/api/media-hubs/${hub.id}?month=${m}`).then(r => r.json());
+    monthData[m] = {
+      coverage: d.coverage || [],
+      top_coverage: d.top_coverage || [],
+      report: d.report || { work_completed: '', insights: '' }
+    };
+  }
+
+  function switchSubTab(t) {
+    activeSubTab = t;
+    renderContent();
+  }
+
+  function render() {
+    const name = hub.client_name || '';
+    const code = hub.client_code ? `${hub.client_code} — ` : '';
+    const hubName = `${name}_MediaCoverage_${hub.year}`;
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="hub-header">
+        <button class="btn btn-ghost" onclick="history.back()">← Back</button>
+        <div class="hub-title">${escHtml(code)}<span>${escHtml(hubName)}</span></div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+          ${hub.share_token ? `
+            <div class="share-bar">
+              <input class="share-link-input" id="share-link-input" value="${location.origin}/mh/${hub.share_token}" readonly onclick="this.select()">
+              <button class="btn btn-ghost" style="font-size:12px;" onclick="copyShareLink()">Copy Link</button>
+            </div>` : `
+            <button class="btn btn-ghost" style="font-size:12px;" onclick="generateShareLink()">Share</button>`}
+          <a href="/clients/${clientId}/board" class="btn btn-ghost" style="font-size:12px;">Client Board</a>
+        </div>
+      </div>
+
+      <div class="month-bar" id="month-bar"></div>
+      <div id="hub-content"></div>
+    `;
+
+    renderMonthBar();
+    renderContent();
+  }
+
+  function renderMonthBar() {
+    const bar = document.getElementById('month-bar');
+    if (!bar) return;
+    let html = `<button class="month-tab${activeMonth==='overview'?' active':''}" onclick="switchMonth('overview')">Overview</button>`;
+    months.forEach(m => {
+      html += `<button class="month-tab${activeMonth===m?' active':''}" onclick="switchMonth('${m}')">${monthLabel(m)}</button>`;
+    });
+    bar.innerHTML = html;
+  }
+
+  function renderContent() {
+    renderMonthBar();
+    const el = document.getElementById('hub-content');
+    if (!el) return;
+    if (activeMonth === 'overview') {
+      el.innerHTML = buildOverviewHtml();
+    } else {
+      el.innerHTML = buildMonthHtml();
+    }
+  }
+
+  function buildOverviewHtml() {
+    if (!overviewData) return '<p style="color:var(--text-muted);font-size:13px;">Loading…</p>';
+    const { totals, by_type, by_month, by_campaign } = overviewData;
+    const fmtAsr = v => v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${Number(v||0).toFixed(0)}`;
+
+    return `
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-box-label">Total Hits</div>
+          <div class="stat-box-value">${totals?.total_hits || 0}</div>
+          <div class="stat-box-sub">coverage items</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Total ASR</div>
+          <div class="stat-box-value">${fmtAsr(totals?.total_asr || 0)}</div>
+          <div class="stat-box-sub">advertising value</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Months Active</div>
+          <div class="stat-box-value">${by_month?.length || 0}</div>
+          <div class="stat-box-sub">with coverage</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">Campaigns</div>
+          <div class="stat-box-value">${prCampaigns.length}</div>
+          <div class="stat-box-sub">PR campaigns</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Coverage by Media Type</div>
+          ${by_type?.length ? `
+          <table class="breakdown-table">
+            <thead><tr><th>Type</th><th>Hits</th><th>ASR</th></tr></thead>
+            <tbody>
+              ${by_type.map(r => `
+                <tr>
+                  <td><span class="type-chip chip-${r.media_type?.toLowerCase()}">${escHtml(r.media_type)}</span></td>
+                  <td>${r.count}</td>
+                  <td>${fmtAsr(r.asr)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>` : `<p style="font-size:13px;color:var(--text-muted);margin:0;">No coverage logged yet.</p>`}
+        </div>
+
+        <div class="card">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Coverage by Month</div>
+          ${by_month?.length ? `
+          <table class="breakdown-table">
+            <thead><tr><th>Month</th><th>Hits</th><th>ASR</th></tr></thead>
+            <tbody>
+              ${by_month.map(r => `
+                <tr>
+                  <td style="cursor:pointer;color:var(--accent);" onclick="switchMonth('${r.month}')">${monthLabel(r.month)}</td>
+                  <td>${r.count}</td>
+                  <td>${fmtAsr(r.asr)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>` : `<p style="font-size:13px;color:var(--text-muted);margin:0;">No coverage logged yet.</p>`}
+        </div>
+      </div>
+
+      ${by_campaign?.length ? `
+      <div class="card" style="margin-top:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Coverage by Campaign</div>
+        <table class="breakdown-table">
+          <thead><tr><th>Campaign</th><th>Hits</th><th>ASR</th></tr></thead>
+          <tbody>
+            ${by_campaign.map(r => `<tr><td>${escHtml(r.campaign_name)}</td><td>${r.count}</td><td>${fmtAsr(r.asr)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+    `;
+  }
+
+  function buildMonthHtml() {
+    const d = monthData[activeMonth];
+    if (!d) return '<p style="color:var(--text-muted);font-size:13px;">Loading…</p>';
+
+    return `
+      <div class="sub-bar">
+        <button class="sub-tab${activeSubTab==='log'?' active':''}" onclick="switchSubTab('log')">Media Log (${d.coverage.length})</button>
+        <button class="sub-tab${activeSubTab==='top'?' active':''}" onclick="switchSubTab('top')">Top Coverage (${d.top_coverage.length})</button>
+        <button class="sub-tab${activeSubTab==='report'?' active':''}" onclick="switchSubTab('report')">Report</button>
+      </div>
+      <div id="sub-content">
+        ${activeSubTab === 'log' ? buildLogHtml(d.coverage) : ''}
+        ${activeSubTab === 'top' ? buildTopHtml(d.top_coverage) : ''}
+        ${activeSubTab === 'report' ? buildReportHtml(d.report) : ''}
+      </div>
+    `;
+  }
+
+  function buildLogHtml(coverage) {
+    const campOpts = prCampaigns.map(c => `<option value="${c.id}" data-name="${escHtml(c.name)}">${escHtml(c.name)}</option>`).join('');
+    const rows = coverage.map(r => `
+      <tr id="log-row-${r.id}">
+        <td><input class="log-cell-edit" value="${escHtml(r.date||'')}" type="date" onchange="patchCoverage(${r.id},'date',this.value)" style="min-width:110px;"></td>
+        <td>
+          <select class="log-select" onchange="patchCoverage(${r.id},'campaign_id',this.value);patchCoverage(${r.id},'campaign_name',this.options[this.selectedIndex].dataset.name)" style="min-width:120px;">
+            <option value="">—</option>${campOpts.replace(`value="${r.campaign_id}"`,`value="${r.campaign_id}" selected`)}
+          </select>
+        </td>
+        <td><input class="log-cell-edit" value="${escHtml(r.publication||'')}" placeholder="Publication" onblur="patchCoverage(${r.id},'publication',this.value)" style="min-width:140px;"></td>
+        <td><input class="log-cell-edit" value="${escHtml(r.author||'')}" placeholder="Author" onblur="patchCoverage(${r.id},'author',this.value)" style="min-width:100px;"></td>
+        <td><input class="log-cell-edit" value="${escHtml(r.headline||'')}" placeholder="Headline" onblur="patchCoverage(${r.id},'headline',this.value)" style="min-width:180px;"></td>
+        <td><input class="log-cell-edit" value="${escHtml(r.page_num||'')}" placeholder="Pg" onblur="patchCoverage(${r.id},'page_num',this.value)" style="min-width:50px;max-width:60px;"></td>
+        <td>
+          <select class="log-select" onchange="patchCoverage(${r.id},'media_type',this.value)">
+            ${['Print','Online','Social','eDMs','Influencers','Broadcast'].map(t => `<option${r.media_type===t?' selected':''}>${t}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="log-select" onchange="patchCoverage(${r.id},'tone',this.value)">
+            ${['Positive','Neutral','Negative'].map(t => `<option${r.tone===t?' selected':''}>${t}</option>`).join('')}
+          </select>
+        </td>
+        <td style="text-align:center;"><input type="checkbox" class="log-checkbox" ${r.stakeholder_mentions?'checked':''} onchange="patchCoverage(${r.id},'stakeholder_mentions',this.checked)"></td>
+        <td style="text-align:center;"><input type="checkbox" class="log-checkbox" ${r.images_included?'checked':''} onchange="patchCoverage(${r.id},'images_included',this.checked)"></td>
+        <td style="text-align:center;"><input type="checkbox" class="log-checkbox" ${r.ctas?'checked':''} onchange="patchCoverage(${r.id},'ctas',this.checked)"></td>
+        <td><input class="log-cell-edit" value="${r.circulation||''}" type="number" onblur="patchCoverage(${r.id},'circulation',this.value)" style="min-width:80px;max-width:90px;"></td>
+        <td style="text-align:center;"><input type="checkbox" class="log-checkbox" ${r.hit?'checked':''} onchange="patchCoverage(${r.id},'hit',this.checked)"></td>
+        <td><input class="log-cell-edit" value="${r.asr||''}" type="number" step="0.01" onblur="patchCoverage(${r.id},'asr',this.value)" style="min-width:80px;max-width:90px;"></td>
+        <td><button class="log-del" onclick="deleteCoverage(${r.id})" title="Delete">✕</button></td>
+      </tr>`).join('');
+
+    return `
+      <div class="card" style="padding:0;">
+        <div class="log-wrap">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Campaign</th><th>Publication</th><th>Author</th>
+                <th>Headline</th><th>Pg</th><th>Type</th><th>Tone</th>
+                <th>Stakeholder</th><th>Images</th><th>CTAs</th>
+                <th>Circulation</th><th>Hit</th><th>ASR ($)</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="log-body">
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 14px;">
+          <button class="add-row-btn" onclick="addCoverageRow()">+ Add Coverage</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function addCoverageRow() {
+    const res = await fetch(`/api/media-hubs/${hub.id}/coverage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ month: activeMonth, media_type: 'Online', tone: 'Neutral' })
+    });
+    const { id } = await res.json();
+
+    // Add to local state and re-render log
+    if (!monthData[activeMonth]) monthData[activeMonth] = { coverage: [], top_coverage: [], report: null };
+    monthData[activeMonth].coverage.push({ id, month: activeMonth, media_type: 'Online', tone: 'Neutral', hit: 1 });
+    refreshSubContent();
+    // Also update overview
+    overviewData = await fetch(`/api/media-hubs/${hub.id}/overview`).then(r => r.json());
+  }
+
+  async function patchCoverage(id, field, value) {
+    await fetch(`/api/media-hubs/${hub.id}/coverage/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value })
+    });
+    // Update local state
+    const rows = monthData[activeMonth]?.coverage;
+    if (rows) {
+      const row = rows.find(r => r.id === id);
+      if (row) row[field] = value;
+    }
+    // Refresh overview totals quietly
+    fetch(`/api/media-hubs/${hub.id}/overview`).then(r => r.json()).then(d => { overviewData = d; });
+  }
+
+  async function deleteCoverage(id) {
+    await fetch(`/api/media-hubs/${hub.id}/coverage/${id}`, { method: 'DELETE' });
+    if (monthData[activeMonth]) {
+      monthData[activeMonth].coverage = monthData[activeMonth].coverage.filter(r => r.id !== id);
+    }
+    refreshSubContent();
+    overviewData = await fetch(`/api/media-hubs/${hub.id}/overview`).then(r => r.json());
+  }
+
+  function buildTopHtml(cards) {
+    const cardHtml = cards.map(c => `
+      <div class="top-card" id="top-card-${c.id}">
+        ${c.image_url ? `<img class="top-card-img" src="${escHtml(c.image_url)}" alt="">` : `<div class="top-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;">No image</div>`}
+        <div class="top-card-body">
+          <div class="top-card-publisher">${escHtml(c.publisher||'')}</div>
+          <div class="top-card-title">${escHtml(c.title||'—')}</div>
+          ${c.description ? `<div class="top-card-desc">${escHtml(c.description)}</div>` : ''}
+          <div class="top-card-footer">
+            ${c.media_type ? `<span class="type-chip chip-${c.media_type.toLowerCase()}">${escHtml(c.media_type)}</span>` : ''}
+            ${c.audience ? `<span style="font-size:11px;color:var(--text-muted);">👥 ${escHtml(c.audience)}</span>` : ''}
+            ${c.article_url ? `<a href="${escHtml(c.article_url)}" target="_blank" style="font-size:11px;color:var(--accent);">View →</a>` : ''}
+          </div>
+          <div class="top-card-actions">
+            <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" onclick="openEditTop(${c.id})">Edit</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;color:var(--danger);" onclick="deleteTop(${c.id})">Delete</button>
+          </div>
+        </div>
+      </div>`).join('');
+
+    return `
+      <div class="top-grid">${cardHtml}</div>
+      <div style="margin-top:16px;">
+        <button class="add-row-btn" onclick="openAddTop()">+ Add Top Coverage</button>
+      </div>
+    `;
+  }
+
+  function openAddTop() {
+    editingTopId = null;
+    document.getElementById('drawer-title').textContent = 'Add Top Coverage';
+    ['publisher','title','description','audience','url','img'].forEach(f => {
+      const el = document.getElementById('tc-' + f);
+      if (el) el.value = '';
+    });
+    document.getElementById('tc-media-type').value = '';
+    document.getElementById('top-drawer').classList.add('open');
+  }
+
+  function openEditTop(id) {
+    editingTopId = id;
+    const c = monthData[activeMonth]?.top_coverage.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('drawer-title').textContent = 'Edit Top Coverage';
+    document.getElementById('tc-publisher').value = c.publisher || '';
+    document.getElementById('tc-title').value = c.title || '';
+    document.getElementById('tc-description').value = c.description || '';
+    document.getElementById('tc-media-type').value = c.media_type || '';
+    document.getElementById('tc-audience').value = c.audience || '';
+    document.getElementById('tc-url').value = c.article_url || '';
+    document.getElementById('tc-img').value = c.image_url || '';
+    document.getElementById('top-drawer').classList.add('open');
+  }
+
+  function closeTopDrawer() {
+    document.getElementById('top-drawer').classList.remove('open');
+    editingTopId = null;
+  }
+
+  async function saveTopCoverage() {
+    const payload = {
+      month: activeMonth,
+      publisher: document.getElementById('tc-publisher').value.trim(),
+      title: document.getElementById('tc-title').value.trim(),
+      description: document.getElementById('tc-description').value.trim(),
+      media_type: document.getElementById('tc-media-type').value,
+      audience: document.getElementById('tc-audience').value.trim(),
+      article_url: document.getElementById('tc-url').value.trim(),
+      image_url: document.getElementById('tc-img').value.trim(),
+    };
+
+    if (editingTopId) {
+      await fetch(`/api/media-hubs/${hub.id}/top-coverage/${editingTopId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const cards = monthData[activeMonth]?.top_coverage;
+      if (cards) {
+        const c = cards.find(x => x.id === editingTopId);
+        if (c) Object.assign(c, payload);
+      }
+    } else {
+      const res = await fetch(`/api/media-hubs/${hub.id}/top-coverage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const { id } = await res.json();
+      if (!monthData[activeMonth]) monthData[activeMonth] = { coverage: [], top_coverage: [], report: null };
+      monthData[activeMonth].top_coverage.push({ id, ...payload });
+    }
+
+    closeTopDrawer();
+    refreshSubContent();
+  }
+
+  async function deleteTop(id) {
+    await fetch(`/api/media-hubs/${hub.id}/top-coverage/${id}`, { method: 'DELETE' });
+    if (monthData[activeMonth]) {
+      monthData[activeMonth].top_coverage = monthData[activeMonth].top_coverage.filter(c => c.id !== id);
+    }
+    refreshSubContent();
+  }
+
+  function buildReportHtml(report) {
+    return `
+      <div class="card">
+        <div style="margin-bottom:20px;">
+          <div class="report-label">Work Completed</div>
+          <textarea class="report-ta" id="report-work" placeholder="Describe the work completed this month…">${escHtml(report?.work_completed||'')}</textarea>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div class="report-label">Insights &amp; Recommendations</div>
+          <textarea class="report-ta" id="report-insights" placeholder="Key insights, learnings, and recommendations…">${escHtml(report?.insights||'')}</textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveReport()">Save Report</button>
+      </div>
+    `;
+  }
+
+  async function saveReport() {
+    const payload = {
+      work_completed: document.getElementById('report-work').value,
+      insights: document.getElementById('report-insights').value,
+    };
+    await fetch(`/api/media-hubs/${hub.id}/report/${activeMonth}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (monthData[activeMonth]) {
+      monthData[activeMonth].report = { ...monthData[activeMonth].report, ...payload };
+    }
+  }
+
+  function refreshSubContent() {
+    const d = monthData[activeMonth];
+    if (!d) return;
+    const el = document.getElementById('sub-content');
+    if (!el) return;
+
+    // Update sub-tab badges
+    const subBar = el.previousElementSibling;
+    if (subBar) {
+      const btns = subBar.querySelectorAll('.sub-tab');
+      btns[0].textContent = `Media Log (${d.coverage.length})`;
+      btns[1].textContent = `Top Coverage (${d.top_coverage.length})`;
+    }
+
+    if (activeSubTab === 'log') el.innerHTML = buildLogHtml(d.coverage);
+    else if (activeSubTab === 'top') el.innerHTML = buildTopHtml(d.top_coverage);
+    else if (activeSubTab === 'report') el.innerHTML = buildReportHtml(d.report);
+  }
+
+  async function generateShareLink() {
+    const res = await fetch(`/api/media-hubs/${hub.id}/share`, { method: 'POST' });
+    const { share_token } = await res.json();
+    hub.share_token = share_token;
+    render();
+    renderContent();
+  }
+
+  function copyShareLink() {
+    const inp = document.getElementById('share-link-input');
+    if (inp) { inp.select(); document.execCommand('copy'); }
+  }
+
+  load();
+</script>
+</body>
+</html>

@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
     [client_id || null, name, status || 'draft', type || null, start_date || null, end_date || null, budget || null, notes || null, scope ? JSON.stringify(scope) : null, setup ? JSON.stringify(setup) : null]
   );
   const idResult = db.exec('SELECT last_insert_rowid() as id');
-  const id = idResult[0].values[0][0];
+  const id = Number(idResult[0].values[0][0]);
 
   const taskTemplate = CAMPAIGN_TASK_TEMPLATES[type] || null;
   if (taskTemplate) {
@@ -121,7 +121,7 @@ router.post('/:id/tasks', async (req, res) => {
     [req.params.id, stage_index, title, assignee || null, due_date || null]
   );
   const idResult = db.exec('SELECT last_insert_rowid() as id');
-  const id = idResult[0].values[0][0];
+  const id = Number(idResult[0].values[0][0]);
   saveDb();
   res.status(201).json({ id });
 });
@@ -133,14 +133,15 @@ router.patch('/:id/tasks/:taskId', async (req, res) => {
   if (!existing.length || !existing[0].values.length) return res.status(404).json({ error: 'Not found' });
   const cur = Object.fromEntries(existing[0].columns.map((c, i) => [c, existing[0].values[0][i]]));
   const b = req.body;
+  const v = k => k in b ? (b[k] || null) : cur[k];
   db.run(
-    `UPDATE campaign_tasks SET title=?, assignee=?, due_date=?, done=?, progress=? WHERE id=?`,
+    `UPDATE campaign_tasks SET title=?, assignee=?, due_date=?, done=?, progress=?, estimated_time=?, approver=?, task_type=?, priority=?, notes=? WHERE id=?`,
     [
       'title' in b ? b.title : cur.title,
-      'assignee' in b ? (b.assignee || null) : cur.assignee,
-      'due_date' in b ? (b.due_date || null) : cur.due_date,
+      v('assignee'), v('due_date'),
       'done' in b ? (b.done ? 1 : 0) : cur.done,
       'progress' in b ? (b.progress || 'Not Assigned') : (cur.progress || 'Not Assigned'),
+      v('estimated_time'), v('approver'), v('task_type'), v('priority'), v('notes'),
       req.params.taskId
     ]
   );
@@ -175,6 +176,8 @@ router.patch('/:id/status', async (req, res) => {
 
 router.patch('/:id/setup', async (req, res) => {
   const db = await getDb();
+  const existing = db.exec('SELECT id FROM campaigns WHERE id=?', [req.params.id]);
+  if (!existing.length || !existing[0].values.length) return res.status(404).json({ error: 'Not found' });
   const { setup } = req.body;
   db.run('UPDATE campaigns SET setup=? WHERE id=?', [setup ? JSON.stringify(setup) : null, req.params.id]);
   saveDb();
@@ -185,6 +188,84 @@ router.patch('/:id/setup', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const db = await getDb();
   db.run('DELETE FROM campaigns WHERE id=?', [req.params.id]);
+  saveDb();
+  res.json({ ok: true });
+});
+
+// Save social admin data (inputs, blockers, priorities, key dates)
+router.patch('/:id/social-admin', async (req, res) => {
+  const db = await getDb();
+  const existing = db.exec('SELECT id FROM campaigns WHERE id=?', [req.params.id]);
+  if (!existing.length || !existing[0].values.length) return res.status(404).json({ error: 'Not found' });
+  db.run('UPDATE campaigns SET social_admin=? WHERE id=?', [req.body.social_admin ? JSON.stringify(req.body.social_admin) : null, req.params.id]);
+  saveDb();
+  res.json({ ok: true });
+});
+
+// Update sked/slack links
+router.patch('/:id/links', async (req, res) => {
+  const db = await getDb();
+  const { sked_link, slack_channel } = req.body;
+  db.run('UPDATE campaigns SET sked_link=?, slack_channel=? WHERE id=?', [sked_link||null, slack_channel||null, req.params.id]);
+  saveDb();
+  res.json({ ok: true });
+});
+
+// ── Social Posts ───────────────────────────────────────────────────────────────
+
+router.get('/:id/posts', async (req, res) => {
+  const db = await getDb();
+  const { month } = req.query;
+  const result = month
+    ? db.exec('SELECT * FROM social_posts WHERE campaign_id=? AND month=? ORDER BY post_date ASC, created_at ASC', [req.params.id, month])
+    : db.exec('SELECT * FROM social_posts WHERE campaign_id=? ORDER BY month DESC, post_date ASC', [req.params.id]);
+  res.json(rows(result));
+});
+
+router.post('/:id/posts', async (req, res) => {
+  const db = await getDb();
+  const { month, platform, format, caption, title, status, assignee, post_date, content_pillar, sked_link, published_link, notes } = req.body;
+  if (!month || !platform) return res.status(400).json({ error: 'month and platform required' });
+  db.run(
+    'INSERT INTO social_posts (campaign_id, month, platform, format, caption, title, status, assignee, post_date, content_pillar, sked_link, published_link, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [req.params.id, month, platform, format || 'Post', caption || null, title || null, status || 'draft', assignee || null, post_date || null, content_pillar || null, sked_link || null, published_link || null, notes || null]
+  );
+  const idResult = db.exec('SELECT last_insert_rowid() as id');
+  const id = Number(idResult[0].values[0][0]);
+  saveDb();
+  res.status(201).json({ id });
+});
+
+router.patch('/:id/posts/:postId', async (req, res) => {
+  const db = await getDb();
+  const existing = db.exec('SELECT * FROM social_posts WHERE id=? AND campaign_id=?', [req.params.postId, req.params.id]);
+  if (!existing.length || !existing[0].values.length) return res.status(404).json({ error: 'Not found' });
+  const cur = Object.fromEntries(existing[0].columns.map((c, i) => [c, existing[0].values[0][i]]));
+  const b = req.body;
+  db.run(
+    'UPDATE social_posts SET platform=?, format=?, caption=?, title=?, status=?, assignee=?, post_date=?, content_pillar=?, sked_link=?, published_link=?, notes=? WHERE id=?',
+    [
+      'platform'       in b ? b.platform                   : cur.platform,
+      'format'         in b ? b.format                     : cur.format,
+      'caption'        in b ? (b.caption        || null)   : cur.caption,
+      'title'          in b ? (b.title          || null)   : cur.title,
+      'status'         in b ? b.status                     : cur.status,
+      'assignee'       in b ? (b.assignee        || null)  : cur.assignee,
+      'post_date'      in b ? (b.post_date       || null)  : cur.post_date,
+      'content_pillar' in b ? (b.content_pillar  || null)  : cur.content_pillar,
+      'sked_link'      in b ? (b.sked_link        || null) : cur.sked_link,
+      'published_link' in b ? (b.published_link   || null) : cur.published_link,
+      'notes'          in b ? (b.notes            || null) : cur.notes,
+      req.params.postId,
+    ]
+  );
+  saveDb();
+  res.json({ ok: true });
+});
+
+router.delete('/:id/posts/:postId', async (req, res) => {
+  const db = await getDb();
+  db.run('DELETE FROM social_posts WHERE id=? AND campaign_id=?', [req.params.postId, req.params.id]);
   saveDb();
   res.json({ ok: true });
 });

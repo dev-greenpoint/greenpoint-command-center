@@ -21,7 +21,7 @@ router.post('/:clientId/contacts', async (req, res) => {
   db.run('INSERT INTO client_contacts (client_id, name, role, email, phone) VALUES (?, ?, ?, ?, ?)',
     [req.params.clientId, name, role || null, email || null, phone || null]);
   saveDb();
-  const id = rows(db.exec('SELECT last_insert_rowid() as id'))[0].id;
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   res.status(201).json({ id });
 });
 

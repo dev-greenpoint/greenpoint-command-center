@@ -7,84 +7,152 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
   <style>
-    .board-header { display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap; }
+    /* ── Overview card ── */
+    .overview-card {
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;
+    }
+    .ov-field { display:flex;flex-direction:column;gap:3px;min-width:120px; }
+    .ov-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim); }
+    .ov-value { font-size:13px;color:var(--text); }
+    .ov-link  { font-size:13px;color:var(--accent);text-decoration:none; }
+    .ov-link:hover { text-decoration:underline; }
+    .ov-actions { margin-left:auto;display:flex;gap:8px;align-items:center; }
+
+    /* ── Status chips ── */
     .status-chip { display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600; }
     .chip-active    { background:#0d3323;color:var(--success); }
     .chip-draft     { background:var(--surface-2);color:var(--text-muted); }
     .chip-paused    { background:#3d2a00;color:var(--warning); }
     .chip-completed { background:#1a1a2e;color:#8888cc; }
 
-    .scope-bar {
-      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-      padding:12px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;
-    }
-    .scope-block { display:flex;flex-direction:column;gap:4px; }
-    .scope-label { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim); }
-    .platform-chips { display:flex;flex-wrap:wrap;gap:5px; }
-    .platform-chip {
-      background:var(--surface-2);border:1px solid var(--border);border-radius:4px;
-      padding:2px 8px;font-size:11px;color:var(--text-muted);font-weight:500;
-    }
+    /* ── Board tabs ── */
+    .board-tabs { display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;scrollbar-width:none; }
+    .board-tabs::-webkit-scrollbar { display:none; }
+    .board-tab { padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text-muted);background:none;border:none;border-radius:8px 8px 0 0;white-space:nowrap;transition:color .15s,background .15s;margin-bottom:-1px; }
+    .board-tab:hover:not(.active) { color:var(--text);background:var(--surface-2); }
+    .board-tab.active { background:var(--accent);color:#fff;font-weight:600; }
 
-    .stage-section { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden; }
-    .stage-header { display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none; }
-    .stage-section:not(.open) .stage-header { border-bottom-color:transparent; }
-    .stage-num { width:26px;height:26px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0; }
-    .stage-name { font-size:13px;font-weight:600;flex:1; }
-    .stage-task-count { font-size:11px;color:var(--text-muted); }
-    .stage-chevron { font-size:10px;color:var(--text-dim);transition:transform 0.2s; }
-    .stage-section.open .stage-chevron { transform:rotate(180deg); }
-    .stage-body { display:none;padding:8px 12px 10px; }
-    .stage-section.open .stage-body { display:block; }
+    /* ── Pipeline stage chips ── */
+    .stage-chip { display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;user-select:none; }
+    .sc-planned    { background:var(--surface-2);color:var(--text-muted); }
+    .sc-creation   { background:#1a1400;color:#cc9900; }
+    .sc-ready      { background:#0a1f33;color:#5599dd; }
+    .sc-in-sked    { background:#0d1a2e;color:#6699cc; }
+    .sc-awaiting   { background:#2a1400;color:#dd8800; }
+    .sc-scheduled  { background:#0d2e1a;color:#44bb77; }
+    .sc-published  { background:#1a0a2e;color:#9966cc; }
+    .sc-complete   { background:#0d3323;color:var(--success); }
 
-    .task-list { width:100%; }
-    .task-cols { display:grid;grid-template-columns:18px 1fr 120px 95px 85px 22px;gap:0 8px;padding:0 4px 5px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em; }
-    .task-row { display:grid;grid-template-columns:18px 1fr 120px 95px 85px 22px;gap:0 8px;padding:0 4px;min-height:34px;align-items:center;border-bottom:1px solid var(--border); }
-    .task-row:last-child { border-bottom:none; }
+    /* ── Platform chips ── */
+    .plat-chip { display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap; }
+    .plat-instagram { background:#3d1a24;color:#e1306c; }
+    .plat-linkedin  { background:#0a1f33;color:#4d9de0; }
+    .plat-facebook  { background:#0a1a33;color:#5b8cdb; }
+    .plat-tiktok    { background:#1a0a0a;color:#ff4466; }
+    .plat-other     { background:var(--surface-2);color:var(--text-muted); }
+
+    /* ── Content pipeline ── */
+    .stage-filter { display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px; }
+    .sf-tab { padding:4px 11px;font-size:12px;font-weight:600;border-radius:100px;cursor:pointer;color:var(--text-muted);background:var(--surface-2);transition:all 0.15s; }
+    .sf-tab:hover { color:var(--text); }
+    .sf-tab.active { background:var(--accent);color:#fff; }
+
+    .content-table { width:100%;border-collapse:collapse; }
+    .content-table th { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:0 10px 8px;text-align:left;border-bottom:1px solid var(--border); }
+    .content-table td { padding:0;border-bottom:1px solid var(--border);vertical-align:middle; }
+    .content-row { cursor:pointer; }
+    .content-row:hover td { background:rgba(255,255,255,.02); }
+    .content-row:last-child td { border-bottom:none; }
+    .td-p { padding:8px 10px;display:flex;align-items:center;min-height:38px; }
+    .content-title { font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px; }
+    .content-empty { text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px; }
+
+    /* ── Admin tab ── */
+    .admin-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    @media(max-width:700px){ .admin-grid { grid-template-columns:1fr; } }
+    .admin-section { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden; }
+    .admin-section-header { padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em; }
+    .admin-list { padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-height:40px; }
+    .admin-item { display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;font-size:13px; }
+    .admin-item:hover { background:var(--surface-2); }
+    .admin-item-text { flex:1; }
+    .admin-item-del { background:none;border:none;color:transparent;cursor:pointer;font-size:14px;padding:0;transition:color 0.1s;flex-shrink:0; }
+    .admin-item:hover .admin-item-del { color:var(--text-dim); }
+    .admin-item-del:hover { color:var(--danger) !important; }
+    .admin-add { display:flex;gap:6px;padding:6px 10px;border-top:1px solid var(--border); }
+    .admin-add input { flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:4px 8px; }
+    .admin-add input:focus { outline:none;border-color:var(--accent); }
+    .admin-add select { background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:4px 6px;cursor:pointer; }
+    .admin-add select:focus { outline:none; }
+
+    .item-status { display:inline-flex;align-items:center;padding:1px 7px;border-radius:100px;font-size:10px;font-weight:700;white-space:nowrap;flex-shrink:0; }
+    .is-received  { background:#0d3323;color:var(--success); }
+    .is-pending   { background:#2a1800;color:#cc8800; }
+    .is-missing   { background:#2a0a0a;color:var(--danger); }
+    .is-active    { background:#2a0a0a;color:var(--danger); }
+    .is-resolved  { background:#0d3323;color:var(--success); }
+    .is-done      { background:var(--surface-2);color:var(--text-dim); }
+    .is-open      { background:#2a1800;color:#cc8800; }
+
+    .brief-fields { padding:14px;display:flex;flex-direction:column;gap:10px; }
+    .brief-field label { font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px; }
+    .brief-field textarea,.brief-field input { width:100%;box-sizing:border-box;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;padding:6px 8px;font-family:var(--font);resize:vertical; }
+    .brief-field textarea:focus,.brief-field input:focus { outline:none;border-color:var(--accent); }
+
+    /* ── Tasks ── */
+    .task-row { display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:4px;font-size:13px; }
     .task-row:hover { background:var(--surface-2); }
-    .task-row.done .task-cell-title span { text-decoration:line-through;color:var(--text-dim); }
-    .task-row input[type=checkbox] { width:13px;height:13px;flex-shrink:0;cursor:pointer;accent-color:var(--accent); }
+    .task-check { accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer; }
+    .task-title { flex:1; }
+    .task-done .task-title { color:var(--text-dim);text-decoration:line-through; }
+    .task-meta { font-size:12px;color:var(--text-muted);flex-shrink:0; }
+    .task-date { background:var(--surface-2);padding:1px 7px;border-radius:100px; }
+    .task-overdue { background:#2a0a0a;color:var(--danger); }
+    .task-del { background:none;border:none;color:transparent;cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;transition:color .1s; }
+    .task-row:hover .task-del { color:var(--text-dim); }
+    .task-del:hover { color:var(--danger) !important; }
 
-    .task-cell { position:relative;cursor:text;min-width:0; }
-    .task-cell span { display:block;font-size:13px;line-height:1;padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-    .task-cell-assignee span,.task-cell-due span { font-size:12px;color:var(--text-muted); }
-    .task-cell input { display:none;width:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:12px;padding:3px 6px; }
-    .task-cell input:focus { outline:none; }
-    .task-cell select { display:none;width:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:11px;padding:3px 4px;cursor:pointer; }
-    .task-cell select:focus { outline:none; }
-    .task-cell.editing span { display:none; }
-    .task-cell.editing input,.task-cell.editing select { display:block; }
+    /* ── Calendar ── */
+    .cal-grid { display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border);border-left:1px solid var(--border); }
+    .cal-header { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:6px 8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center; }
+    .cal-day { min-height:90px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:5px;display:flex;flex-direction:column;gap:2px; }
+    .cal-day-empty { background:rgba(0,0,0,.12); }
+    .cal-day-today { background:rgba(72,187,120,.05); }
+    .cal-day-num { font-size:12px;font-weight:600;color:var(--text-muted);line-height:1;margin-bottom:2px;cursor:default;user-select:none; }
+    .cal-day-today .cal-day-num { color:var(--accent); }
+    .cal-day-posts { display:flex;flex-direction:column;gap:2px;flex:1; }
+    .cal-post { font-size:11px;padding:2px 5px;border-radius:3px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;font-weight:500;opacity:.9; }
+    .cal-post:hover { opacity:1; }
+    .plat-cal-instagram { background:#c13584; }
+    .plat-cal-linkedin  { background:#0077b5; }
+    .plat-cal-facebook  { background:#1877f2; }
+    .plat-cal-tiktok    { background:#ff2d55; }
+    .plat-cal-other     { background:#666; }
+    .cal-add-btn { font-size:15px;color:transparent;cursor:pointer;padding:0 3px;margin-top:auto;line-height:1;align-self:flex-start; }
+    .cal-day:hover .cal-add-btn { color:var(--text-dim); }
+    .cal-add-btn:hover { color:var(--accent) !important; }
+    .cal-unsched-item { display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;cursor:pointer;background:var(--surface-2);border:1px solid var(--border);font-size:12px; }
+    .cal-unsched-item:hover { border-color:var(--accent); }
 
-    .av { display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;flex-shrink:0;vertical-align:middle;color:#fff; }
-    .task-cell-assignee { cursor:pointer;overflow:visible !important; }
-    .task-cell-assignee > span { display:flex;align-items:center;gap:5px; }
-    .av-dropdown { display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 6px 16px rgba(0,0,0,0.35);padding:4px;min-width:150px; }
+    /* ── Reporting tab ── */
+    .reporting-placeholder { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;color:var(--text-muted);font-size:13px; }
+    .report-status-row { display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap; }
+    .rs-chip { padding:4px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text-muted);background:var(--surface-2);transition:all 0.15s; }
+    .rs-chip.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+
+    /* ── Assignee ── */
+    .av { display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;flex-shrink:0;color:#fff; }
+    .av-wrap { position:relative;display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--text-muted); }
+    .av-dropdown { display:none;position:absolute;top:calc(100%+4px);left:0;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 6px 16px rgba(0,0,0,.4);padding:4px;min-width:155px; }
     .av-dropdown.open { display:block; }
     .av-option { display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px; }
     .av-option:hover { background:var(--surface-2); }
 
-    .progress-chip { display:inline-block;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;cursor:pointer; }
-    .pc-not-assigned { background:var(--surface-2);color:var(--text-dim); }
-    .pc-planned      { background:#0d1f33;color:#6699cc; }
-    .pc-in-progress  { background:#2a1800;color:#cc8800; }
-    .pc-in-review    { background:#1a0a2e;color:#9966cc; }
-    .pc-complete     { background:#0d3323;color:var(--success); }
-
-    .task-del { background:none;border:none;color:transparent;cursor:pointer;font-size:14px;line-height:1;padding:0;transition:color 0.1s; }
-    .task-row:hover .task-del { color:var(--text-dim); }
-    .task-del:hover { color:var(--danger) !important; }
-
-    .add-task-row { display:grid;grid-template-columns:18px 1fr;gap:0 8px;padding:0 4px;min-height:32px;align-items:center; }
-    .add-task-trigger { font-size:12px;color:var(--text-dim);cursor:pointer;transition:color 0.15s; }
-    .add-task-trigger:hover { color:var(--accent); }
-    .add-task-inline { display:none; }
-    .add-task-inline.open { display:grid;grid-template-columns:1fr 100px 85px auto auto;gap:5px;align-items:center;margin-top:2px;padding:4px 4px 6px; }
-    .add-task-inline input { background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:4px 7px;width:100%;box-sizing:border-box; }
-    .add-task-inline input:focus { outline:none;border-color:var(--accent); }
-
-    .drawer-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200; }
+    /* ── Drawer ── */
+    .drawer-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200; }
     .drawer-overlay.open { display:block; }
-    .drawer { position:fixed;top:0;right:-400px;width:380px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right 0.25s ease; }
+    .drawer { position:fixed;top:0;right:-440px;width:420px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right .25s ease; }
     .drawer.open { right:0; }
     .drawer-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border); }
     .drawer-header h2 { font-size:15px;font-weight:600; }
@@ -93,10 +161,11 @@
     .drawer-footer { padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center; }
     .form-group { display:flex;flex-direction:column;gap:5px; }
     .form-group label { font-size:12px;color:var(--text-muted);font-weight:500; }
-    .form-group input,.form-group select,.form-group textarea { background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 10px;font-family:var(--font);width:100%; }
+    .form-group input,.form-group select,.form-group textarea { background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 10px;font-family:var(--font);width:100%;box-sizing:border-box; }
     .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none;border-color:var(--accent); }
-    .form-group textarea { resize:vertical;min-height:80px; }
+    .form-group textarea { resize:vertical;min-height:70px; }
     .form-row { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+    .drawer-section-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding-top:4px; }
   </style>
 </head>
 <body>
@@ -110,6 +179,7 @@
     </div>
   </div>
 
+  <!-- Edit campaign drawer -->
   <div class="drawer-overlay" id="edit-overlay"></div>
   <div class="drawer" id="edit-drawer">
     <div class="drawer-header">
@@ -128,294 +198,620 @@
             <option value="completed">Completed</option>
           </select>
         </div>
+        <div class="form-group"><label>Campaign Period</label><input type="text" id="f-period" placeholder="e.g. Jun 2026"></div>
       </div>
-      <div class="form-group"><label>Notes</label><textarea id="f-notes" rows="4"></textarea></div>
+      <div class="drawer-section-label">Links</div>
+      <div class="form-group"><label>Sked Link</label><input type="url" id="f-sked" placeholder="https://…"></div>
+      <div class="form-group"><label>Slack Channel</label><input type="text" id="f-slack" placeholder="#channel-name"></div>
+      <div class="form-group"><label>Notes / Main Blocker</label><textarea id="f-notes" rows="3"></textarea></div>
     </div>
     <div class="drawer-footer">
-      <button class="btn btn-primary" id="edit-save">Save</button>
+      <button class="btn btn-primary" id="edit-save-btn">Save</button>
       <button class="btn btn-ghost" onclick="closeEditDrawer()">Cancel</button>
       <button class="btn btn-danger" style="margin-left:auto;" onclick="deleteCampaign()">Delete</button>
+    </div>
+  </div>
+
+  <!-- Add / edit content drawer -->
+  <div class="drawer-overlay" id="content-overlay"></div>
+  <div class="drawer" id="content-drawer">
+    <div class="drawer-header">
+      <h2 id="content-drawer-title">Add Content</h2>
+      <button class="drawer-close" onclick="closeContentDrawer()">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label>Working Title</label><input type="text" id="cd-title" placeholder="e.g. LinkedIn founder post"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Platform</label>
+          <select id="cd-platform">
+            <option value="Instagram">Instagram</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="Facebook">Facebook</option>
+            <option value="TikTok">TikTok</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Format</label>
+          <select id="cd-format">
+            <option value="Post">Post</option>
+            <option value="Reel">Reel</option>
+            <option value="Story">Story</option>
+            <option value="Carousel">Carousel</option>
+            <option value="Video">Video</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Stage</label>
+          <select id="cd-stage">
+            <option value="planned">Planned</option>
+            <option value="in_creation">In Creation</option>
+            <option value="ready_for_sked">Ready for Sked</option>
+            <option value="in_sked">In Sked</option>
+            <option value="awaiting_approval">Awaiting Approval</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+            <option value="complete">Complete</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Publish Date</label><input type="date" id="cd-date"></div>
+      </div>
+      <div class="form-group"><label>Content Pillar</label><input type="text" id="cd-pillar" placeholder="e.g. Brand trust, Education…"></div>
+      <div class="form-group">
+        <label>Assignee</label>
+        <select id="cd-assignee"><option value="">— Unassigned —</option></select>
+      </div>
+      <div class="form-group"><label>Sked Link</label><input type="url" id="cd-sked" placeholder="https://…"></div>
+      <div class="form-group"><label>Published Link</label><input type="url" id="cd-published" placeholder="https://…"></div>
+      <div class="form-group"><label>Notes</label><textarea id="cd-notes" rows="3"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-primary" id="cd-save-btn" onclick="saveContent()">Save</button>
+      <button class="btn btn-ghost" onclick="closeContentDrawer()">Cancel</button>
+      <button class="btn btn-danger" id="cd-delete-btn" style="margin-left:auto;display:none;" onclick="deleteContentFromDrawer()">Delete</button>
     </div>
   </div>
 
   <script src="/components/shell.js"></script>
   <script>
     const campaignId = location.pathname.split('/')[2];
-    let campaign = null;
-    let allTasks = [];
+    let campaign    = null;
+    let socialPosts = [];
     let teamMembers = [];
+    let campaignTasks = [];
+    let socialAdmin = { inputs:[], blockers:[], priorities:[], key_dates:[], slack_followups:[] };
+    let activeTab     = 'tasks';
+    let stageFilter   = 'all';
+    const _now = new Date();
+    let calendarMonth = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+    let editingPostId = null;
 
-    const SOCIAL_STAGES = ['Internal Brief','Strategy & Campaign Direction','Content Planning','Creative Briefing','Content Production','Internal Review','Client Approval','Scheduling','Campaign Launch','Community Management','Optimisation','Reporting'];
+    const STAGES = ['planned','in_creation','ready_for_sked','in_sked','awaiting_approval','scheduled','published','complete'];
+    const STAGE_LABEL = {
+      planned:'Planned', in_creation:'In Creation', ready_for_sked:'Ready for Sked',
+      in_sked:'In Sked', awaiting_approval:'Awaiting Approval',
+      scheduled:'Scheduled', published:'Published', complete:'Complete'
+    };
+    const STAGE_CLASS = {
+      planned:'sc-planned', in_creation:'sc-creation', ready_for_sked:'sc-ready',
+      in_sked:'sc-in-sked', awaiting_approval:'sc-awaiting',
+      scheduled:'sc-scheduled', published:'sc-published', complete:'sc-complete'
+    };
+    const REPORT_STATUSES = ['metrics_pending','metrics_pulled','insights_drafted','ready_for_review','sent','complete'];
+    const REPORT_LABEL    = { metrics_pending:'Metrics Pending', metrics_pulled:'Metrics Pulled', insights_drafted:'Insights Drafted', ready_for_review:'Ready for Review', sent:'Sent', complete:'Complete' };
 
-    const SOCIAL_GROUPS = [
-      { label: 'Set Up',    stages: [0, 1, 2, 3] },
-      { label: 'Content',   stages: [4, 5, 6] },
-      { label: 'Admin',     stages: [7, 8, 9] },
-      { label: 'Reporting', stages: [10, 11] },
-    ];
-
+    // ── Load ─────────────────────────────────────────────────────────────────────
     async function load() {
-      const [campRes, tasksRes, teamRes] = await Promise.all([
+      const [campRes, postsRes, teamRes, tasksRes] = await Promise.all([
         fetch(`/api/campaigns/${campaignId}`),
-        fetch(`/api/campaigns/${campaignId}/tasks`),
+        fetch(`/api/campaigns/${campaignId}/posts`),
         fetch('/api/team-members/names'),
+        fetch(`/api/campaigns/${campaignId}/tasks`),
       ]);
-      teamMembers = teamRes.ok ? await teamRes.json() : [];
       if (!campRes.ok) {
         document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Campaign not found.</p>';
         return;
       }
-      campaign = await campRes.json();
-      allTasks = tasksRes.ok ? await tasksRes.json() : [];
+      campaign      = await campRes.json();
+      socialPosts   = postsRes.ok  ? await postsRes.json()  : [];
+      teamMembers   = teamRes.ok   ? await teamRes.json()   : [];
+      campaignTasks = tasksRes.ok  ? await tasksRes.json()  : [];
+      let sa = null;
+      try { sa = campaign.social_admin ? JSON.parse(campaign.social_admin) : null; } catch {}
+      if (sa) socialAdmin = { inputs:[], blockers:[], priorities:[], key_dates:[], slack_followups:[], ...sa };
       renderShell({ pageId: 'social', title: campaign.name });
-      render();
+      renderPage();
     }
 
-    function render() {
-      const scope = campaign.scope ? JSON.parse(campaign.scope) : {};
-      const platforms = scope.platforms || [];
-      const contentTypes = scope.contentTypes || [];
-      const chipClass = { active:'chip-active', draft:'chip-draft', paused:'chip-paused', completed:'chip-completed' }[campaign.status] || 'chip-draft';
+    // ── Page ─────────────────────────────────────────────────────────────────────
+    function renderPage() {
+      const chipClass   = { active:'chip-active', draft:'chip-draft', paused:'chip-paused', completed:'chip-completed' }[campaign.status] || 'chip-draft';
       const statusLabel = campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1);
+      const scope       = (() => { try { return campaign.scope ? JSON.parse(campaign.scope) : {}; } catch { return {}; } })();
+      const platforms   = (scope.platforms||[]).map(p=>p.name||p).join(', ') || '—';
+      const published   = socialPosts.filter(p => p.status === 'published' && p.post_date).sort((a,b) => b.post_date.localeCompare(a.post_date));
+      const lastPost    = published.length ? new Date(published[0].post_date+'T00:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : null;
 
-      const scopeBar = (platforms.length || contentTypes.length || scope.notes) ? `
-        <div class="scope-bar">
-          ${platforms.length ? `
-          <div class="scope-block">
-            <div class="scope-label">Platforms</div>
-            <div class="platform-chips">
-              ${platforms.map(p => `<span class="platform-chip">${p.name}${p.posts ? ' · ' + p.posts + '/mo' : ''}</span>`).join('')}
-            </div>
-          </div>` : ''}
-          ${contentTypes.length ? `
-          <div class="scope-block">
-            <div class="scope-label">Content Types</div>
-            <div class="platform-chips">
-              ${contentTypes.map(t => `<span class="platform-chip">${t}</span>`).join('')}
-            </div>
-          </div>` : ''}
-          ${scope.notes ? `
-          <div class="scope-block">
-            <div class="scope-label">Notes</div>
-            <div style="font-size:12px;color:var(--text-muted);max-width:300px;">${scope.notes}</div>
-          </div>` : ''}
-        </div>` : '';
+      document.getElementById('page-content').innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <a href="/social" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Social</a>
+          ${campaign.client_name ? `<span style="color:var(--text-dim);">›</span><a href="/clients/${campaign.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">${escHtml(campaign.client_name)}</a>` : ''}
+        </div>
 
-      const stageHtml = (s, i) => {
-        const stageTasks = allTasks.filter(t => t.stage_index === i);
-        const doneCount = stageTasks.filter(t => t.done).length;
-        const taskCountLabel = stageTasks.length ? `${doneCount}/${stageTasks.length}` : '';
+        <div class="overview-card">
+          <div class="ov-field">
+            <span class="ov-label">Campaign</span>
+            <span class="ov-value" style="font-weight:700;font-size:16px;">${escHtml(campaign.name)}</span>
+            ${campaign.client_name ? `<span style="font-size:12px;color:var(--text-muted);">${escHtml(campaign.client_name)}</span>` : ''}
+          </div>
+          ${campaign.notes ? `<div class="ov-field"><span class="ov-label">Status / Blocker</span><span class="ov-value" style="color:var(--warning);font-size:12px;">${escHtml(campaign.notes)}</span></div>` : ''}
+          <div class="ov-field"><span class="ov-label">Platforms</span><span class="ov-value">${escHtml(platforms)}</span></div>
+          <div class="ov-field"><span class="ov-label">Status</span><span class="status-chip ${chipClass}" style="margin-top:2px;">${statusLabel}</span></div>
+          ${lastPost ? `<div class="ov-field"><span class="ov-label">Last Post</span><span class="ov-value">${lastPost}</span></div>` : ''}
+          ${campaign.sked_link ? `<div class="ov-field"><span class="ov-label">Sked</span><a class="ov-link" href="${escAttr(campaign.sked_link)}" target="_blank">Open Sked ↗</a></div>` : ''}
+          ${campaign.slack_channel ? `<div class="ov-field"><span class="ov-label">Slack</span><span class="ov-value">${escHtml(campaign.slack_channel)}</span></div>` : ''}
+          <div class="ov-actions">
+            <button class="btn btn-ghost" style="font-size:12px;" onclick="openEditDrawer()">Edit</button>
+          </div>
+        </div>
 
-        const colHeader = stageTasks.length ? `
-          <div class="task-cols">
-            <div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div>
-          </div>` : '';
+        <div class="board-tabs">
+          <div class="board-tab ${activeTab==='admin'?'active':''}"     onclick="switchTab('admin')">Admin</div>
+          <div class="board-tab ${activeTab==='tasks'?'active':''}"     onclick="switchTab('tasks')">Tasks</div>
+          <div class="board-tab ${activeTab==='content'?'active':''}"   onclick="switchTab('content')">Content</div>
+          <div class="board-tab ${activeTab==='reporting'?'active':''}" onclick="switchTab('reporting')">Reporting</div>
+        </div>
 
-        const tasksHtml = stageTasks.map(t => {
-          const prog = t.progress || 'Not Assigned';
-          const progClass = progressClass(prog);
-          return `
-          <div class="task-row ${t.done ? 'done' : ''}" id="task-row-${t.id}">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleDone(${t.id}, this.checked)">
-            <div class="task-cell task-cell-title" onclick="editCell(this, ${t.id}, 'title')">
-              <span>${t.title}</span>
-              <input type="text" value="${t.title.replace(/"/g, '&quot;')}"
-                onblur="saveField(${t.id}, 'title', this.value)"
-                onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelCell(this.parentElement)">
-            </div>
-            <div class="task-cell task-cell-progress" onclick="editCell(this, ${t.id}, 'progress')">
-              <span><span class="progress-chip ${progClass}">${prog}</span></span>
-              <select onchange="saveField(${t.id}, 'progress', this.value)" onblur="cancelCell(this.parentElement)">
-                ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o => `<option${o===prog?' selected':''}>${o}</option>`).join('')}
-              </select>
-            </div>
-            <div class="task-cell task-cell-assignee" onclick="openAssigneeSelector(event, ${t.id})">
-              <span>${assigneeDisplay(t.assignee)}</span>
-              <div class="av-dropdown" id="av-drop-${t.id}">
-                <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, null)">
-                  <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
-                </div>
-                ${teamMembers.map(name => `
-                  <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, '${name.replace(/'/g, "\\'")}')">
-                    ${avatarHtml(name)} ${name}
-                  </div>`).join('')}
+        <div id="tab-admin"     ${activeTab!=='admin'?'style="display:none"':''}>
+          ${buildAdminHtml()}
+        </div>
+        <div id="tab-tasks"     ${activeTab!=='tasks'?'style="display:none"':''}>
+          ${buildTasksHtml()}
+        </div>
+        <div id="tab-content"   ${activeTab!=='content'?'style="display:none"':''}>
+          ${buildContentHtml()}
+        </div>
+        <div id="tab-reporting" ${activeTab!=='reporting'?'style="display:none"':''}>
+          ${buildReportingHtml()}
+        </div>
+      `;
+
+      const sel = document.getElementById('cd-assignee');
+      if (sel) {
+        sel.innerHTML = '<option value="">— Unassigned —</option>' +
+          teamMembers.map(n => `<option value="${escAttr(n)}">${escHtml(n)}</option>`).join('');
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const TABS = ['admin','tasks','content','reporting'];
+      TABS.forEach((t, i) => {
+        document.querySelectorAll('.board-tab')[i].classList.toggle('active', t === tab);
+        document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
+      });
+    }
+
+    // ── Admin tab ────────────────────────────────────────────────────────────────
+    function buildAdminHtml() {
+      const brief = socialAdmin.brief || {};
+      return `
+        <div class="admin-grid" style="margin-bottom:16px;">
+          <div class="admin-section" style="grid-column:1/-1;">
+            <div class="admin-section-header">Campaign Brief</div>
+            <div class="brief-fields">
+              <div class="brief-field">
+                <label>Objective</label>
+                <input type="text" value="${escAttr(brief.objective||'')}" placeholder="What is this campaign trying to achieve?"
+                  onblur="saveBriefField('objective',this.value)">
+              </div>
+              <div class="brief-field">
+                <label>Key Messages</label>
+                <textarea rows="2" placeholder="Core messages for this campaign…"
+                  onblur="saveBriefField('key_messages',this.value)">${escHtml(brief.key_messages||'')}</textarea>
+              </div>
+              <div class="brief-field">
+                <label>Content Pillars</label>
+                <textarea rows="2" placeholder="e.g. Brand trust, Education, Community…"
+                  onblur="saveBriefField('content_pillars',this.value)">${escHtml(brief.content_pillars||'')}</textarea>
               </div>
             </div>
-            <div class="task-cell task-cell-due" onclick="editCell(this, ${t.id}, 'due_date')">
-              <span>${t.due_date || '<span style=color:var(--text-dim)>—</span>'}</span>
-              <input type="date" value="${t.due_date || ''}"
-                onchange="saveField(${t.id}, 'due_date', this.value)"
-                onblur="saveField(${t.id}, 'due_date', this.value)"
-                onkeydown="if(event.key==='Escape')cancelCell(this.parentElement)">
-            </div>
-            <button class="task-del" onclick="deleteTask(${t.id})" title="Delete">×</button>
-          </div>`;
-        }).join('');
+          </div>
+        </div>
 
+        <div class="admin-grid">
+          ${buildAdminList('inputs','Inputs Tracker',
+            ['Received','Pending','Missing'],
+            ['is-received','is-pending','is-missing'])}
+          ${buildAdminList('blockers','Blockers',
+            ['Active','Resolved'],
+            ['is-active','is-resolved'])}
+          ${buildAdminList('key_dates','Key Dates',
+            ['Upcoming','Done'],
+            ['is-pending','is-done'],true)}
+          ${buildAdminList('slack_followups','Slack Follow-ups',
+            ['Open','Done'],
+            ['is-open','is-done'])}
+        </div>`;
+    }
+
+    function buildAdminList(key, label, statusOptions, statusClasses, dateMode=false) {
+      const items = socialAdmin[key] || [];
+      const rows = items.map((item,i) => `
+        <div class="admin-item">
+          <span class="item-status ${statusClasses[statusOptions.map(s=>s.toLowerCase()).indexOf((item.status||statusOptions[0]).toLowerCase())]||statusClasses[0]}"
+            onclick="cycleAdminStatus('${key}',${i},'${statusOptions.join(',')}','${statusClasses.join(',')}')" style="cursor:pointer;">
+            ${escHtml(item.status||statusOptions[0])}
+          </span>
+          <span class="admin-item-text">${escHtml(item.text)}</span>
+          <button class="admin-item-del" onclick="removeAdminItem('${key}',${i})">×</button>
+        </div>`).join('');
+      const addInput = dateMode
+        ? `<input type="text" id="ai-${key}" placeholder="Date + label…">`
+        : `<input type="text" id="ai-${key}" placeholder="Add item…" onkeydown="if(event.key==='Enter')addAdminItem('${key}','${statusOptions[0]}')">`;
+      return `
+        <div class="admin-section">
+          <div class="admin-section-header">${label}</div>
+          <div class="admin-list" id="alist-${key}">${rows||'<span style="font-size:12px;color:var(--text-dim);padding:4px 6px;">None yet</span>'}</div>
+          <div class="admin-add">
+            ${addInput}
+            <select id="as-${key}">
+              ${statusOptions.map((s,i) => `<option value="${s}">${s}</option>`).join('')}
+            </select>
+            <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;white-space:nowrap;" onclick="addAdminItem('${key}','${statusOptions[0]}')">Add</button>
+          </div>
+        </div>`;
+    }
+
+    function cycleAdminStatus(key, index, optionsStr, classesStr) {
+      const options = optionsStr.split(',');
+      const classes = classesStr.split(',');
+      const item = socialAdmin[key][index];
+      if (!item) return;
+      const cur = options.findIndex(o => o.toLowerCase() === (item.status||options[0]).toLowerCase());
+      item.status = options[(cur+1) % options.length];
+      saveAdmin();
+      const listEl = document.getElementById(`alist-${key}`);
+      if (listEl) listEl.parentElement.outerHTML = buildAdminList(key,
+        listEl.closest('.admin-section').querySelector('.admin-section-header').textContent,
+        options, classes
+      );
+      document.getElementById('tab-admin').innerHTML = buildAdminHtml();
+    }
+
+    function addAdminItem(key, defaultStatus) {
+      const input  = document.getElementById(`ai-${key}`);
+      const selEl  = document.getElementById(`as-${key}`);
+      const text   = input?.value.trim();
+      if (!text) return;
+      socialAdmin[key].push({ text, status: selEl?.value || defaultStatus });
+      input.value = '';
+      saveAdmin();
+      document.getElementById('tab-admin').innerHTML = buildAdminHtml();
+    }
+
+    function removeAdminItem(key, index) {
+      socialAdmin[key].splice(index, 1);
+      saveAdmin();
+      document.getElementById('tab-admin').innerHTML = buildAdminHtml();
+    }
+
+    function saveBriefField(field, value) {
+      if (!socialAdmin.brief) socialAdmin.brief = {};
+      socialAdmin.brief[field] = value.trim();
+      saveAdmin();
+    }
+
+    async function saveAdmin() {
+      await fetch(`/api/campaigns/${campaignId}/social-admin`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ social_admin: socialAdmin }),
+      });
+    }
+
+    // ── Tasks tab ─────────────────────────────────────────────────────────────────
+    function buildTasksHtml() {
+      const open = campaignTasks.filter(t => !t.done);
+      const done = campaignTasks.filter(t => t.done);
+
+      const taskRow = (t) => {
+        const dateStr = t.due_date ? new Date(t.due_date+'T00:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}) : '';
+        const overdue = t.due_date && !t.done && new Date(t.due_date+'T00:00:00') < new Date();
         return `
-          <div class="stage-section open" id="stage-section-${i}">
-            <div class="stage-header" onclick="toggleSection(${i})">
-              <div class="stage-num">${i + 1}</div>
-              <div class="stage-name">${s}</div>
-              ${taskCountLabel ? `<span class="stage-task-count">${taskCountLabel}</span>` : ''}
-              <span class="stage-chevron">▼</span>
-            </div>
-            <div class="stage-body">
-              <div class="task-list">
-                ${colHeader}
-                ${tasksHtml}
-              </div>
-              <div class="add-task-row">
-                <div></div>
-                <div class="add-task-trigger" id="add-trigger-${i}" onclick="showAddForm(${i})">+ Add task</div>
-              </div>
-              <div class="add-task-inline" id="add-form-${i}">
-                <input type="text" id="add-title-${i}" placeholder="Task title…" onkeydown="if(event.key==='Enter')submitTask(${i});if(event.key==='Escape')hideAddForm(${i})">
-                <input type="text" id="add-assignee-${i}" placeholder="Assignee">
-                <input type="date" id="add-due-${i}">
-                <button class="btn btn-primary" style="font-size:12px;padding:4px 10px;white-space:nowrap;" onclick="submitTask(${i})">Add</button>
-                <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px;" onclick="hideAddForm(${i})">✕</button>
-              </div>
-            </div>
+          <div class="task-row ${t.done ? 'task-done' : ''}">
+            <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id}, this.checked)">
+            <span class="task-title">${escHtml(t.title)}</span>
+            ${t.assignee ? `<span class="task-meta">${avatarHtml(t.assignee,18)}</span>` : ''}
+            ${dateStr ? `<span class="task-meta task-date ${overdue?'task-overdue':''}">${dateStr}</span>` : ''}
+            <button class="task-del" onclick="deleteTask(${t.id})">×</button>
           </div>`;
       };
 
-      const sectionsHtml = SOCIAL_GROUPS.map(group => `
-        <div style="margin-bottom:6px;margin-top:20px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);padding:0 2px 8px;">${group.label}</div>
-          ${group.stages.map(i => stageHtml(SOCIAL_STAGES[i], i)).join('')}
-        </div>
-      `).join('');
+      const assigneeOpts = '<option value="">— Unassigned —</option>' +
+        teamMembers.map(n => `<option value="${escAttr(n)}">${escHtml(n)}</option>`).join('');
 
-      document.getElementById('page-content').innerHTML = `
-        <div class="board-header">
-          <a href="/social" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Social</a>
-          ${campaign.client_name ? `<span style="color:var(--text-dim);">›</span><a href="/clients/${campaign.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">${campaign.client_name}</a>` : ''}
-          <h1 style="font-size:20px;font-weight:700;">${campaign.name}</h1>
-          <span class="status-chip ${chipClass}">${statusLabel}</span>
-          <div style="flex:1;"></div>
-          <button class="btn btn-ghost" style="font-size:12px;" onclick="openEditDrawer()">Edit</button>
-        </div>
-        ${scopeBar}
-        <div id="stages-list">${sectionsHtml}</div>
-      `;
+      return `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);">Tasks</span>
+            <span style="font-size:12px;color:var(--text-dim);">${open.length} open</span>
+          </div>
+          <div id="task-list" style="padding:6px 8px;display:flex;flex-direction:column;gap:1px;min-height:40px;">
+            ${open.map(taskRow).join('')}
+            ${done.length ? `<div style="font-size:11px;color:var(--text-dim);padding:6px 8px;margin-top:4px;text-transform:uppercase;letter-spacing:.06em;">Completed</div>${done.map(taskRow).join('')}` : ''}
+            ${!campaignTasks.length ? `<div style="font-size:13px;color:var(--text-dim);padding:8px 6px;">No tasks yet</div>` : ''}
+          </div>
+          <div style="padding:8px 10px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;">
+            <input type="text" id="new-task-title" placeholder="Add a task…" style="flex:1;min-width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:5px 8px;"
+              onkeydown="if(event.key==='Enter')addTask()">
+            <select id="new-task-assignee" style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:5px 6px;">${assigneeOpts}</select>
+            <input type="date" id="new-task-date" style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:5px 8px;">
+            <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;" onclick="addTask()">Add</button>
+          </div>
+        </div>`;
     }
 
-    function toggleSection(i) {
-      document.getElementById(`stage-section-${i}`).classList.toggle('open');
-    }
-
-    function showAddForm(i) {
-      document.getElementById(`add-trigger-${i}`).style.display = 'none';
-      document.getElementById(`add-form-${i}`).classList.add('open');
-      document.getElementById(`add-title-${i}`).focus();
-    }
-    function hideAddForm(i) {
-      document.getElementById(`add-form-${i}`).classList.remove('open');
-      const t = document.getElementById(`add-trigger-${i}`);
-      if (t) t.style.display = '';
-    }
-    async function submitTask(i) {
-      const title = document.getElementById(`add-title-${i}`).value.trim();
+    async function addTask() {
+      const input    = document.getElementById('new-task-title');
+      const title    = input?.value.trim();
       if (!title) return;
-      const assignee = document.getElementById(`add-assignee-${i}`).value.trim();
-      const due_date = document.getElementById(`add-due-${i}`).value;
-      hideAddForm(i);
-      await fetch(`/api/campaigns/${campaignId}/tasks`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage_index: i, title, assignee: assignee || null, due_date: due_date || null }),
+      const assignee = document.getElementById('new-task-assignee')?.value || null;
+      const due_date = document.getElementById('new-task-date')?.value || null;
+      const res = await fetch(`/api/campaigns/${campaignId}/tasks`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ stage_index:0, title, assignee, due_date }),
       });
-      load();
+      if (res.ok) {
+        const { id } = await res.json();
+        campaignTasks.push({ id, stage_index:0, title, assignee, due_date, done:0 });
+        input.value = '';
+        document.getElementById('tab-tasks').innerHTML = buildTasksHtml();
+      }
     }
 
-    async function toggleDone(taskId, done) {
-      await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    async function toggleTask(id, done) {
+      await fetch(`/api/campaigns/${campaignId}/tasks/${id}`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ done }),
       });
-      const task = allTasks.find(t => t.id === taskId);
-      if (task) task.done = done ? 1 : 0;
+      const t = campaignTasks.find(t => t.id === id);
+      if (t) t.done = done ? 1 : 0;
+      document.getElementById('tab-tasks').innerHTML = buildTasksHtml();
     }
 
-    async function deleteTask(taskId) {
-      await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, { method: 'DELETE' });
-      load();
+    async function deleteTask(id) {
+      await fetch(`/api/campaigns/${campaignId}/tasks/${id}`, { method:'DELETE' });
+      campaignTasks = campaignTasks.filter(t => t.id !== id);
+      document.getElementById('tab-tasks').innerHTML = buildTasksHtml();
     }
 
-    function avatarColor(name) {
-      const p = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
-      let h = 0;
-      for (let i = 0; i < (name||'').length; i++) h = (name.charCodeAt(i) + ((h << 5) - h)) | 0;
-      return p[Math.abs(h) % p.length];
-    }
-    function avatarHtml(name, size=20) {
-      if (!name) return '';
-      const ini = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-      return `<span class="av" style="width:${size}px;height:${size}px;background:${avatarColor(name)};font-size:${Math.round(size*.42)}px">${ini}</span>`;
-    }
-    function assigneeDisplay(name) {
-      return name ? `${avatarHtml(name)} ${name}` : '<span style="color:var(--text-dim)">—</span>';
-    }
-    function progressClass(p) {
-      return {'Not Assigned':'pc-not-assigned','Planned':'pc-planned','In Progress':'pc-in-progress','In Review':'pc-in-review','Complete':'pc-complete'}[p]||'pc-not-assigned';
+    // ── Content tab (calendar view) ───────────────────────────────────────────────
+    function buildContentHtml() {
+      const [year, mon] = calendarMonth.split('-').map(Number);
+      const firstDay    = new Date(year, mon - 1, 1);
+      const daysInMonth = new Date(year, mon, 0).getDate();
+      const startDow    = (firstDay.getDay() + 6) % 7; // 0=Mon
+
+      const filtered    = stageFilter === 'all' ? socialPosts : socialPosts.filter(p => p.status === stageFilter);
+      const monthPosts  = filtered.filter(p => p.post_date && p.post_date.startsWith(calendarMonth));
+      const unscheduled = filtered.filter(p => !p.post_date);
+
+      const dayMap = {};
+      monthPosts.forEach(p => {
+        const d = parseInt(p.post_date.split('-')[2]);
+        (dayMap[d] = dayMap[d] || []).push(p);
+      });
+
+      const cells = [...Array(startDow).fill(null)];
+      for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+      while (cells.length % 7) cells.push(null);
+
+      const today      = new Date();
+      const todayDate  = (today.getFullYear() === year && today.getMonth() + 1 === mon) ? today.getDate() : -1;
+      const monthLabel = firstDay.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
+      const _p = new Date(year, mon - 2, 1), _n = new Date(year, mon, 1);
+      const prevM = `${_p.getFullYear()}-${String(_p.getMonth()+1).padStart(2,'0')}`;
+      const nextM = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}`;
+
+      const dayCells = cells.map(day => {
+        if (!day) return `<div class="cal-day cal-day-empty"></div>`;
+        const posts   = dayMap[day] || [];
+        const isToday = day === todayDate;
+        const ds      = `${calendarMonth}-${String(day).padStart(2, '0')}`;
+        return `
+          <div class="cal-day ${isToday ? 'cal-day-today' : ''}">
+            <div class="cal-day-num">${day}</div>
+            <div class="cal-day-posts">
+              ${posts.map(p => {
+                const pk = (p.platform||'other').toLowerCase();
+                const lbl = (p.title||'Untitled');
+                return `<div class="cal-post plat-cal-${pk}" onclick="openContentDrawer(${p.id})" title="${escAttr(lbl)}">${escHtml(lbl.length > 24 ? lbl.slice(0,24)+'…' : lbl)}</div>`;
+              }).join('')}
+              <div class="cal-add-btn" onclick="openNewContentDrawerDate('${ds}')">+</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      const unschedHtml = unscheduled.length ? `
+        <div style="margin-top:16px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px;">Unscheduled (${unscheduled.length})</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${unscheduled.map(p => {
+              const pk = (p.platform||'other').toLowerCase();
+              return `<div class="cal-unsched-item" onclick="openContentDrawer(${p.id})">
+                <span class="plat-chip plat-${pk}" style="font-size:10px;padding:1px 6px;">${escHtml(p.platform||'Other')}</span>
+                <span>${escHtml((p.title||'Untitled').slice(0, 32))}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : '';
+
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="btn btn-ghost" style="padding:4px 12px;font-size:14px;" onclick="setCalMonth('${prevM}')">‹</button>
+            <span style="font-weight:600;font-size:15px;min-width:145px;text-align:center;">${monthLabel}</span>
+            <button class="btn btn-ghost" style="padding:4px 12px;font-size:14px;" onclick="setCalMonth('${nextM}')">›</button>
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <div class="sf-tab ${stageFilter==='all'?'active':''}" onclick="setStageFilter('all')">All (${socialPosts.length})</div>
+            ${STAGES.map(s => {
+              const count = socialPosts.filter(p => p.status === s).length;
+              return count ? `<div class="sf-tab ${stageFilter===s?'active':''}" onclick="setStageFilter('${s}')">${STAGE_LABEL[s]} (${count})</div>` : '';
+            }).join('')}
+          </div>
+        </div>
+        <div class="cal-grid">
+          ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cal-header">${d}</div>`).join('')}
+          ${dayCells}
+        </div>
+        ${unschedHtml}
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;" onclick="openNewContentDrawer()">+ Add Content</button>
+        </div>`;
     }
 
-    function openAssigneeSelector(event, taskId) {
-      event.stopPropagation();
-      const drop = document.getElementById(`av-drop-${taskId}`);
-      const isOpen = drop.classList.contains('open');
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
-      if (!isOpen) drop.classList.add('open');
+    function setStageFilter(s) {
+      stageFilter = s;
+      document.getElementById('tab-content').innerHTML = buildContentHtml();
     }
-    async function selectAssignee(taskId, name) {
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
-      await saveField(taskId, 'assignee', name || '');
-    }
-    document.addEventListener('click', () => {
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
-    });
 
-    function editCell(cell, taskId, field) {
-      cell.classList.add('editing');
-      const el = cell.querySelector('input, select');
-      if (!el) return;
-      el.focus();
-      if (el.type === 'text') el.select();
+    function setCalMonth(m) {
+      calendarMonth = m;
+      document.getElementById('tab-content').innerHTML = buildContentHtml();
     }
-    function cancelCell(cell) { cell.classList.remove('editing'); }
 
-    async function saveField(taskId, field, value) {
-      const task = allTasks.find(t => t.id === taskId);
-      if (!task) return;
-      const sanitized = (value && value.trim) ? value.trim() : value;
-      if (field === 'title' && !sanitized) { cancelCell(document.querySelector(`#task-row-${taskId} .task-cell-title`)); return; }
-      const row = document.getElementById(`task-row-${taskId}`);
-      if (row) {
-        row.querySelectorAll('.task-cell').forEach(c => c.classList.remove('editing'));
-        const map = { title:'title', assignee:'assignee', due_date:'due', progress:'progress' };
-        const span = row.querySelector(`.task-cell-${map[field]} > span`);
-        if (span) {
-          if (field === 'progress') {
-            const p = sanitized || 'Not Assigned';
-            span.innerHTML = `<span class="progress-chip ${progressClass(p)}">${p}</span>`;
-          } else if (field === 'assignee') {
-            span.innerHTML = assigneeDisplay(sanitized);
-          } else {
-            span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
-          }
+    // ── Reporting tab ────────────────────────────────────────────────────────────
+    function buildReportingHtml() {
+      const reportStatus = socialAdmin.report_status || 'metrics_pending';
+      return `
+        <div class="reporting-placeholder">
+          <div style="font-size:15px;font-weight:600;margin-bottom:8px;">Reporting</div>
+          <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px;">Metrics, insights and client updates will live here.</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;">Report Status</div>
+          <div class="report-status-row">
+            ${REPORT_STATUSES.map(s => `
+              <span class="rs-chip ${reportStatus===s?'active':''}" onclick="setReportStatus('${s}')">${REPORT_LABEL[s]}</span>
+            `).join('')}
+          </div>
+        </div>`;
+    }
+
+    function setReportStatus(s) {
+      socialAdmin.report_status = s;
+      saveAdmin();
+      document.getElementById('tab-reporting').innerHTML = buildReportingHtml();
+    }
+
+    // ── Content drawer ────────────────────────────────────────────────────────────
+    function openNewContentDrawer(date) {
+      editingPostId = null;
+      document.getElementById('content-drawer-title').textContent = 'Add Content';
+      document.getElementById('cd-title').value     = '';
+      document.getElementById('cd-platform').value  = 'Instagram';
+      document.getElementById('cd-format').value    = 'Post';
+      document.getElementById('cd-stage').value     = 'planned';
+      document.getElementById('cd-date').value      = date || '';
+      document.getElementById('cd-pillar').value    = '';
+      document.getElementById('cd-assignee').value  = '';
+      document.getElementById('cd-sked').value      = '';
+      document.getElementById('cd-published').value = '';
+      document.getElementById('cd-notes').value     = '';
+      document.getElementById('cd-delete-btn').style.display = 'none';
+      document.getElementById('content-drawer').classList.add('open');
+      document.getElementById('content-overlay').classList.add('open');
+    }
+
+    function openNewContentDrawerDate(date) { openNewContentDrawer(date); }
+
+    function openContentDrawer(postId) {
+      const p = socialPosts.find(x => x.id === postId);
+      if (!p) return;
+      editingPostId = postId;
+      document.getElementById('content-drawer-title').textContent = 'Edit Content';
+      document.getElementById('cd-title').value     = p.title     || '';
+      document.getElementById('cd-platform').value  = p.platform  || 'Instagram';
+      document.getElementById('cd-format').value    = p.format    || 'Post';
+      document.getElementById('cd-stage').value     = p.status    || 'planned';
+      document.getElementById('cd-date').value      = p.post_date || '';
+      document.getElementById('cd-pillar').value    = p.content_pillar || '';
+      document.getElementById('cd-assignee').value  = p.assignee  || '';
+      document.getElementById('cd-sked').value      = p.sked_link || '';
+      document.getElementById('cd-published').value = p.published_link || '';
+      document.getElementById('cd-notes').value     = p.notes     || '';
+      document.getElementById('cd-delete-btn').style.display = '';
+      document.getElementById('content-drawer').classList.add('open');
+      document.getElementById('content-overlay').classList.add('open');
+    }
+
+    function closeContentDrawer() {
+      document.getElementById('content-drawer').classList.remove('open');
+      document.getElementById('content-overlay').classList.remove('open');
+      editingPostId = null;
+    }
+    document.getElementById('content-overlay').addEventListener('click', closeContentDrawer);
+
+    async function saveContent() {
+      const payload = {
+        title:          document.getElementById('cd-title').value.trim(),
+        platform:       document.getElementById('cd-platform').value,
+        format:         document.getElementById('cd-format').value,
+        status:         document.getElementById('cd-stage').value,
+        post_date:      document.getElementById('cd-date').value || null,
+        content_pillar: document.getElementById('cd-pillar').value.trim() || null,
+        assignee:       document.getElementById('cd-assignee').value || null,
+        sked_link:      document.getElementById('cd-sked').value.trim() || null,
+        published_link: document.getElementById('cd-published').value.trim() || null,
+        notes:          document.getElementById('cd-notes').value.trim() || null,
+      };
+      const btn = document.getElementById('cd-save-btn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      if (editingPostId) {
+        const res = await fetch(`/api/campaigns/${campaignId}/posts/${editingPostId}`, {
+          method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const post = socialPosts.find(p => p.id === editingPostId);
+          if (post) Object.assign(post, payload);
+        }
+      } else {
+        const res = await fetch(`/api/campaigns/${campaignId}/posts`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ ...payload, month: payload.post_date ? payload.post_date.slice(0,7) : calendarMonth }),
+        });
+        if (res.ok) {
+          const { id } = await res.json();
+          socialPosts.push({ id, ...payload });
+        } else {
+          alert('Failed to save'); btn.disabled = false; btn.textContent = 'Save'; return;
         }
       }
-      task[field] = sanitized || null;
-      await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: sanitized || null }),
-      });
+
+      btn.disabled = false; btn.textContent = 'Save';
+      closeContentDrawer();
+      document.getElementById('tab-content').innerHTML = buildContentHtml();
     }
 
+    async function deleteContentFromDrawer() {
+      if (!editingPostId || !confirm('Delete this content piece?')) return;
+      await fetch(`/api/campaigns/${campaignId}/posts/${editingPostId}`, { method:'DELETE' });
+      socialPosts = socialPosts.filter(p => p.id !== editingPostId);
+      closeContentDrawer();
+      document.getElementById('tab-content').innerHTML = buildContentHtml();
+    }
+
+    // ── Edit campaign drawer ──────────────────────────────────────────────────────
     function openEditDrawer() {
-      document.getElementById('f-name').value = campaign.name || '';
-      document.getElementById('f-status').value = campaign.status || 'active';
-      document.getElementById('f-notes').value = campaign.notes || '';
+      document.getElementById('f-name').value   = campaign.name          || '';
+      document.getElementById('f-status').value = campaign.status        || 'active';
+      document.getElementById('f-period').value = campaign.campaign_period || '';
+      document.getElementById('f-sked').value   = campaign.sked_link     || '';
+      document.getElementById('f-slack').value  = campaign.slack_channel || '';
+      document.getElementById('f-notes').value  = campaign.notes         || '';
       document.getElementById('edit-drawer').classList.add('open');
       document.getElementById('edit-overlay').classList.add('open');
     }
@@ -424,23 +820,51 @@
       document.getElementById('edit-overlay').classList.remove('open');
     }
     document.getElementById('edit-overlay').addEventListener('click', closeEditDrawer);
-    document.getElementById('edit-save').addEventListener('click', async () => {
-      await fetch(`/api/campaigns/${campaignId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: document.getElementById('f-name').value.trim(),
-          status: document.getElementById('f-status').value,
-          notes: document.getElementById('f-notes').value.trim() || null,
+    document.getElementById('edit-save-btn').addEventListener('click', async () => {
+      await Promise.all([
+        fetch(`/api/campaigns/${campaignId}`, {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            name:   document.getElementById('f-name').value.trim(),
+            status: document.getElementById('f-status').value,
+            notes:  document.getElementById('f-notes').value.trim() || null,
+          }),
         }),
-      });
+        fetch(`/api/campaigns/${campaignId}/links`, {
+          method:'PATCH', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            sked_link:    document.getElementById('f-sked').value.trim()  || null,
+            slack_channel: document.getElementById('f-slack').value.trim() || null,
+          }),
+        }),
+      ]);
       closeEditDrawer();
       load();
     });
     async function deleteCampaign() {
       if (!confirm('Delete this social campaign? This cannot be undone.')) return;
-      await fetch(`/api/campaigns/${campaignId}`, { method: 'DELETE' });
+      await fetch(`/api/campaigns/${campaignId}`, { method:'DELETE' });
       window.location.href = '/social';
     }
+
+    // ── Utils ─────────────────────────────────────────────────────────────────────
+    function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return escHtml(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+    function avatarColor(name) {
+      const p = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
+      let h = 0;
+      for (let i=0;i<(name||'').length;i++) h=(name.charCodeAt(i)+((h<<5)-h))|0;
+      return p[Math.abs(h)%p.length];
+    }
+    function avatarHtml(name, size=20) {
+      if (!name) return '';
+      const ini = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return `<span class="av" style="width:${size}px;height:${size}px;background:${avatarColor(name)};font-size:${Math.round(size*.42)}px">${ini}</span>`;
+    }
+
+    document.addEventListener('click', () =>
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'))
+    );
 
     load();
   </script>

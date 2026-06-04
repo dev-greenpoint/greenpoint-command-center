@@ -17,6 +17,8 @@ const campaignsRouter = require('./routes/campaigns');
 const teamPlannerRouter = require('./routes/team-planner');
 const teamMembersRouter = require('./routes/team-members');
 const { router: strategiesRouter } = require('./routes/strategies');
+const mediaHubsRouter = require('./routes/media-hubs');
+const onboardingRouter = require('./routes/onboarding');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,13 +42,19 @@ const upload = multer({
   }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    cb(null, /^image\/(jpeg|png|gif|webp|svg\+xml)$/.test(file.mimetype));
+    cb(null, /^image\/(jpeg|png|gif|webp)$/.test(file.mimetype));
   },
 });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ url: `/uploads/${req.file.filename}` });
+app.post('/api/upload', (req, res) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      return res.status(status).json({ error: err.message });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    res.json({ url: `/uploads/${req.file.filename}` });
+  });
 });
 
 app.get('/api/health', async (req, res) => {
@@ -65,6 +73,8 @@ app.use('/api/campaigns', campaignsRouter);
 app.use('/api/team-planner', teamPlannerRouter);
 app.use('/api/team-members', teamMembersRouter);
 app.use('/api/strategies', strategiesRouter);
+app.use('/api/media-hubs', mediaHubsRouter);
+app.use('/api/onboarding', onboardingRouter);
 
 const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies'];
 PAGES.forEach(page => {
@@ -99,6 +109,14 @@ app.get('/strategy/:id', (req, res) => {
 
 app.get('/s/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/strategy-view.html'));
+});
+
+app.get('/media-hub/:clientId', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/media-hub.html'));
+});
+
+app.get('/mh/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/media-hub-share.html'));
 });
 
 app.get('*', (req, res) => {

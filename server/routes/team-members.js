@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
     'INSERT INTO team_members (name, role, email) VALUES (?, ?, ?)',
     [name, role || null, email || null]
   );
-  const id = rows(db.exec('SELECT last_insert_rowid() as id'))[0].id;
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   saveDb();
   res.status(201).json({ id });
 });

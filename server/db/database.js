@@ -18,6 +18,8 @@ async function getDb() {
     db = new SQL.Database();
   }
 
+  db.run('PRAGMA foreign_keys = ON');
+
   return db;
 }
 

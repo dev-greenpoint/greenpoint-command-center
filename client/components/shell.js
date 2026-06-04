@@ -7,6 +7,19 @@ const NAV_ITEMS = [
   { id: 'reports',     label: 'Reports',     icon: '▦',  href: '/reports' },
 ];
 
+// ● green = built  ◑ yellow = partial  ○ grey = not started
+const CAMPAIGN_TYPE_STATUS = [
+  { label: 'PR',                    status: 'built',    href: '/campaigns' },
+  { label: 'PR Light',              status: 'partial',  href: '/campaigns' },
+  { label: 'Social',                status: 'built',    href: '/social' },
+  { label: 'Events & Partnerships', status: 'none',     href: '#' },
+  { label: 'Awards',                status: 'none',     href: '#' },
+  { label: 'Paid Media',            status: 'none',     href: '#' },
+  { label: 'Design',                status: 'none',     href: '#' },
+  { label: 'eDM',                   status: 'none',     href: '#' },
+  { label: 'Reporting',             status: 'partial',  href: '/reports' },
+];
+
 function renderShell({ pageId, title }) {
   const sidebar = document.getElementById('sidebar');
   const header  = document.getElementById('header');
@@ -29,9 +42,27 @@ function renderShell({ pageId, title }) {
           <span class="nav-label">${item.label}</span>
         </a>
       `).join('')}
+
+      <div class="nav-section-label nav-section-toggle" id="types-section-label" style="margin-top:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding-right:12px;" onclick="toggleSidebarTypes()">
+        Campaign Types
+        <span id="types-chevron" style="font-size:9px;color:var(--text-dim);transition:transform 0.2s;">▼</span>
+      </div>
+      <div id="sidebar-types">
+        ${CAMPAIGN_TYPE_STATUS.map(t => {
+          const dot = t.status === 'built' ? `<span style="color:var(--success);font-size:9px;">●</span>`
+                    : t.status === 'partial' ? `<span style="color:var(--warning);font-size:9px;">●</span>`
+                    : `<span style="color:var(--text-dim);font-size:9px;">○</span>`;
+          const dim = t.status === 'none' ? 'opacity:.45;pointer-events:none;' : '';
+          return `<a class="nav-item" href="${t.href}" style="padding-left:22px;${dim}">
+            <span class="nav-icon" style="font-size:11px;">${dot}</span>
+            <span class="nav-label" style="font-size:12px;">${t.label}</span>
+          </a>`;
+        }).join('')}
+      </div>
+
       <div class="nav-section-label nav-section-toggle" id="team-section-label" style="margin-top:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding-right:12px;" onclick="toggleSidebarTeam()">
         Team
-        <span id="team-chevron" style="font-size:9px;color:var(--text-dim);transition:transform 0.2s;${teamCollapsed ? 'transform:rotate(-90deg)' : ''}"">▼</span>
+        <span id="team-chevron" style="font-size:9px;color:var(--text-dim);transition:transform 0.2s;${teamCollapsed ? 'transform:rotate(-90deg)' : ''}">▼</span>
       </div>
       <div id="sidebar-team" style="${teamCollapsed ? 'display:none' : ''}"></div>
     </nav>
@@ -42,7 +73,7 @@ function renderShell({ pageId, title }) {
       </a>
       <a class="nav-item ${'team-admin' === pageId ? 'active' : ''}" href="/team-admin">
         <span class="nav-icon">◉</span>
-        <span class="nav-label">Team | Admin</span>
+        <span class="nav-label">Team</span>
       </a>
       <a class="nav-item" href="#">
         <span class="nav-icon">⚙</span>
@@ -76,6 +107,15 @@ function renderShell({ pageId, title }) {
       sidebar.classList.toggle('collapsed');
     }
   });
+
+  // Campaign Types section collapse toggle
+  window.toggleSidebarTypes = function() {
+    const el      = document.getElementById('sidebar-types');
+    const chevron = document.getElementById('types-chevron');
+    const isCollapsed = el.style.display === 'none';
+    el.style.display = isCollapsed ? '' : 'none';
+    chevron.style.transform = isCollapsed ? '' : 'rotate(-90deg)';
+  };
 
   // Team section collapse toggle
   window.toggleSidebarTeam = function() {

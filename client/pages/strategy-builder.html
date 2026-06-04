@@ -234,7 +234,8 @@
     <span id="toast-msg"></span>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
   <script src="/components/shell.js"></script>
   <script>
     const strategyId = location.pathname.split('/')[2];
@@ -473,7 +474,7 @@
         </div>
         <div class="sb-hint">${escHtml(hint)}</div>
         <div class="section-preview ${hasContent ? '' : 'hidden'}" id="preview-${id}"
-             onclick="editSection('${id}')" title="Click to edit">${hasContent ? marked.parse(content) : ''}</div>
+             onclick="editSection('${id}')" title="Click to edit">${hasContent ? DOMPurify.sanitize(marked.parse(content)) : ''}</div>
         <textarea class="section-textarea ${hasContent ? 'hidden' : ''}" id="ta-${id}"
           placeholder="${escAttr(hint)}…"
           oninput="onSectionInput('${id}')"
@@ -592,7 +593,7 @@
       if (!content) return;
       const preview = document.getElementById(`preview-${id}`);
       if (preview) {
-        preview.innerHTML = marked.parse(content);
+        preview.innerHTML = DOMPurify.sanitize(marked.parse(content));
         preview.classList.remove('hidden');
         ta.classList.add('hidden');
       }
@@ -754,6 +755,7 @@
         const pos = target.selectionStart ?? target.value.length;
         target.value = target.value.slice(0, pos) + insert + target.value.slice(pos);
         sections[id] = target.value;
+        if (target.classList.contains('hidden')) previewSection(id);
         scheduleSave();
         showToast('Image added');
       }

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Coverage Hub — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    body { background: var(--bg); min-height: 100vh; }
+    .share-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+    .share-logo { font-size: 13px; font-weight: 700; color: var(--text-dim); letter-spacing: .05em; margin-bottom: 32px; text-transform: uppercase; }
+    .hub-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .hub-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
+
+    .month-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
+    .month-bar::-webkit-scrollbar { display: none; }
+    .month-tab { padding: 7px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: none; border: none; border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s; }
+    .month-tab:hover { color: var(--text); background: var(--surface-2); }
+    .month-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    .sub-bar { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .sub-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-muted); background: none; border: none; border-radius: 8px 8px 0 0; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s; margin-bottom: -1px; }
+    .sub-tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
+    .sub-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    .log-wrap { overflow-x: auto; }
+    .log-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 12px; }
+    .log-table th { text-align: left; padding: 6px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .log-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: var(--surface-2); }
+
+    .type-chip { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+    .chip-print      { background: #1a2636; color: #6aabff; }
+    .chip-online     { background: #0d3323; color: var(--success); }
+    .chip-social     { background: #3d1a5a; color: #cc88ff; }
+    .chip-edms       { background: #3d2a00; color: var(--warning); }
+    .chip-influencers{ background: #3d1f1f; color: #ff8888; }
+    .chip-broadcast  { background: #1a1a1a; color: var(--text-muted); }
+
+    .tone-pos { color: var(--success); font-weight: 600; }
+    .tone-neu { color: var(--text-muted); }
+    .tone-neg { color: var(--danger); font-weight: 600; }
+
+    .top-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .top-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .top-card-img { width: 100%; height: 140px; object-fit: cover; background: var(--surface-2); }
+    .top-card-body { padding: 14px; }
+    .top-card-publisher { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 6px; }
+    .top-card-title { font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; }
+    .top-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+    .top-card-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .stat-box-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 6px; }
+    .stat-box-value { font-size: 22px; font-weight: 700; }
+    .stat-box-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .breakdown-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .breakdown-table th { text-align: left; padding: 6px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+    .breakdown-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .breakdown-table tr:last-child td { border-bottom: none; }
+
+    .report-section { margin-bottom: 24px; }
+    .report-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 8px; }
+    .report-body { font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+<div class="share-wrap">
+  <div class="share-logo">Greenpoint Media</div>
+  <div id="page-content">
+    <p style="color:var(--text-muted);font-size:13px;">Loading…</p>
+  </div>
+</div>
+
+<script>
+  const token = location.pathname.split('/').pop();
+  let hub = null;
+  let overviewData = null;
+  let activeMonth = 'overview';
+  let activeSubTab = 'log';
+  let months = [];
+  let monthData = {};
+
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function load() {
+    const [hubRes, overviewRes] = await Promise.all([
+      fetch(`/api/media-hubs/share/${token}`).then(r => r.json()),
+      fetch(`/api/media-hubs/share/${token}`).then(r => r.json()),
+    ]);
+
+    if (hubRes.error) {
+      document.getElementById('page-content').innerHTML = `<p style="color:var(--danger);">This hub is not available.</p>`;
+      return;
+    }
+
+    hub = hubRes.hub;
+    overviewData = await fetch(`/api/media-hubs/${hub.id}/overview`).then(r => r.json());
+    months = buildMonthRange(null); // will use coverage months
+    // derive months from overview data
+    const covMonths = overviewData.by_month?.map(r => r.month) || [];
+    months = covMonths.length ? covMonths : buildMonthRange(null);
+
+    document.title = `${hub.client_name}_MediaCoverage_${hub.year} — Greenpoint`;
+    activeMonth = 'overview';
+    render();
+  }
+
+  function buildMonthRange(firstDate) {
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const startYM = firstDate || `${now.getFullYear()}-01`;
+    const result = [];
+    let cur = startYM;
+    while (cur <= nowYM) {
+      result.push(cur);
+      const [y, m] = cur.split('-').map(Number);
+      cur = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
+    }
+    return result;
+  }
+
+  function monthLabel(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    return new Date(y, m-1, 1).toLocaleString('en-AU', { month: 'short', year: '2-digit' });
+  }
+
+  async function switchMonth(m) {
+    activeMonth = m;
+    activeSubTab = 'log';
+    if (m !== 'overview' && !monthData[m]) {
+      const d = await fetch(`/api/media-hubs/share/${token}?month=${m}`).then(r => r.json());
+      monthData[m] = {
+        coverage: d.coverage || [],
+        top_coverage: d.top_coverage || [],
+        report: d.report || null
+      };
+    }
+    renderContent();
+  }
+
+  function switchSubTab(t) { activeSubTab = t; renderContent(); }
+
+  function render() {
+    const name = hub.client_name || '';
+    const hubName = `${name}_MediaCoverage_${hub.year}`;
+    document.getElementById('page-content').innerHTML = `
+      <div class="hub-title">${escHtml(hubName)}</div>
+      <div class="hub-sub">Media Coverage Report · ${hub.year}</div>
+      <div class="month-bar" id="month-bar"></div>
+      <div id="hub-content"></div>
+    `;
+    renderMonthBar();
+    renderContent();
+  }
+
+  function renderMonthBar() {
+    const bar = document.getElementById('month-bar');
+    if (!bar) return;
+    let html = `<button class="month-tab${activeMonth==='overview'?' active':''}" onclick="switchMonth('overview')">Overview</button>`;
+    months.forEach(m => {
+      html += `<button class="month-tab${activeMonth===m?' active':''}" onclick="switchMonth('${m}')">${monthLabel(m)}</button>`;
+    });
+    bar.innerHTML = html;
+  }
+
+  function renderContent() {
+    renderMonthBar();
+    const el = document.getElementById('hub-content');
+    if (!el) return;
+    if (activeMonth === 'overview') el.innerHTML = buildOverviewHtml();
+    else el.innerHTML = buildMonthHtml();
+  }
+
+  function buildOverviewHtml() {
+    if (!overviewData) return '<p style="color:var(--text-muted);">Loading…</p>';
+    const { totals, by_type, by_month } = overviewData;
+    const fmtAsr = v => v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${Number(v||0).toFixed(0)}`;
+    return `
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-box-label">Total Hits</div><div class="stat-box-value">${totals?.total_hits||0}</div><div class="stat-box-sub">coverage items</div></div>
+        <div class="stat-box"><div class="stat-box-label">Total ASR</div><div class="stat-box-value">${fmtAsr(totals?.total_asr||0)}</div><div class="stat-box-sub">advertising value</div></div>
+        <div class="stat-box"><div class="stat-box-label">Months Active</div><div class="stat-box-value">${by_month?.length||0}</div><div class="stat-box-sub">with coverage</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Coverage by Media Type</div>
+          ${by_type?.length ? `<table class="breakdown-table"><thead><tr><th>Type</th><th>Hits</th><th>ASR</th></tr></thead><tbody>${by_type.map(r=>`<tr><td><span class="type-chip chip-${r.media_type?.toLowerCase()}">${escHtml(r.media_type)}</span></td><td>${r.count}</td><td>${fmtAsr(r.asr)}</td></tr>`).join('')}</tbody></table>` : `<p style="font-size:13px;color:var(--text-muted);margin:0;">No coverage yet.</p>`}
+        </div>
+        <div class="card">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Coverage by Month</div>
+          ${by_month?.length ? `<table class="breakdown-table"><thead><tr><th>Month</th><th>Hits</th><th>ASR</th></tr></thead><tbody>${by_month.map(r=>`<tr><td style="cursor:pointer;color:var(--accent);" onclick="switchMonth('${r.month}')">${monthLabel(r.month)}</td><td>${r.count}</td><td>${fmtAsr(r.asr)}</td></tr>`).join('')}</tbody></table>` : `<p style="font-size:13px;color:var(--text-muted);margin:0;">No coverage yet.</p>`}
+        </div>
+      </div>
+    `;
+  }
+
+  function buildMonthHtml() {
+    const d = monthData[activeMonth];
+    if (!d) return '<p style="color:var(--text-muted);">Loading…</p>';
+    return `
+      <div class="sub-bar">
+        <button class="sub-tab${activeSubTab==='log'?' active':''}" onclick="switchSubTab('log')">Media Log (${d.coverage.length})</button>
+        <button class="sub-tab${activeSubTab==='top'?' active':''}" onclick="switchSubTab('top')">Top Coverage (${d.top_coverage.length})</button>
+        ${d.report ? `<button class="sub-tab${activeSubTab==='report'?' active':''}" onclick="switchSubTab('report')">Report</button>` : ''}
+      </div>
+      <div>
+        ${activeSubTab==='log' ? buildLogHtml(d.coverage) : ''}
+        ${activeSubTab==='top' ? buildTopHtml(d.top_coverage) : ''}
+        ${activeSubTab==='report' ? buildReportHtml(d.report) : ''}
+      </div>
+    `;
+  }
+
+  function buildLogHtml(coverage) {
+    if (!coverage.length) return `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No coverage logged for this month.</p></div>`;
+    return `
+      <div class="card" style="padding:0;">
+        <div class="log-wrap">
+          <table class="log-table">
+            <thead><tr>
+              <th>Date</th><th>Campaign</th><th>Publication</th><th>Author</th>
+              <th>Headline</th><th>Type</th><th>Tone</th><th>Circulation</th><th>ASR ($)</th>
+            </tr></thead>
+            <tbody>
+              ${coverage.map(r => `
+                <tr>
+                  <td>${escHtml(r.date||'')}</td>
+                  <td>${escHtml(r.campaign_name||'')}</td>
+                  <td>${escHtml(r.publication||'')}</td>
+                  <td>${escHtml(r.author||'')}</td>
+                  <td>${escHtml(r.headline||'')}</td>
+                  <td><span class="type-chip chip-${r.media_type?.toLowerCase()}">${escHtml(r.media_type)}</span></td>
+                  <td><span class="tone-${r.tone==='Positive'?'pos':r.tone==='Negative'?'neg':'neu'}">${escHtml(r.tone||'')}</span></td>
+                  <td>${r.circulation ? Number(r.circulation).toLocaleString() : ''}</td>
+                  <td>${r.asr ? `$${Number(r.asr).toFixed(0)}` : ''}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  function buildTopHtml(cards) {
+    if (!cards.length) return `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No top coverage featured this month.</p></div>`;
+    return `<div class="top-grid">${cards.map(c => `
+      <div class="top-card">
+        ${c.image_url ? `<img class="top-card-img" src="${escHtml(c.image_url)}" alt="">` : `<div class="top-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:12px;background:var(--surface-2);">No image</div>`}
+        <div class="top-card-body">
+          <div class="top-card-publisher">${escHtml(c.publisher||'')}</div>
+          <div class="top-card-title">${escHtml(c.title||'—')}</div>
+          ${c.description ? `<div class="top-card-desc">${escHtml(c.description)}</div>` : ''}
+          <div class="top-card-footer">
+            ${c.media_type ? `<span class="type-chip chip-${c.media_type.toLowerCase()}">${escHtml(c.media_type)}</span>` : ''}
+            ${c.audience ? `<span style="font-size:11px;color:var(--text-muted);">👥 ${escHtml(c.audience)}</span>` : ''}
+            ${c.article_url ? `<a href="${escHtml(c.article_url)}" target="_blank" style="font-size:11px;color:var(--accent);">View →</a>` : ''}
+          </div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  function buildReportHtml(report) {
+    if (!report) return `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No report for this month.</p></div>`;
+    return `
+      <div class="card">
+        ${report.work_completed ? `<div class="report-section"><div class="report-label">Work Completed</div><div class="report-body">${escHtml(report.work_completed)}</div></div>` : ''}
+        ${report.insights ? `<div class="report-section"><div class="report-label">Insights &amp; Recommendations</div><div class="report-body">${escHtml(report.insights)}</div></div>` : ''}
+      </div>`;
+  }
+
+  load();
+</script>
+</body>
+</html>

@@ -11,13 +11,14 @@ function rows(result) {
 
 router.post('/', async (req, res) => {
   const db = await getDb();
-  const { client_id, title, service, assignee, due_date } = req.body;
+  const { client_id, title, service, assignee, due_date, estimated_time, approver, task_type, priority, progress, notes } = req.body;
   if (!client_id || !title) return res.status(400).json({ error: 'client_id and title required' });
   db.run(
-    'INSERT INTO tasks (client_id, title, service, assignee, due_date) VALUES (?, ?, ?, ?, ?)',
-    [client_id, title, service || null, assignee || null, due_date || null]
+    `INSERT INTO tasks (client_id, title, service, assignee, due_date, estimated_time, approver, task_type, priority, progress, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [client_id, title, service || null, assignee || null, due_date || null, estimated_time || null, approver || null, task_type || null, priority || 'Medium', progress || 'Not Assigned', notes || null]
   );
-  const id = rows(db.exec('SELECT last_insert_rowid() as id'))[0].id;
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   saveDb();
   res.status(201).json({ id });
 });
@@ -28,13 +29,13 @@ router.patch('/:id', async (req, res) => {
   if (!existing.length || !existing[0].values.length) return res.status(404).json({ error: 'Not found' });
   const cur = Object.fromEntries(existing[0].columns.map((c, i) => [c, existing[0].values[0][i]]));
   const b = req.body;
+  const v = k => k in b ? (b[k] || null) : cur[k];
   db.run(
-    `UPDATE tasks SET title=?, status=?, assignee=?, due_date=? WHERE id=?`,
+    `UPDATE tasks SET title=?, status=?, assignee=?, due_date=?, estimated_time=?, approver=?, task_type=?, priority=?, progress=?, notes=? WHERE id=?`,
     [
       'title' in b ? b.title : cur.title,
       'status' in b ? b.status : cur.status,
-      'assignee' in b ? (b.assignee || null) : cur.assignee,
-      'due_date' in b ? (b.due_date || null) : cur.due_date,
+      v('assignee'), v('due_date'), v('estimated_time'), v('approver'), v('task_type'), v('priority'), v('progress'), v('notes'),
       req.params.id
     ]
   );

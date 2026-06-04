@@ -16,12 +16,15 @@
     }
     .tab-bar {
       display: flex;
-      gap: 0;
+      gap: 2px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+    .tab-bar::-webkit-scrollbar { display: none; }
     .tab-btn {
-      padding: 7px 18px;
+      padding: 8px 16px;
       font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
@@ -31,11 +34,13 @@
       cursor: pointer;
       transition: color .15s, background .15s;
       white-space: nowrap;
+      margin-bottom: -1px;
     }
-    .tab-btn:hover { color: var(--text); background: var(--surface-2); }
+    .tab-btn:hover:not(.active) { color: var(--text); background: var(--surface-2); }
     .tab-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
     .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel.active { display: block; padding-top: 16px; }
+    #campaigns-sections { padding: 0 4px; }
 
     /* Collapsible sections */
     .brief-toggle {
@@ -78,7 +83,7 @@
     .camp-status-opt:hover { background:var(--surface-2); }
 
     .camp-tab {
-      padding: 7px 18px;
+      padding: 8px 16px;
       font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
@@ -88,13 +93,118 @@
       cursor: pointer;
       transition: color .15s, background .15s;
       white-space: nowrap;
+      margin-bottom: -1px;
     }
-    .camp-tab:hover { color: var(--text); background: var(--surface-2); }
-    .camp-tab.active {
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
+    .camp-tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
+    .camp-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* ── Onboarding panel ── */
+    .ob-stage { margin-bottom: 12px; }
+    .ob-stage-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); cursor: pointer; user-select: none;
+      transition: background .15s;
     }
+    .ob-stage-head:hover { background: var(--surface-2); }
+    .ob-stage-head.open { border-radius: var(--radius) var(--radius) 0 0; border-bottom-color: transparent; }
+    .ob-stage-num { font-size: 11px; font-weight: 700; color: var(--text-dim); width: 18px; flex-shrink: 0; }
+    .ob-stage-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .ob-stage-prog { font-size: 11px; color: var(--text-muted); }
+    .ob-stage-prog.done { color: var(--success); font-weight: 600; }
+    .ob-stage-arrow { font-size: 10px; color: var(--text-dim); transition: transform .2s; }
+    .ob-stage-head.open .ob-stage-arrow { transform: rotate(90deg); }
+    .ob-body {
+      display: none; border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      background: var(--surface);
+    }
+    .ob-body.open { display: block; }
+    .ob-task {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .ob-task:last-child { border-bottom: none; }
+    .ob-task.done { color: var(--text-muted); text-decoration: line-through; }
+    .ob-task input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+    .ob-auto-badge {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      padding: 2px 7px; border-radius: 100px; margin-left: auto; flex-shrink: 0;
+    }
+    .badge-slack   { background: #3d1f5a; color: #cc88ff; }
+    .badge-drive   { background: #0d2a1a; color: #3ecf8e; }
+    .badge-email   { background: #3d2a00; color: var(--warning); }
+    .badge-research{ background: #0a1a2e; color: #5599dd; }
+    .ob-action-btn {
+      margin-left: auto; flex-shrink: 0;
+      padding: 3px 10px; font-size: 11px; font-weight: 600;
+      border-radius: var(--radius); border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--text); cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .ob-action-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .ob-action-btn.done { background: none; border-color: transparent; color: var(--success); cursor: default; pointer-events: none; }
+    .ob-progress-bar { height: 4px; background: var(--surface-2); border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+    .ob-progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+    .ob-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .ob-info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+    .ob-info-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin-bottom: 5px; }
+    .ob-info-val { font-size: 13px; font-weight: 500; line-height: 1.5; }
+
+    /* 9-column onboarding task table */
+    .ob-tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; }
+    .ob-tbl-hdr,
+    .ob-tbl-row {
+      display: grid;
+      grid-template-columns: 26px 1fr 65px 95px 85px 90px 110px 75px 115px;
+      gap: 0 6px;
+      align-items: flex-start;
+      min-width: 820px;
+      padding: 0 10px;
+    }
+    .ob-tbl-hdr {
+      padding-top: 7px; padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-dim); background: var(--surface-2);
+      align-items: center;
+    }
+    .ob-parent-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; min-width: 870px;
+      background: var(--surface-2); border-bottom: 1px solid var(--border);
+      cursor: pointer; user-select: none;
+    }
+    .ob-parent-row:hover { background: var(--surface); }
+    .ob-parent-expand { font-size: 9px; color: var(--text-dim); transition: transform .2s; width: 14px; flex-shrink: 0; }
+    .ob-parent-row.open .ob-parent-expand { transform: rotate(90deg); }
+    .ob-parent-name { font-size: 12px; font-weight: 600; flex: 1; }
+    .ob-parent-prog { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .ob-parent-prog.done { color: var(--success); font-weight: 600; }
+    .ob-tbl-row { border-bottom: 1px solid var(--border); min-height: 36px; }
+    .ob-tbl-row:last-child { border-bottom: none; }
+    .ob-tbl-row:hover { background: var(--surface-2); }
+    .ob-tbl-row.ob-done .ob-tbl-name { text-decoration: line-through; color: var(--text-dim); }
+    .ob-tbl-row input[type=checkbox] { width: 13px; height: 13px; cursor: pointer; accent-color: var(--accent); }
+    .ob-tbl-cell { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ob-tbl-name { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .ob-tbl-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
+    .ob-children { display: none; }
+    .ob-children.open { display: block; }
+    /* Editable cells inside onboarding table */
+    .ob-cell { position: relative; cursor: text; min-width: 0; }
+    .ob-cell > span { display: block; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ob-cell input, .ob-cell select {
+      display: none; width: 100%; box-sizing: border-box;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 4px; color: var(--text); font-size: 12px; padding: 3px 6px;
+    }
+    .ob-cell select { font-size: 11px; padding: 3px 4px; }
+    .ob-cell input:focus, .ob-cell select:focus { outline: none; }
+    .ob-cell.editing > span { display: none; }
+    .ob-cell.editing input, .ob-cell.editing select { display: block; }
 
     .section-label {
       font-size: 11px;
@@ -111,24 +221,39 @@
       letter-spacing: .05em; color: var(--text-dim); padding: 6px 0 4px;
     }
 
-    /* Shared compact task rows */
+    /* Shared compact task rows — 9-column layout (notes embedded under task name) */
     .cb-task-cols,
     .cb-task-row {
       display: grid;
-      grid-template-columns: 18px 1fr 120px 95px 85px 22px;
-      gap: 0 8px;
-      align-items: center;
+      grid-template-columns: 18px 65px 1fr 95px 85px 90px 110px 75px 115px 22px;
+      gap: 0 6px;
+      align-items: flex-start;
+      min-width: 850px;
     }
     .cb-task-cols {
-      padding: 0 4px 5px;
+      padding: 0 6px 6px;
       border-bottom: 1px solid var(--border);
       font-size: 10px; color: var(--text-dim);
       text-transform: uppercase; letter-spacing: .06em;
+      align-items: center;
     }
     .cb-task-row {
-      padding: 0 4px; min-height: 34px;
+      padding: 8px 6px 12px;
       border-bottom: 1px solid var(--border);
     }
+    .cb-task-row input[type=checkbox] { margin-top: 3px; }
+    /* Title col wrapper — stacks title input + notes textarea */
+    .cb-title-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    /* Notes textarea embedded under task name */
+    .cb-task-desc {
+      width: 100%; height: 68px; resize: none;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text-muted); font-size: 11px;
+      padding: 4px 6px; box-sizing: border-box; font-family: inherit; line-height: 1.5;
+    }
+    .cb-task-desc:focus { outline: none; border-color: var(--accent); color: var(--text); background: var(--surface); }
+    .cb-task-desc::placeholder { color: var(--text-dim); font-style: italic; }
+    .cb-task-wrap { overflow-x: auto; }
     .cb-task-row:last-child { border-bottom: none; }
     .cb-task-row:hover { background: var(--surface-2); }
     .cb-task-row.done .cb-cell-title > span { text-decoration: line-through; color: var(--text-dim); }
@@ -184,13 +309,14 @@
     }
 
     /* Campaign items */
-    .camp-item { border-bottom: 1px solid var(--border); }
-    .camp-item:last-child { border-bottom: none; }
+    [id^="camp-card-"] { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+    [id^="camp-card-"]:last-child { margin-bottom: 0; }
+    .camp-item { }
     .camp-summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 0;
+      padding: 10px 14px;
       cursor: pointer;
     }
 
@@ -330,6 +456,9 @@
   <script>
     const clientId = location.pathname.split('/')[2];
 
+    function escHtml(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escAttr(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
     const STAGES = {
       'PR':                                       ['Campaign Prep','Campaign Development','Awaiting Approval','Set up Public Address','Pitch!','Campaign Complete'],
       'PR Light':                                 ['Campaign Prep','Campaign Development','Awaiting Approval','Set up Public Address','Pitch!','Campaign Complete'],
@@ -344,18 +473,13 @@
 
     // Map client service names → campaign section labels
     const SERVICE_TYPE_MAP = {
-      'PR':                                    'PR',
-      'PR Light':                              'PR Light',
-      'Content - Social':                      'Social',
-      'Content - eDM':                         'Other',
-      'Content - Web/Blogs/Other Copy':        'Other',
-      'Content - Influencer':                  'Other',
-      'Content - Shortform Capture':           'Other',
-      'Content - Video Production':            'Other',
+      'PR':                                       'PR',
+      'PR Light':                                 'PR Light',
+      'Social Media':                             'Social Media',
       'Brand Activation - Events & Partnerships': 'Events & Partnerships',
-      'Awards':                                'Awards',
-      'Paid Media':                            'Paid Media',
-      'Design':                                'Design',
+      'Awards':                                   'Awards',
+      'Paid Media':                               'Paid Media',
+      'Design':                                   'Design',
     };
 
     // Board URL per type
@@ -365,14 +489,13 @@
 
     // Section label → campaign type stored in DB
     const SECTION_DB_TYPE = {
-      'PR':                  'PR',
-      'PR Light':            'PR Light',
-      'Social':              'Social Media',
-      'Other':               'Content',
+      'PR':                    'PR',
+      'PR Light':              'PR Light',
+      'Social Media':          'Social Media',
       'Events & Partnerships': 'Events & Partnerships',
-      'Awards':              'Awards',
-      'Paid Media':          'Paid Media',
-      'Design':              'Design',
+      'Awards':                'Awards',
+      'Paid Media':            'Paid Media',
+      'Design':                'Design',
     };
 
     let campaigns = [];
@@ -392,8 +515,7 @@
     const SECTION_CHECKLIST_CATEGORIES = {
       'PR':                    ['PR'],
       'PR Light':              ['PR Light'],
-      'Social':                ['Content - Social'],
-      'Other':                 ['Content - eDM','Content - Web/Blogs/Other Copy','Content - Influencer','Content - Shortform Capture','Content - Video Production'],
+      'Social Media':          ['Social Media'],
       'Events & Partnerships': ['Brand Activation - Events & Partnerships'],
       'Awards':                ['Awards'],
       'Paid Media':            ['Paid Media'],
@@ -419,6 +541,13 @@
     function openCbAssigneeSelector(event, taskId, prefix) {
       event.stopPropagation();
       const drop = document.getElementById(`av-drop-${prefix}-${taskId}`);
+      const isOpen = drop && drop.classList.contains('open');
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      if (!isOpen && drop) drop.classList.add('open');
+    }
+    function openCbApproverSelector(event, taskId, prefix) {
+      event.stopPropagation();
+      const drop = document.getElementById(`av-drop-ap-${prefix}-${taskId}`);
       const isOpen = drop && drop.classList.contains('open');
       document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
       if (!isOpen && drop) drop.classList.add('open');
@@ -451,9 +580,17 @@
       document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
       await cbSaveClientField(taskId, 'assignee', name);
     }
+    async function selectClientApprover(taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await cbSaveClientField(taskId, 'approver', name);
+    }
     async function selectCampAssignee(campId, taskId, name) {
       document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
       await cbSaveCampField(campId, taskId, 'assignee', name);
+    }
+    async function selectCampApprover(campId, taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await cbSaveCampField(campId, taskId, 'approver', name);
     }
 
     // ── Shared cell edit ───────────────────────────────────────────────────────
@@ -467,14 +604,90 @@
     }
     function cbCancelCell(cell) { cell.classList.remove('editing'); }
 
+    // ── Quick content cards ────────────────────────────────────────────────────
+
+    function quickCard(label, title, sub, chipHtml, actionHtml) {
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 14px 12px;display:flex;flex-direction:column;gap:5px;min-height:100px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);">${label}</div>
+        <div style="font-size:13px;font-weight:600;flex:1;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${title}</div>
+        ${sub ? `<div style="font-size:11px;color:var(--text-muted);">${sub}</div>` : ''}
+        ${chipHtml ? `<div>${chipHtml}</div>` : ''}
+        ${actionHtml ? `<div style="margin-top:4px;">${actionHtml}</div>` : ''}
+      </div>`;
+    }
+
+    function quickCardsHtml() {
+      const stratChipMap = { draft:'background:var(--surface-2);color:var(--text-muted)', awaiting_approval:'background:#3d2a00;color:#f5a623', approved:'background:#0d3323;color:#3ecf6e' };
+      const stratLabelMap = { draft:'Draft', awaiting_approval:'Awaiting Approval', approved:'Approved' };
+
+      // 1 — Strategy
+      const strat = clientStrategies[0] || null;
+      const stratCard = strat
+        ? quickCard('Strategy', escHtml(strat.title),
+            strat.updated_at ? `Updated ${new Date(strat.updated_at).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}` : '',
+            `<span style="${stratChipMap[strat.status]||stratChipMap.draft};font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:100px;">${stratLabelMap[strat.status]||strat.status}</span>`,
+            `<a href="/strategy/${strat.id}" style="font-size:11px;color:var(--accent);font-weight:500;">Edit →</a>`)
+        : quickCard('Strategy', '<span style="color:var(--text-dim);">No strategy yet</span>', '', '',
+            `<button onclick="newStrategy()" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;font-weight:500;">+ Create →</button>`);
+
+      // 2 — Press Releases (PR campaigns)
+      const prCamps = campaigns.filter(c => c.type === 'PR' || c.type === 'PR Light');
+      const activePr = prCamps.filter(c => c.status === 'active');
+      const prCard = quickCard('Press Releases',
+        prCamps.length ? `${prCamps.length} campaign${prCamps.length>1?'s':''}` : '<span style="color:var(--text-dim);">No PR campaigns</span>',
+        activePr.length ? `${activePr.length} active` : prCamps.length ? 'None active' : '',
+        '', prCamps.length
+          ? `<a onclick="switchTab('one',document.querySelector('.tab-btn'));switchCampTypeTab('PR')" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`
+          : `<a onclick="switchTab('one',document.querySelector('.tab-btn'));openCampDrawer('PR')" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">+ New →</a>`);
+
+      // 3 — Social
+      const socialCamps = campaigns.filter(c => c.type === 'Social Media');
+      const activeSocial = socialCamps.filter(c => c.status === 'active');
+      const socialCard = quickCard('Social Content',
+        socialCamps.length ? `${socialCamps.length} campaign${socialCamps.length>1?'s':''}` : '<span style="color:var(--text-dim);">No social campaigns</span>',
+        activeSocial.length ? `${activeSocial.length} active` : socialCamps.length ? 'None active' : '',
+        '', socialCamps.length
+          ? `<a onclick="switchTab('one',document.querySelector('.tab-btn'));switchCampTypeTab('Social Media')" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`
+          : '');
+
+      // 4 — Media Hub
+      const hasPR = (client.services||'').split(',').map(s=>s.trim()).some(s=>s==='PR'||s==='PR Light');
+      const mediaCard = quickCard('Media Hub',
+        hasPR ? `${client.code||client.name} Coverage` : '<span style="color:var(--text-dim);">Not available</span>',
+        hasPR ? new Date().getFullYear() + ' media coverage' : 'Add PR service to enable',
+        '', hasPR ? `<a href="/media-hub/${clientId}" style="font-size:11px;color:var(--accent);font-weight:500;">Open →</a>` : '');
+
+      // 5 — Onboarding
+      const obItems = (onboardingData?.items||[]).filter(i=>i.parent_id);
+      const obDone = obItems.filter(i=>i.completed).length;
+      const obPct = obItems.length ? Math.round((obDone/obItems.length)*100) : 0;
+      const obCard = quickCard('Onboarding',
+        obItems.length ? `${obDone}/${obItems.length} tasks` : 'No tasks',
+        '',
+        obItems.length ? `<div style="height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:2px;"><div style="height:100%;background:${obPct===100?'var(--success)':'var(--accent)'};border-radius:2px;width:${obPct}%;"></div></div>` : '',
+        `<a onclick="switchTab('admin',document.getElementById('tab-btn-admin'))" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`);
+
+      // 6 — Tasks
+      const doneTasks = clientTasksAll.filter(t=>t.status==='done').length;
+      const totalTasks = clientTasksAll.length;
+      const taskPct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+      const tasksCard = quickCard('Tasks',
+        totalTasks ? `${doneTasks}/${totalTasks} done` : 'No tasks',
+        totalTasks ? `${taskPct}% complete` : '',
+        '', `<a onclick="switchTab('three',document.querySelectorAll('.tab-btn')[2])" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`);
+
+      return [stratCard, prCard, socialCard, mediaCard, obCard, tasksCard].join('');
+    }
+
     // ── Main load ──────────────────────────────────────────────────────────────
 
     async function load() {
-      const [profileRes, campaignsRes, strategiesRes, teamMembersRes] = await Promise.all([
+      const [profileRes, campaignsRes, strategiesRes, teamMembersRes, onboardingRes] = await Promise.all([
         fetch(`/api/clients/${clientId}/profile`),
         fetch(`/api/campaigns/client/${clientId}`),
         fetch(`/api/strategies/client/${clientId}`),
-        fetch('/api/team-members')
+        fetch('/api/team-members'),
+        fetch(`/api/onboarding/${clientId}`)
       ]);
       allTeamMembers = teamMembersRes.ok ? await teamMembersRes.json() : [];
       if (!profileRes.ok) {
@@ -484,6 +697,7 @@
       campaigns = campaignsRes.ok ? await campaignsRes.json() : [];
       campaigns.forEach(c => expandedCamps.add(c.id));
       clientStrategies = strategiesRes.ok ? await strategiesRes.json() : [];
+      onboardingData = onboardingRes.ok ? await onboardingRes.json() : null;
       const { client: clientData, checklist, tasks, team, contacts } = await profileRes.json();
       client = clientData;
       clientChecklist = checklist || [];
@@ -519,7 +733,9 @@
 
       document.getElementById('page-content').innerHTML = `
         <div class="board-header">
-          <h1 style="font-size:20px;font-weight:700;">${client.name}</h1>
+          <h1 style="font-size:20px;font-weight:700;">
+            ${client.code ? `<span style="font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:.08em;margin-right:6px;">${client.code}</span><span style="color:var(--text-dim);font-weight:400;margin-right:6px;">—</span>` : ''}${client.name}
+          </h1>
           <span class="status-chip ${statusClass}">${statusLabel}</span>
           ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${client.industry}</span>` : ''}
           <div style="flex:1;"></div>
@@ -531,6 +747,12 @@
           <button class="tab-btn active" onclick="switchTab('one', this)">Campaigns</button>
           <button class="tab-btn" onclick="switchTab('two', this)">Client Info</button>
           <button class="tab-btn" onclick="switchTab('three', this)">Tasks</button>
+          <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin', this)">Admin</button>
+        </div>
+
+        <!-- Quick-link content cards -->
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
+          ${quickCardsHtml()}
         </div>
 
         <!-- Tab One — 2-column layout -->
@@ -552,6 +774,13 @@
                 <div id="strategy-list">
                   <p style="font-size:13px;color:var(--text-dim);">Loading…</p>
                 </div>
+              </div>
+              <!-- Media Hub card — shown for clients with PR service -->
+              <div class="card" id="media-hub-card" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Media Hub</div>
+                </div>
+                <div id="media-hub-link-wrap"></div>
               </div>
             </div>
           </div>
@@ -656,13 +885,284 @@
         <div class="tab-panel" id="tab-three">
           <div id="tasks-tab-container"></div>
         </div>
+
+        <!-- Tab Admin -->
+        <div class="tab-panel" id="tab-admin">
+          <div id="admin-tab-container"></div>
+        </div>
       `;
 
       renderCampaigns();
       renderStrategyCard(clientStrategies);
+      renderMediaHubCard();
       renderTeamCard(team);
       renderTasksTab();
+      renderAdminTab();
     }
+
+    // ── Admin / Onboarding tab ────────────────────────────────────────────────
+
+    let onboardingData = null;
+
+    async function renderAdminTab() {
+      const container = document.getElementById('admin-tab-container');
+      if (!container) return;
+      if (!onboardingData) {
+        container.innerHTML = '<p style="font-size:13px;color:var(--text-muted);">Loading…</p>';
+        const res = await fetch(`/api/onboarding/${clientId}`);
+        onboardingData = await res.json();
+      }
+      renderOnboardingPanel();
+    }
+
+    function renderOnboardingPanel() {
+      const container = document.getElementById('admin-tab-container');
+      if (!container || !onboardingData) return;
+
+      const { items, slack_channel, drive_folder_url } = onboardingData;
+
+      // Separate parents (parent_id=null) from subtasks
+      const parents = items.filter(i => !i.parent_id);
+      const childMap = {};
+      items.filter(i => i.parent_id).forEach(c => {
+        if (!childMap[c.parent_id]) childMap[c.parent_id] = [];
+        childMap[c.parent_id].push(c);
+      });
+
+      const allChildren = items.filter(i => i.parent_id);
+      const total = allChildren.length;
+      const done = allChildren.filter(i => i.completed).length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+
+      const slackName = client ? `${(client.code||'').toLowerCase()}-${(client.name||'').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-')}` : '';
+      const driveName = client ? `${client.code ? client.code + ' — ' : ''}${client.name}` : '';
+
+      let html = `
+        <div style="max-width:1020px;">
+          <!-- Client info card -->
+          <div class="card" style="margin-bottom:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;">
+            <div style="flex:1;min-width:160px;">
+              <div style="font-size:16px;font-weight:700;margin-bottom:4px;">${escHtml(client?.code ? client.code + ' — ' : '')}${escHtml(client?.name || '')}</div>
+              ${client?.account_lead ? `<div style="font-size:12px;color:var(--text-muted);">Lead: ${escHtml(client.account_lead)}</div>` : ''}
+              ${client?.services ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${client.services.split(',').map(s=>`<span style="padding:2px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;font-size:11px;">${escHtml(s.trim())}</span>`).join('')}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;min-width:180px;">
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:4px;">Slack</div>
+                ${slack_channel
+                  ? `<span style="font-size:13px;color:var(--success);font-weight:500;">#${escHtml(slack_channel)}</span>`
+                  : `<span style="font-size:13px;color:var(--text-dim);">#${escHtml(slackName)}</span>`}
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:4px;">Google Drive</div>
+                ${drive_folder_url
+                  ? `<a href="${escHtml(drive_folder_url)}" target="_blank" style="font-size:13px;color:var(--accent);">Open folder →</a>`
+                  : `<span style="font-size:13px;color:var(--text-dim);">${escHtml(driveName)}</span>`}
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:4px;">Project Budget</div>
+                <span style="font-size:12px;color:var(--text-dim);font-style:italic;">${client?.monthly_hours ? `${escHtml(String(client.monthly_hours))} hrs/month allocated` : 'No hours set'} · coming soon</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);">Onboarding Progress</div>
+            <div style="font-size:12px;color:${pct===100?'var(--success)':'var(--text-muted)'};">${done}/${total} tasks · ${pct}%</div>
+          </div>
+          <div class="ob-progress-bar" style="margin-bottom:20px;">
+            <div class="ob-progress-fill" style="width:${pct}%;"></div>
+          </div>
+
+          <!-- Onboarding task table -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Onboarding Tasks</div>
+          <div class="ob-tbl-wrap">
+            <div class="ob-tbl-hdr">
+              <div></div>
+              <div>Task / Notes</div>
+              <div>Time</div>
+              <div>Due Date</div>
+              <div>Approver</div>
+              <div>Assignee</div>
+              <div>Task Type</div>
+              <div>Priority</div>
+              <div>Progress</div>
+            </div>
+            ${parents.map(parent => {
+              const kids = childMap[parent.id] || [];
+              const kidsDone = kids.filter(k => k.completed).length;
+              const allDone = kidsDone === kids.length && kids.length > 0;
+              const openByDefault = !allDone;
+              return `
+                <div>
+                  <div class="ob-parent-row${openByDefault ? ' open' : ''}" id="ob-par-${parent.id}" onclick="toggleObParent(${parent.id})">
+                    <span class="ob-parent-expand">▶</span>
+                    <span class="ob-parent-name">${escHtml(parent.item)}</span>
+                    <span class="ob-parent-prog${allDone ? ' done' : ''}">${allDone ? '✓ Complete' : `${kidsDone}/${kids.length}`}</span>
+                  </div>
+                  <div class="ob-children${openByDefault ? ' open' : ''}" id="ob-children-${parent.id}">
+                    ${kids.map(task => renderObTaskRow(task, slack_channel, drive_folder_url, slackName, driveName)).join('')}
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function renderObTaskRow(task, slack_channel, drive_folder_url, slackName, driveName) {
+      const isDone = !!task.completed;
+      const prog = task.progress || 'Not Assigned';
+      const pClass = progressClass(prog);
+
+      let autoHtml = '';
+      if (task.auto_type === 'slack') {
+        autoHtml = isDone
+          ? `<span class="ob-auto-badge badge-slack" style="font-size:9px;padding:1px 5px;flex-shrink:0;">✓ Slack</span>`
+          : `<button class="ob-action-btn" onclick="event.stopPropagation();doSlack(${task.id},'${escAttr(slackName)}')" style="font-size:10px;padding:2px 7px;flex-shrink:0;">Create #${escHtml(slackName)}</button>`;
+      } else if (task.auto_type === 'drive') {
+        autoHtml = isDone
+          ? `<span class="ob-auto-badge badge-drive" style="font-size:9px;padding:1px 5px;flex-shrink:0;">✓ Drive</span>`
+          : `<button class="ob-action-btn" onclick="event.stopPropagation();doDrive(${task.id},'${escAttr(driveName)}')" style="font-size:10px;padding:2px 7px;flex-shrink:0;">Create Folder</button>`;
+      } else if (task.auto_type === 'email') {
+        autoHtml = isDone
+          ? `<span class="ob-auto-badge badge-email" style="font-size:9px;padding:1px 5px;flex-shrink:0;">✓ Email</span>`
+          : `<button class="ob-action-btn" style="opacity:.5;cursor:not-allowed;font-size:10px;padding:2px 7px;flex-shrink:0;" disabled>Send Email</button>`;
+      } else if (task.auto_type === 'research') {
+        autoHtml = `<span class="ob-auto-badge badge-research" style="font-size:9px;padding:1px 5px;flex-shrink:0;">Auto</span>`;
+      }
+
+      return `
+        <div class="ob-tbl-row${isDone ? ' ob-done' : ''}" id="ob-task-${task.id}">
+          <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleObTask(${task.id}, this.checked)" style="margin-top:3px;">
+          <div class="cb-title-col">
+            <div class="ob-tbl-name">
+              <span>${escHtml(task.item)}</span>
+              ${autoHtml}
+            </div>
+            <textarea class="cb-task-desc" placeholder="Add description…"
+              onblur="saveObTaskField(${task.id},'notes',this.value)"
+              onclick="event.stopPropagation()">${escHtml(task.notes||'')}</textarea>
+          </div>
+          <div class="ob-tbl-cell ob-cell" onclick="obEditCell(this)">
+            <span>${escHtml(task.estimated_time || '—')}</span>
+            <input type="text" value="${(task.estimated_time||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2h"
+              onblur="saveObTaskField(${task.id},'estimated_time',this.value)"
+              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){obCancelCell(this.parentElement);}">
+          </div>
+          <div class="ob-tbl-cell ob-cell" onclick="obEditCell(this)">
+            <span>${task.due_date ? escHtml(task.due_date) : '—'}</span>
+            <input type="date" value="${task.due_date||''}"
+              onchange="saveObTaskField(${task.id},'due_date',this.value)"
+              onblur="obCancelCell(this.parentElement)"
+              onkeydown="if(event.key==='Escape'){obCancelCell(this.parentElement);}">
+          </div>
+          <div class="ob-tbl-cell ob-cell" onclick="obEditCell(this)">
+            <span>${escHtml(task.approver || '—')}</span>
+            <input type="text" value="${(task.approver||'').replace(/"/g,'&quot;')}" placeholder="Approver"
+              onblur="saveObTaskField(${task.id},'approver',this.value)"
+              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){obCancelCell(this.parentElement);}">
+          </div>
+          <div class="ob-tbl-cell ob-cell" onclick="obEditCell(this)">
+            <span>${escHtml(task.assignee || '—')}</span>
+            <input type="text" value="${(task.assignee||'').replace(/"/g,'&quot;')}" placeholder="Assignee"
+              onblur="saveObTaskField(${task.id},'assignee',this.value)"
+              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){obCancelCell(this.parentElement);}">
+          </div>
+          <div class="ob-tbl-cell">${escHtml(task.task_type || 'Onboarding')}</div>
+          <div class="ob-tbl-cell ob-cell" onclick="obEditCell(this)">
+            <span>${escHtml(task.priority || 'Medium')}</span>
+            <select onchange="saveObTaskField(${task.id},'priority',this.value)" onblur="obCancelCell(this.parentElement)">
+              ${PRIORITIES.map(o=>`<option${o===(task.priority||'Medium')?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="ob-tbl-cell ob-cell" onclick="obEditCell(this)">
+            <span><span class="progress-chip ${pClass}">${escHtml(prog)}</span></span>
+            <select onchange="saveObTaskField(${task.id},'progress',this.value)" onblur="obCancelCell(this.parentElement)">
+              ${PROGRESS_VALS.map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+        </div>`;
+    }
+
+    function toggleObParent(parentId) {
+      const row = document.getElementById(`ob-par-${parentId}`);
+      const children = document.getElementById(`ob-children-${parentId}`);
+      row.classList.toggle('open');
+      children.classList.toggle('open');
+    }
+
+    function obEditCell(cell) {
+      cell.classList.add('editing');
+      const el = cell.querySelector('input, select');
+      if (!el) return;
+      el.focus();
+      if (el.tagName === 'INPUT' && el.type === 'text') el.select();
+    }
+    function obCancelCell(cell) { cell?.classList.remove('editing'); }
+
+    async function saveObTaskField(itemId, field, value) {
+      const sanitized = (value && value.trim) ? value.trim() : value;
+      const item = onboardingData?.items.find(i => i.id === itemId);
+      if (item) {
+        item[field] = sanitized || null;
+        if (field === 'progress' && sanitized === 'Complete') item.completed = 1;
+      }
+      const payload = { [field]: sanitized || null };
+      if (field === 'progress' && sanitized === 'Complete') payload.completed = true;
+      await fetch(`/api/onboarding/${clientId}/items/${itemId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      renderOnboardingPanel();
+    }
+
+    async function toggleObTask(itemId, checked) {
+      await fetch(`/api/onboarding/${clientId}/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: checked })
+      });
+      const item = onboardingData.items.find(i => i.id === itemId);
+      if (item) item.completed = checked ? 1 : 0;
+      renderOnboardingPanel();
+    }
+
+    async function doSlack(itemId, channelName) {
+      const res = await fetch(`/api/onboarding/${clientId}/slack`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slack_channel: channelName })
+      });
+      if (res.ok) {
+        onboardingData.slack_channel = channelName;
+        const item = onboardingData.items.find(i => i.id === itemId);
+        if (item) item.completed = 1;
+        renderOnboardingPanel();
+      }
+    }
+
+    async function doDrive(itemId, folderName) {
+      // Placeholder — prompt user to paste the Drive folder URL they create
+      const url = prompt(`Paste the Google Drive folder URL for "${folderName}":`);
+      if (!url) return;
+      const res = await fetch(`/api/onboarding/${clientId}/drive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drive_folder_url: url })
+      });
+      if (res.ok) {
+        onboardingData.drive_folder_url = url;
+        const item = onboardingData.items.find(i => i.id === itemId);
+        if (item) item.completed = 1;
+        renderOnboardingPanel();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     function switchTab(name, btn) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -684,29 +1184,49 @@
 
       const grouped = {};
       clientTasksAll.forEach(t => {
-        const svc = (t.service || 'General').replace(/^Content - /, '');
+        const svc = t.service || 'General';
         if (!grouped[svc]) grouped[svc] = [];
         grouped[svc].push(t);
       });
 
       const svcs = Object.keys(grouped);
-      if (!svcs.length) {
-        container.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No tasks yet.</p></div>`;
-        return;
-      }
+      const allTabs = ['Onboarding', ...svcs];
 
-      if (!activeTaskTab || !svcs.includes(activeTaskTab)) activeTaskTab = svcs[0];
-
-      const tabTasks = grouped[activeTaskTab] || [];
-      const done = tabTasks.filter(t => t.status === 'done').length;
-      const pct = tabTasks.length ? Math.round((done / tabTasks.length) * 100) : 0;
+      if (!activeTaskTab || !allTabs.includes(activeTaskTab)) activeTaskTab = 'Onboarding';
 
       const tabBar = `<div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;">
-        ${svcs.map(s => `<button class="camp-tab ${s === activeTaskTab ? 'active' : ''}" onclick="switchTaskTab('${s.replace(/'/g,"\\'")}')">
+        ${allTabs.map(s => `<button class="camp-tab ${s === activeTaskTab ? 'active' : ''}" onclick="switchTaskTab('${s.replace(/'/g,"\\'")}')">
           ${s}
         </button>`).join('')}
       </div>`;
 
+      if (activeTaskTab === 'Onboarding') {
+        const obItems = (onboardingData?.items || []).filter(i => i.parent_id);
+        const done = obItems.filter(i => i.completed).length;
+        const total = obItems.length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const rows = obItems.map(t => obTaskRowHtml(t)).join('');
+        container.innerHTML = `
+          ${tabBar}
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <span style="font-size:12px;color:var(--text-muted);">${done}/${total} done</span>
+            </div>
+            <div class="campaign-bar" style="margin-bottom:12px;">
+              <div class="campaign-bar-fill" style="width:${pct}%"></div>
+            </div>
+            ${!obItems.length ? '<p style="font-size:13px;color:var(--text-muted);margin:0;">No onboarding tasks.</p>' : ''}
+            <div class="cb-task-wrap" ${!obItems.length ? 'style="display:none;"' : ''}>
+              <div class="cb-task-cols"><div></div><div>Time</div><div>Task / Notes</div><div>Due Date</div><div>Approver</div><div>Assignee</div><div>Task Type</div><div>Priority</div><div>Progress</div><div></div></div>
+              <div>${rows}</div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      const tabTasks = grouped[activeTaskTab] || [];
+      const done = tabTasks.filter(t => t.status === 'done').length;
+      const pct = tabTasks.length ? Math.round((done / tabTasks.length) * 100) : 0;
       const rows = tabTasks.map(t => clientTaskRowHtml(t)).join('');
       const empty = !tabTasks.length ? `<p style="font-size:13px;color:var(--text-muted);">No tasks yet.</p>` : '';
 
@@ -720,8 +1240,10 @@
             <div class="campaign-bar-fill" id="task-progress-bar" style="width:${pct}%"></div>
           </div>
           ${empty}
-          <div class="cb-task-cols" ${!tabTasks.length ? 'style="display:none;"' : ''}><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>
-          <div id="client-tasks-list">${rows}</div>
+          <div class="cb-task-wrap" ${!tabTasks.length ? 'style="display:none;"' : ''}>
+            <div class="cb-task-cols"><div></div><div>Time</div><div>Task / Notes</div><div>Due Date</div><div>Approver</div><div>Assignee</div><div>Task Type</div><div>Priority</div><div>Progress</div><div></div></div>
+            <div id="client-tasks-list">${rows}</div>
+          </div>
           <div class="cb-add-trigger" id="client-add-trigger" onclick="showClientAddForm()">+ Add task</div>
           <div class="cb-add-form" id="client-add-form">
             <input id="client-task-input" placeholder="Task title…"
@@ -737,6 +1259,111 @@
     function switchTaskTab(svc) {
       activeTaskTab = svc;
       renderTasksTab();
+    }
+
+    function obTaskRowHtml(t) {
+      const prog = t.progress || 'Not Assigned';
+      const pClass = progressClass(prog);
+      const isDone = !!t.completed;
+      return `
+        <div class="cb-task-row ${isDone ? 'done' : ''}" id="ob-task-${t.id}">
+          <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleObRow(${t.id}, this.checked)">
+          <div class="cb-cell cb-cell-time" onclick="cbEditCell(this)">
+            <span>${escHtml(t.estimated_time || '—')}</span>
+            <input type="text" value="${(t.estimated_time||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2h"
+              onblur="saveObField(${t.id},'estimated_time',this.value)"
+              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+          </div>
+          <div class="cb-title-col">
+            <div class="cb-cell cb-cell-title">
+              <span>${escHtml(t.item)}</span>
+            </div>
+            <textarea class="cb-task-desc" placeholder="Add description…"
+              onblur="saveObField(${t.id},'notes',this.value)"
+              onclick="event.stopPropagation()">${escHtml(t.notes||'')}</textarea>
+          </div>
+          <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
+            <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
+            <input type="date" value="${t.due_date||''}"
+              onchange="saveObField(${t.id},'due_date',this.value)"
+              onblur="saveObField(${t.id},'due_date',this.value)"
+              onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
+          </div>
+          <div class="cb-cell cb-cell-approver" onclick="openCbApproverSelector(event,${t.id},'ob')">
+            <span>${assigneeDisplay(t.approver)}</span>
+            ${avDropdownHtml(`av-drop-ap-ob-${t.id}`, `selectObApprover(${t.id},`)}
+          </div>
+          <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'ob')">
+            <span>${assigneeDisplay(t.assignee)}</span>
+            ${avDropdownHtml(`av-drop-ob-${t.id}`, `selectObAssignee(${t.id},`)}
+          </div>
+          <div class="cb-cell cb-cell-type" onclick="cbEditCell(this)">
+            <span>${escHtml(t.task_type||'—')}</span>
+            <select onchange="saveObField(${t.id},'task_type',this.value)" onblur="cbCancelCell(this.parentElement)">
+              <option value="">—</option>
+              ${TASK_TYPES.map(o=>`<option${o===t.task_type?' selected':''}>${escHtml(o)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="cb-cell cb-cell-priority" onclick="cbEditCell(this)">
+            <span>${escHtml(t.priority||'Medium')}</span>
+            <select onchange="saveObField(${t.id},'priority',this.value)" onblur="cbCancelCell(this.parentElement)">
+              ${PRIORITIES.map(o=>`<option${o===(t.priority||'Medium')?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
+            <span><span class="progress-chip ${pClass}">${escHtml(prog)}</span></span>
+            <select onchange="saveObField(${t.id},'progress',this.value)" onblur="cbCancelCell(this.parentElement)">
+              ${PROGRESS_VALS.map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div></div>
+        </div>`;
+    }
+
+    async function saveObField(taskId, field, value) {
+      const sanitized = (value && value.trim) ? value.trim() : value;
+      const row = document.getElementById(`ob-task-${taskId}`);
+      if (row) {
+        row.querySelectorAll('.cb-cell').forEach(c => c.classList.remove('editing'));
+        const cellCls = { estimated_time:'time', due_date:'due', approver:'approver', assignee:'assignee', task_type:'type', priority:'priority', progress:'progress' };
+        const span = cellCls[field] ? row.querySelector(`.cb-cell-${cellCls[field]} > span`) : null;
+        if (span) {
+          if (field === 'progress') span.innerHTML = `<span class="progress-chip ${progressClass(sanitized||'Not Assigned')}">${escHtml(sanitized||'Not Assigned')}</span>`;
+          else if (field === 'assignee' || field === 'approver') span.innerHTML = assigneeDisplay(sanitized);
+          else span.innerHTML = escHtml(sanitized) || '<span style=color:var(--text-dim)>—</span>';
+        }
+        if (field === 'progress' && sanitized === 'Complete') {
+          row.classList.add('done');
+          const cb = row.querySelector('input[type=checkbox]');
+          if (cb) cb.checked = true;
+        }
+      }
+      const item = onboardingData?.items.find(i => i.id === taskId);
+      if (item) item[field] = sanitized || null;
+      await fetch(`/api/onboarding/${clientId}/items/${taskId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: sanitized || null })
+      });
+    }
+
+    async function toggleObRow(taskId, checked) {
+      const row = document.getElementById(`ob-task-${taskId}`);
+      if (row) row.classList.toggle('done', checked);
+      const item = onboardingData?.items.find(i => i.id === taskId);
+      if (item) item.completed = checked ? 1 : 0;
+      await fetch(`/api/onboarding/${clientId}/items/${taskId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: checked })
+      });
+    }
+
+    async function selectObAssignee(taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await saveObField(taskId, 'assignee', name);
+    }
+    async function selectObApprover(taskId, name) {
+      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
+      await saveObField(taskId, 'approver', name);
     }
 
     // ── Section setup checklist ────────────────────────────────────────────────
@@ -863,7 +1490,14 @@
         ? `<a href="/pages/reports.html?campaign=${c.id}" class="btn btn-primary" style="font-size:11px;padding:3px 8px;">View Report →</a>`
         : `<button class="btn btn-primary" style="font-size:11px;padding:3px 8px;" onclick="${isLastStage ? `completeCampaign(${c.id},event)` : `advanceCampStage(${c.id},${selStage + 1},event)`}">${isLastStage ? 'Complete →' : 'Advance →'}</button>`;
 
-      const setup = c.setup ? (typeof c.setup === 'string' ? JSON.parse(c.setup) : c.setup) : null;
+      let setup = null;
+      if (c.setup) {
+        try {
+          setup = typeof c.setup === 'string' ? JSON.parse(c.setup) : c.setup;
+        } catch (e) {
+          console.warn('Failed to parse campaign setup:', e);
+        }
+      }
       const setupHtml = setup ? (() => {
         const parts = [];
         if (setup.angle) parts.push(`<div style="margin-bottom:12px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:5px;">Campaign Angle</div><div style="font-size:13px;line-height:1.6;">${setup.angle}</div></div>`);
@@ -997,38 +1631,68 @@
         return;
       }
       list.innerHTML = `
-        <div class="cb-task-cols"><div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div></div>
-        ${tasks.map(t => {
-          const prog = t.progress || 'Not Assigned';
-          return `
-          <div class="cb-task-row ${t.done ? 'done' : ''}" id="camp-task-${t.id}">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleCampTask(${campId}, ${t.id}, this.checked)">
-            <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
-              <span>${t.title}</span>
-              <input type="text" value="${t.title.replace(/"/g,'&quot;')}"
-                onblur="cbSaveCampField(${campId},${t.id},'title',this.value)"
-                onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
-            </div>
-            <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
-              <span><span class="progress-chip ${progressClass(prog)}">${prog}</span></span>
-              <select onchange="cbSaveCampField(${campId},${t.id},'progress',this.value)" onblur="cbCancelCell(this.parentElement)">
-                ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
-              </select>
-            </div>
-            <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'cc${campId}')">
-              <span>${assigneeDisplay(t.assignee)}</span>
-              ${avDropdownHtml(`av-drop-cc${campId}-${t.id}`, `selectCampAssignee(${campId},${t.id},`)}
-            </div>
-            <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
-              <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
-              <input type="date" value="${t.due_date||''}"
-                onchange="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
-                onblur="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
-                onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
-            </div>
-            <button class="cb-del" onclick="deleteCampTask(${campId},${t.id})" title="Delete">×</button>
-          </div>`;
-        }).join('')}`;
+        <div class="cb-task-wrap">
+          <div class="cb-task-cols"><div></div><div>Time</div><div>Task / Notes</div><div>Due Date</div><div>Approver</div><div>Assignee</div><div>Task Type</div><div>Priority</div><div>Progress</div><div></div></div>
+          ${tasks.map(t => {
+            const prog = t.progress || 'Not Assigned';
+            return `
+            <div class="cb-task-row ${t.done ? 'done' : ''}" id="camp-task-${t.id}">
+              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleCampTask(${campId}, ${t.id}, this.checked)">
+              <div class="cb-cell cb-cell-time" onclick="cbEditCell(this)">
+                <span>${escHtml(t.estimated_time||'—')}</span>
+                <input type="text" value="${(t.estimated_time||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2h"
+                  onblur="cbSaveCampField(${campId},${t.id},'estimated_time',this.value)"
+                  onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+              </div>
+              <div class="cb-title-col">
+                <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
+                  <span>${escHtml(t.title)}</span>
+                  <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
+                    onblur="cbSaveCampField(${campId},${t.id},'title',this.value)"
+                    onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+                </div>
+                <textarea class="cb-task-desc" placeholder="Add description…"
+                  onblur="cbSaveCampField(${campId},${t.id},'notes',this.value)"
+                  onclick="event.stopPropagation()">${escHtml(t.notes||'')}</textarea>
+              </div>
+              <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
+                <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
+                <input type="date" value="${t.due_date||''}"
+                  onchange="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
+                  onblur="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
+                  onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
+              </div>
+              <div class="cb-cell cb-cell-approver" onclick="openCbApproverSelector(event,${t.id},'cc${campId}')">
+                <span>${assigneeDisplay(t.approver)}</span>
+                ${avDropdownHtml(`av-drop-ap-cc${campId}-${t.id}`, `selectCampApprover(${campId},${t.id},`)}
+              </div>
+              <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'cc${campId}')">
+                <span>${assigneeDisplay(t.assignee)}</span>
+                ${avDropdownHtml(`av-drop-cc${campId}-${t.id}`, `selectCampAssignee(${campId},${t.id},`)}
+              </div>
+              <div class="cb-cell cb-cell-type" onclick="cbEditCell(this)">
+                <span>${escHtml(t.task_type||'—')}</span>
+                <select onchange="cbSaveCampField(${campId},${t.id},'task_type',this.value)" onblur="cbCancelCell(this.parentElement)">
+                  <option value="">—</option>
+                  ${TASK_TYPES.map(o=>`<option${o===t.task_type?' selected':''}>${escHtml(o)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="cb-cell cb-cell-priority" onclick="cbEditCell(this)">
+                <span>${escHtml(t.priority||'Medium')}</span>
+                <select onchange="cbSaveCampField(${campId},${t.id},'priority',this.value)" onblur="cbCancelCell(this.parentElement)">
+                  ${PRIORITIES.map(o=>`<option${o===(t.priority||'Medium')?' selected':''}>${o}</option>`).join('')}
+                </select>
+              </div>
+              <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
+                <span><span class="progress-chip ${progressClass(prog)}">${escHtml(prog)}</span></span>
+                <select onchange="cbSaveCampField(${campId},${t.id},'progress',this.value)" onblur="cbCancelCell(this.parentElement)">
+                  ${PROGRESS_VALS.map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
+                </select>
+              </div>
+              <button class="cb-del" onclick="deleteCampTask(${campId},${t.id})" title="Delete">×</button>
+            </div>`;
+          }).join('')}
+        </div>`;
     }
 
     async function cbSaveCampField(campId, taskId, field, value) {
@@ -1037,13 +1701,13 @@
       const row = document.getElementById(`camp-task-${taskId}`);
       if (row) {
         row.querySelectorAll('.cb-cell').forEach(c => c.classList.remove('editing'));
-        const cellMap = { title:'title', assignee:'assignee', due_date:'due', progress:'progress' };
-        const span = row.querySelector(`.cb-cell-${cellMap[field]} > span`);
+        const cellCls = { title:'title', estimated_time:'time', due_date:'due', approver:'approver', assignee:'assignee', task_type:'type', priority:'priority', progress:'progress' };
+        const span = cellCls[field] ? row.querySelector(`.cb-cell-${cellCls[field]} > span`) : null;
         if (span) {
-        if (field === 'progress') span.innerHTML = `<span class="progress-chip ${progressClass(sanitized||'Not Assigned')}">${sanitized||'Not Assigned'}</span>`;
-        else if (field === 'assignee') span.innerHTML = assigneeDisplay(sanitized);
-        else span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
-      }
+          if (field === 'progress') span.innerHTML = `<span class="progress-chip ${progressClass(sanitized||'Not Assigned')}">${escHtml(sanitized||'Not Assigned')}</span>`;
+          else if (field === 'assignee' || field === 'approver') span.innerHTML = assigneeDisplay(sanitized);
+          else span.innerHTML = escHtml(sanitized) || '<span style=color:var(--text-dim)>—</span>';
+        }
       }
       const tasks = campTasksData[campId] || [];
       const task = tasks.find(t => t.id === taskId);
@@ -1060,21 +1724,24 @@
       const row = document.getElementById(`client-task-${taskId}`);
       if (row) {
         row.querySelectorAll('.cb-cell').forEach(c => c.classList.remove('editing'));
-        const cellMap = { title:'title', assignee:'assignee', due_date:'due', status:'progress' };
-        const span = row.querySelector(`.cb-cell-${cellMap[field]} > span`);
+        const cellCls = { title:'title', estimated_time:'time', due_date:'due', approver:'approver', assignee:'assignee', task_type:'type', priority:'priority', progress:'progress' };
+        const span = cellCls[field] ? row.querySelector(`.cb-cell-${cellCls[field]} > span`) : null;
         if (span) {
-          if (field === 'status') {
-            span.innerHTML = `<span class="progress-chip ${taskStatusClass(sanitized)}">${taskStatusLabel(sanitized)}</span>`;
-            row.classList.toggle('done', sanitized === 'done');
-            const cb = row.querySelector('input[type=checkbox]');
-            if (cb) cb.checked = sanitized === 'done';
+          if (field === 'progress') {
+            span.innerHTML = `<span class="progress-chip ${progressClass(sanitized)}">${escHtml(sanitized||'Not Assigned')}</span>`;
             const t = clientTasksAll.find(x => x.id === taskId);
-            if (t) t.status = sanitized;
-            updateClientTaskCount();
-          } else if (field === 'assignee') {
+            if (t) t.progress = sanitized;
+            if (sanitized === 'Complete') {
+              row.classList.add('done');
+              const cb = row.querySelector('input[type=checkbox]');
+              if (cb) cb.checked = true;
+              if (t) t.status = 'done';
+              updateClientTaskCount();
+            }
+          } else if (field === 'assignee' || field === 'approver') {
             span.innerHTML = assigneeDisplay(sanitized);
           } else {
-            span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
+            span.innerHTML = escHtml(sanitized) || '<span style=color:var(--text-dim)>—</span>';
           }
         }
       }
@@ -1085,7 +1752,16 @@
     }
 
     async function toggleClientTask(taskId, checked) {
-      await cbSaveClientField(taskId, 'status', checked ? 'done' : 'todo');
+      const status = checked ? 'done' : 'todo';
+      const row = document.getElementById(`client-task-${taskId}`);
+      if (row) row.classList.toggle('done', checked);
+      const t = clientTasksAll.find(x => x.id === taskId);
+      if (t) t.status = status;
+      updateClientTaskCount();
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
     }
 
     async function deleteClientTask(taskId) {
@@ -1300,8 +1976,13 @@
         return;
       }
       const s = await res.json();
-      const sections = s.sections ? JSON.parse(s.sections) : {};
-      const active = s.active_sections ? JSON.parse(s.active_sections) : [];
+      let sections = {}, active = [];
+      try {
+        sections = s.sections ? JSON.parse(s.sections) : {};
+        active = s.active_sections ? JSON.parse(s.active_sections) : [];
+      } catch (e) {
+        console.warn('Failed to parse strategy sections:', e);
+      }
 
       const chipMap = {
         draft:             'background:var(--surface-2);color:var(--text-muted)',
@@ -1386,6 +2067,33 @@
       }).join('');
     }
 
+    async function renderMediaHubCard() {
+      const card = document.getElementById('media-hub-card');
+      const wrap = document.getElementById('media-hub-link-wrap');
+      if (!card || !wrap) return;
+
+      // Only show for clients with PR service
+      const services = (client.services || '').split(',').map(s => s.trim());
+      const hasPR = services.some(s => s === 'PR' || s === 'PR Light');
+      if (!hasPR) return;
+
+      card.style.display = '';
+      wrap.innerHTML = '<p style="font-size:13px;color:var(--text-dim);">Loading…</p>';
+
+      const hub = await fetch(`/api/media-hubs/client/${clientId}`).then(r => r.json());
+      const year = hub.year || new Date().getFullYear();
+      const name = `${client.name}_MediaCoverage_${year}`;
+
+      wrap.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${year} PR coverage hub</div>
+          </div>
+          <a href="/media-hub/${clientId}" class="btn btn-ghost" style="font-size:11px;padding:3px 9px;white-space:nowrap;">Open</a>
+        </div>`;
+    }
+
     function viewStrategy(token) {
       window.open(`/s/${token}`, '_blank');
     }
@@ -1403,16 +2111,21 @@
     }
 
     async function newStrategy() {
-      const btn = document.querySelector('#strategy-card .btn');
+      const btn = document.getElementById('strategy-new-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
-      await fetch('/api/strategies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: clientId, title: 'Untitled Strategy' })
-      });
-      const res = await fetch(`/api/strategies/client/${clientId}`);
-      clientStrategies = res.ok ? await res.json() : [];
-      renderStrategyCard(clientStrategies);
+      try {
+        const createRes = await fetch('/api/strategies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: clientId, title: 'Untitled Strategy' })
+        });
+        if (!createRes.ok) throw new Error('Failed to create');
+        const { id } = await createRes.json();
+        window.location.href = `/strategy/${id}`;
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = '+ New'; }
+        alert('Could not create strategy — please try again.');
+      }
     }
 
     function toggleCampStatusDrop(campId, chipEl) {
@@ -1502,18 +2215,22 @@
       const sectionEl = document.querySelector(`.section-setup[data-section="${sectionLabel}"]`);
       if (!sectionEl) return;
       const unchecked = [...sectionEl.querySelectorAll('input[type=checkbox]:not(:checked)')];
-      for (const cb of unchecked) {
+      unchecked.forEach(cb => {
         const itemId = parseInt(cb.dataset.itemId);
         cb.checked = true;
         const label = cb.closest('label');
         if (label) { label.style.color = 'var(--text-muted)'; label.style.textDecoration = 'line-through'; }
         const item = clientChecklist.find(i => i.id === itemId);
         if (item) item.completed = true;
-        await fetch(`/api/clients/${clientId}/checklist/${itemId}`, {
+      });
+
+      await Promise.all(unchecked.map(cb => {
+        const itemId = parseInt(cb.dataset.itemId);
+        return fetch(`/api/clients/${clientId}/checklist/${itemId}`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ completed: true })
         });
-      }
+      }));
       const total = sectionEl.querySelectorAll('input[type=checkbox]').length;
       const countEl = document.getElementById(`setup-count-${sectionLabel.replace(/\s/g,'-')}`);
       if (countEl) countEl.textContent = `${total}/${total}`;
@@ -1595,29 +2312,32 @@
 
     // ── Client task helpers ────────────────────────────────────────────────────
 
+    const TASK_TYPES = ['Strategy','Newsroom','PR','Social Media','Influencer','eDM/Blogs','Awards','Brand Activation - Events & Partnerships','Design','Reporting','Project Management & Admin','Onboarding','Sales/Ops','Internal','Pitchr'];
+    const PRIORITIES = ['High','Medium','Low'];
+    const PROGRESS_VALS = ['Not Assigned','Planned','In Progress','In Review','Complete'];
+
     function clientTaskRowHtml(t) {
-      const sc = taskStatusClass(t.status);
-      const sl = taskStatusLabel(t.status);
+      const prog = t.progress || 'Not Assigned';
+      const pClass = progressClass(prog);
       return `
         <div class="cb-task-row ${t.status === 'done' ? 'done' : ''}" id="client-task-${t.id}">
           <input type="checkbox" ${t.status === 'done' ? 'checked' : ''} onchange="toggleClientTask(${t.id}, this.checked)">
-          <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
-            <span>${t.title}</span>
-            <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
-              onblur="cbSaveClientField(${t.id},'title',this.value)"
+          <div class="cb-cell cb-cell-time" onclick="cbEditCell(this)">
+            <span>${escHtml(t.estimated_time || '—')}</span>
+            <input type="text" value="${(t.estimated_time||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2h"
+              onblur="cbSaveClientField(${t.id},'estimated_time',this.value)"
               onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
           </div>
-          <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
-            <span><span class="progress-chip ${sc}">${sl}</span></span>
-            <select onchange="cbSaveClientField(${t.id},'status',this.value)" onblur="cbCancelCell(this.parentElement)">
-              <option value="todo"${t.status==='todo'?' selected':''}>To Do</option>
-              <option value="in_progress"${t.status==='in_progress'?' selected':''}>In Progress</option>
-              <option value="done"${t.status==='done'?' selected':''}>Done</option>
-            </select>
-          </div>
-          <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'ct')">
-            <span>${assigneeDisplay(t.assignee)}</span>
-            ${avDropdownHtml(`av-drop-ct-${t.id}`, `selectClientAssignee(${t.id},`)}
+          <div class="cb-title-col">
+            <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
+              <span>${escHtml(t.title)}</span>
+              <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
+                onblur="cbSaveClientField(${t.id},'title',this.value)"
+                onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+            </div>
+            <textarea class="cb-task-desc" placeholder="Add description…"
+              onblur="cbSaveClientField(${t.id},'notes',this.value)"
+              onclick="event.stopPropagation()">${escHtml(t.notes||'')}</textarea>
           </div>
           <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
             <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
@@ -1625,6 +2345,33 @@
               onchange="cbSaveClientField(${t.id},'due_date',this.value)"
               onblur="cbSaveClientField(${t.id},'due_date',this.value)"
               onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
+          </div>
+          <div class="cb-cell cb-cell-approver" onclick="openCbApproverSelector(event,${t.id},'ct')">
+            <span>${assigneeDisplay(t.approver)}</span>
+            ${avDropdownHtml(`av-drop-ap-ct-${t.id}`, `selectClientApprover(${t.id},`)}
+          </div>
+          <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'ct')">
+            <span>${assigneeDisplay(t.assignee)}</span>
+            ${avDropdownHtml(`av-drop-ct-${t.id}`, `selectClientAssignee(${t.id},`)}
+          </div>
+          <div class="cb-cell cb-cell-type" onclick="cbEditCell(this)">
+            <span>${escHtml(t.task_type||'—')}</span>
+            <select onchange="cbSaveClientField(${t.id},'task_type',this.value)" onblur="cbCancelCell(this.parentElement)">
+              <option value="">—</option>
+              ${TASK_TYPES.map(o=>`<option${o===t.task_type?' selected':''}>${escHtml(o)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="cb-cell cb-cell-priority" onclick="cbEditCell(this)">
+            <span>${escHtml(t.priority||'Medium')}</span>
+            <select onchange="cbSaveClientField(${t.id},'priority',this.value)" onblur="cbCancelCell(this.parentElement)">
+              ${PRIORITIES.map(o=>`<option${o===(t.priority||'Medium')?' selected':''}>${o}</option>`).join('')}
+            </select>
+          </div>
+          <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
+            <span><span class="progress-chip ${pClass}">${escHtml(prog)}</span></span>
+            <select onchange="cbSaveClientField(${t.id},'progress',this.value)" onblur="cbCancelCell(this.parentElement)">
+              ${PROGRESS_VALS.map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
+            </select>
           </div>
           <button class="cb-del" onclick="deleteClientTask(${t.id})" title="Delete">×</button>
         </div>`;
@@ -1666,6 +2413,10 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: clientId, title, service, assignee: assignee || null, due_date: due_date || null })
       });
+      if (!res.ok) {
+        console.error('Failed to create task');
+        return;
+      }
       const { id } = await res.json();
       clientTasksAll.push({ id, title, status: 'todo', service: service || 'General', assignee: assignee || null, due_date: due_date || null });
       renderTasksTab();

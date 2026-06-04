@@ -119,7 +119,7 @@ router.post('/', async (req, res) => {
     [client_id, title || 'Untitled Strategy', JSON.stringify(activeSections)]
   );
   const idRes = db.exec('SELECT last_insert_rowid() as id');
-  const id = idRes[0].values[0][0];
+  const id = Number(idRes[0].values[0][0]);
   saveDb();
   res.json({ id });
 });

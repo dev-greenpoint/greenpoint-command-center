@@ -21,7 +21,7 @@ router.post('/:clientId/team', async (req, res) => {
   if (!name) return res.status(400).json({ error: 'Name required' });
   db.run('INSERT INTO client_team (client_id, name, role) VALUES (?, ?, ?)', [req.params.clientId, name, role || null]);
   saveDb();
-  const id = rows(db.exec('SELECT last_insert_rowid() as id'))[0].id;
+  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
   res.status(201).json({ id });
 });
 

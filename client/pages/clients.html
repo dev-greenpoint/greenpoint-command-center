@@ -78,19 +78,38 @@
     }
     .form-group textarea { resize: vertical; min-height: 80px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .services-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    .ms-wrap { position: relative; }
+    .ms-trigger {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+      min-height: 38px; padding: 6px 10px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); cursor: pointer;
+      transition: border-color .15s;
     }
-    .service-check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--text);
-      cursor: pointer;
+    .ms-trigger:hover, .ms-trigger.open { border-color: var(--accent); }
+    .ms-placeholder { font-size: 13px; color: var(--text-dim); }
+    .ms-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--accent); color: #fff;
+      padding: 2px 8px; border-radius: 100px; font-size: 12px; font-weight: 500;
     }
+    .ms-pill-x { background: none; border: none; color: #fff; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; opacity: .8; }
+    .ms-pill-x:hover { opacity: 1; }
+    .ms-arrow { margin-left: auto; font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
+    .ms-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: 0 6px 20px rgba(0,0,0,.3); z-index: 400; padding: 6px;
+    }
+    .ms-dropdown.open { display: block; }
+    .ms-option {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 4px; font-size: 13px;
+      cursor: pointer; color: var(--text); transition: background .1s;
+    }
+    .ms-option:hover { background: var(--surface-2); }
+    .ms-option input { width: 14px; height: 14px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+    .service-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
     .service-check input { width: auto; }
     .status-dot {
       width: 7px; height: 7px;
@@ -189,11 +208,7 @@
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label>Campaign End Date</label>
-        <input type="date" id="f-end-date" placeholder="Auto-calculated from start + length">
-      </div>
-
+      <input type="hidden" id="f-end-date">
       <div class="form-row">
         <div class="form-group">
           <label>Monthly Hours</label>
@@ -216,38 +231,39 @@
 
       <div class="form-group">
         <label>Services</label>
-        <div class="services-grid">
-          <label class="service-check"><input type="checkbox" value="PR"> PR</label>
-          <label class="service-check"><input type="checkbox" value="PR Light"> PR Light</label>
-          <label class="service-check"><input type="checkbox" value="Content - Social"> Content - Social</label>
-          <label class="service-check"><input type="checkbox" value="Content - eDM"> Content - eDM</label>
-          <label class="service-check"><input type="checkbox" value="Content - Web/Blogs/Other Copy"> Content - Web/Blogs/Other Copy</label>
-          <label class="service-check"><input type="checkbox" value="Content - Influencer"> Content - Influencer</label>
-          <label class="service-check"><input type="checkbox" value="Content - Shortform Capture"> Content - Shortform Capture</label>
-          <label class="service-check"><input type="checkbox" value="Content - Video Production"> Content - Video Production</label>
-          <label class="service-check"><input type="checkbox" value="Brand Activation - Events & Partnerships"> Brand Activation - Events & Partnerships</label>
-          <label class="service-check"><input type="checkbox" value="Awards"> Awards</label>
-          <label class="service-check"><input type="checkbox" value="Paid Media"> Paid Media</label>
-          <label class="service-check"><input type="checkbox" value="Design"> Design</label>
-          <label class="service-check"><input type="checkbox" value="Other" id="other-checkbox"> Other</label>
-        </div>
-        <div id="other-input-wrap" style="display:none;margin-top:8px;">
-          <input type="text" id="f-other-service" placeholder="Describe the service…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 10px;">
+        <div class="ms-wrap" id="services-ms">
+          <div class="ms-trigger" id="services-trigger" onclick="toggleMs('services')">
+            <span class="ms-placeholder" id="services-placeholder">Select services…</span>
+            <span class="ms-arrow">▾</span>
+          </div>
+          <div class="ms-dropdown" id="services-dropdown">
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="PR"> PR</label>
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="PR Light"> PR Light</label>
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="Social Media"> Social Media</label>
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="Paid Media"> Paid Media</label>
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="Brand Activation - Events & Partnerships"> Brand Activation - Events &amp; Partnerships</label>
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="Awards"> Awards</label>
+            <label class="ms-option"><input type="checkbox" class="svc-cb" value="Design"> Design</label>
+          </div>
         </div>
       </div>
 
       <div class="form-group">
         <label>Content Platforms</label>
-        <div class="platforms-grid services-grid">
-          <label class="service-check"><input type="checkbox" class="platform-cb" value="Facebook"> Facebook</label>
-          <label class="service-check"><input type="checkbox" class="platform-cb" value="Instagram"> Instagram</label>
-          <label class="service-check"><input type="checkbox" class="platform-cb" value="LinkedIn"> LinkedIn</label>
-          <label class="service-check"><input type="checkbox" class="platform-cb" value="TikTok"> TikTok</label>
-          <label class="service-check"><input type="checkbox" class="platform-cb" value="YouTube"> YouTube</label>
-          <label class="service-check"><input type="checkbox" class="platform-cb" value="Other" id="platform-other-checkbox"> Other</label>
-        </div>
-        <div id="platform-other-wrap" style="display:none;margin-top:8px;">
-          <input type="text" id="f-other-platform" placeholder="Describe the platform…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:8px 10px;">
+        <div class="ms-wrap" id="platforms-ms">
+          <div class="ms-trigger" id="platforms-trigger" onclick="toggleMs('platforms')">
+            <span class="ms-placeholder" id="platforms-placeholder">Select platforms…</span>
+            <span class="ms-arrow">▾</span>
+          </div>
+          <div class="ms-dropdown" id="platforms-dropdown">
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="Facebook"> Facebook</label>
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="Instagram"> Instagram</label>
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="LinkedIn"> LinkedIn</label>
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="TikTok"> TikTok</label>
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="YouTube"> YouTube</label>
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="Pinterest"> Pinterest</label>
+            <label class="ms-option"><input type="checkbox" class="platform-cb" value="X (Twitter)"> X (Twitter)</label>
+          </div>
         </div>
       </div>
 
@@ -261,11 +277,6 @@
       <div class="form-group">
         <label>Notes</label>
         <textarea id="f-notes" placeholder="Any additional notes…"></textarea>
-      </div>
-
-      <div id="tasks-preview" style="display:none;">
-        <div style="font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Tasks that will be created</div>
-        <div id="tasks-preview-list" style="display:flex;flex-direction:column;gap:4px;"></div>
       </div>
 
       <div id="research-section" style="display:none;">
@@ -355,7 +366,12 @@
       }
       tbody.innerHTML = clients.map(c => `
         <tr>
-          <td><strong>${c.name}</strong></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${c.code ? `<span style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.06em;flex-shrink:0;">${c.code}</span><span style="color:var(--text-dim);">—</span>` : ''}
+              <strong>${c.name}</strong>
+            </div>
+          </td>
           <td>${c.industry || '—'}</td>
           <td>${statusDot(c.status)}</td>
           <td>${c.start_date || '—'}</td>
@@ -386,9 +402,12 @@
       const start = document.getElementById('f-start-date').value;
       const months = parseInt(document.getElementById('f-campaign-length').value);
       if (!start || !months) return;
-      const d = new Date(start);
-      d.setMonth(d.getMonth() + months);
-      document.getElementById('f-end-date').value = d.toISOString().split('T')[0];
+      const [y, m, day] = start.split('-').map(Number);
+      const d = new Date(y, m - 1 + months, day);
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      document.getElementById('f-end-date').value = `${yy}-${mm}-${dd}`;
     }
 
     document.getElementById('drawer-delete').addEventListener('click', async () => {
@@ -405,54 +424,19 @@
       });
       document.getElementById('f-campaign-length').value = '';
       document.getElementById('f-monthly-hours').value = '';
-      document.getElementById('f-other-service').value = '';
-      document.getElementById('other-input-wrap').style.display = 'none';
       clearContacts();
       clearTeam();
       clearPlatforms();
+      document.querySelectorAll('.svc-cb').forEach(cb => cb.checked = false);
+      refreshMsPills('services', 'svc-cb');
       document.getElementById('f-status').value = 'onboarding';
-      document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]').forEach(cb => cb.checked = false);
       document.getElementById('client-id').value = '';
-      document.getElementById('tasks-preview').style.display = 'none';
       document.getElementById('research-section').style.display = 'none';
       document.getElementById('drawer-delete').style.display = 'none';
       document.getElementById('status-row').style.display = 'none';
     }
 
-    const TASK_TEMPLATES = {
-      'PR': ['Build media list','Draft PR strategy','Write first press release','Identify key media targets','Set up media monitoring'],
-      'PR Light': ['Build targeted media list','Draft PR brief','Set up media monitoring'],
-      'Content - Social': ['Audit existing social channels','Set up content calendar','Define content pillars and tone of voice','Schedule first month of content','Set up scheduling tool access'],
-      'Content - eDM': ['Confirm eDM platform access','Draft eDM template','Define send schedule and audience segments'],
-      'Content - Web/Blogs/Other Copy': ['Confirm copy brief and deliverables','Define tone of voice and style guide','Draft first content piece'],
-      'Content - Influencer': ['Define influencer criteria and tiers','Build influencer longlist','Draft influencer outreach templates','Confirm gifting or paid brief process'],
-      'Content - Shortform Capture': ['Confirm shoot brief and deliverables','Schedule first shoot','Set up asset delivery process'],
-      'Content - Video Production': ['Confirm video brief and deliverables','Schedule pre-production meeting','Confirm shoot dates and locations','Set up asset delivery process'],
-      'Brand Activation - Events & Partnerships': ['Define event/activation objectives','Draft event brief','Build run sheet template','Confirm key dates and suppliers'],
-      'Awards': ['Identify relevant award opportunities','Confirm submission deadlines','Draft awards brief'],
-      'Paid Media': ['Confirm paid media brief and budget','Set up ad account access','Define campaign objectives and KPIs','Draft first campaign plan'],
-      'Design': ['Collect brand assets (logos, fonts, colours)','Confirm design brief and deliverables','Set up shared design folder'],
-    };
 
-    function updateTaskPreview() {
-      if (editingId) return; // don't show on edit, tasks already exist
-      const checked = Array.from(document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]:checked')).map(cb => cb.value);
-      const previewEl = document.getElementById('tasks-preview');
-      const listEl = document.getElementById('tasks-preview-list');
-      if (!checked.length) { previewEl.style.display = 'none'; return; }
-      const tasks = checked.flatMap(s => (TASK_TEMPLATES[s] || []).map(t => ({ service: s, title: t })));
-      listEl.innerHTML = tasks.map(t => `
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface-2);border-radius:4px;">
-          <span style="font-size:11px;color:var(--text-muted);width:80px;flex-shrink:0;">${t.service}</span>
-          <span style="font-size:13px;">${t.title}</span>
-        </div>
-      `).join('');
-      previewEl.style.display = 'block';
-    }
-
-    document.querySelectorAll('.services-grid input[type=checkbox]').forEach(cb => {
-      cb.addEventListener('change', updateTaskPreview);
-    });
 
     function addContactRow(c = {}) {
       const row = document.createElement('div');
@@ -493,60 +477,79 @@
 
     function setTeam(members) { renderTeamGrid(members); }
 
-    document.getElementById('other-checkbox').addEventListener('change', function() {
-      document.getElementById('other-input-wrap').style.display = this.checked ? 'block' : 'none';
-      if (!this.checked) document.getElementById('f-other-service').value = '';
-    });
+    // ── Multi-select dropdowns ──────────────────────────────────────────────────
 
-    document.getElementById('platform-other-checkbox').addEventListener('change', function() {
-      document.getElementById('platform-other-wrap').style.display = this.checked ? 'block' : 'none';
-      if (!this.checked) document.getElementById('f-other-platform').value = '';
-    });
-
-    function getPlatforms() {
-      return Array.from(document.querySelectorAll('.platform-cb:checked'))
-        .map(cb => {
-          if (cb.value === 'Other') {
-            const custom = document.getElementById('f-other-platform').value.trim();
-            return custom ? custom : null;
-          }
-          return cb.value;
-        })
-        .filter(Boolean)
-        .join(', ');
+    function toggleMs(id) {
+      const drop = document.getElementById(`${id}-dropdown`);
+      const trigger = document.getElementById(`${id}-trigger`);
+      const isOpen = drop.classList.contains('open');
+      closeAllMs();
+      if (!isOpen) { drop.classList.add('open'); trigger.classList.add('open'); }
     }
 
-    function setPlatforms(str) {
-      const vals = (str || '').split(',').map(s => s.trim());
-      document.querySelectorAll('.platform-cb').forEach(cb => {
-        cb.checked = vals.includes(cb.value);
+    function closeAllMs() {
+      document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+      document.querySelectorAll('.ms-trigger').forEach(t => t.classList.remove('open'));
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.ms-wrap')) closeAllMs();
+    });
+
+    function refreshMsPills(id, cbClass) {
+      const trigger = document.getElementById(`${id}-trigger`);
+      const placeholder = document.getElementById(`${id}-placeholder`);
+      const selected = Array.from(document.querySelectorAll(`.${cbClass}:checked`)).map(cb => cb.value);
+      const arrow = trigger.querySelector('.ms-arrow');
+
+      // Remove old pills
+      trigger.querySelectorAll('.ms-pill').forEach(p => p.remove());
+      if (placeholder) placeholder.style.display = selected.length ? 'none' : '';
+
+      selected.forEach(val => {
+        const pill = document.createElement('span');
+        pill.className = 'ms-pill';
+        pill.innerHTML = `${val} <button class="ms-pill-x" onclick="removeMsVal(event,'${id}','${cbClass}','${val.replace(/'/g,"\\'")}')" tabindex="-1">×</button>`;
+        trigger.insertBefore(pill, arrow);
       });
     }
 
-    function clearPlatforms() {
-      document.querySelectorAll('.platform-cb').forEach(cb => cb.checked = false);
-      document.getElementById('f-other-platform').value = '';
-      document.getElementById('platform-other-wrap').style.display = 'none';
+    function removeMsVal(e, id, cbClass, val) {
+      e.stopPropagation();
+      const cb = document.querySelector(`.${cbClass}[value="${CSS.escape(val)}"]`);
+      if (cb) { cb.checked = false; refreshMsPills(id, cbClass); }
     }
 
+    document.querySelectorAll('.svc-cb').forEach(cb => {
+      cb.addEventListener('change', () => refreshMsPills('services', 'svc-cb'));
+    });
+    document.querySelectorAll('.platform-cb').forEach(cb => {
+      cb.addEventListener('change', () => refreshMsPills('platforms', 'platform-cb'));
+    });
+
     function getServices() {
-      return Array.from(document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]:checked'))
-        .map(cb => {
-          if (cb.value === 'Other') {
-            const custom = document.getElementById('f-other-service').value.trim();
-            return custom ? custom : null;
-          }
-          return cb.value;
-        })
-        .filter(Boolean)
-        .join(', ');
+      return Array.from(document.querySelectorAll('.svc-cb:checked')).map(cb => cb.value).filter(Boolean).join(', ');
     }
 
     function setServices(str) {
       const vals = (str || '').split(',').map(s => s.trim());
-      document.querySelectorAll('.services-grid:not(.platforms-grid) input[type=checkbox]').forEach(cb => {
-        cb.checked = vals.includes(cb.value);
-      });
+      document.querySelectorAll('.svc-cb').forEach(cb => { cb.checked = vals.includes(cb.value); });
+      refreshMsPills('services', 'svc-cb');
+    }
+
+    function getPlatforms() {
+      return Array.from(document.querySelectorAll('.platform-cb:checked')).map(cb => cb.value).filter(Boolean).join(', ');
+    }
+
+    function setPlatforms(str) {
+      const vals = (str || '').split(',').map(s => s.trim());
+      document.querySelectorAll('.platform-cb').forEach(cb => { cb.checked = vals.includes(cb.value); });
+      refreshMsPills('platforms', 'platform-cb');
+    }
+
+    function clearPlatforms() {
+      document.querySelectorAll('.platform-cb').forEach(cb => cb.checked = false);
+      refreshMsPills('platforms', 'platform-cb');
     }
 
     async function openEdit(id) {
@@ -567,7 +570,6 @@
       document.getElementById('f-notes').value = c.notes || '';
       setServices(c.services);
       setPlatforms(c.platforms);
-      document.getElementById('tasks-preview').style.display = 'none';
       document.getElementById('research-section').style.display = 'block';
       document.getElementById('drawer-delete').style.display = 'block';
       document.getElementById('status-row').style.display = 'block';
