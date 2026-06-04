@@ -49,12 +49,12 @@ const { CAMPAIGN_TASK_TEMPLATES } = require('../db/campaignTaskTemplates');
 // Create campaign
 router.post('/', async (req, res) => {
   const db = await getDb();
-  const { client_id, name, status, type, start_date, end_date, budget, notes, scope } = req.body;
+  const { client_id, name, status, type, start_date, end_date, budget, notes, scope, setup } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
   db.run(
-    `INSERT INTO campaigns (client_id, name, status, type, start_date, end_date, budget, notes, scope)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [client_id || null, name, status || 'draft', type || null, start_date || null, end_date || null, budget || null, notes || null, scope ? JSON.stringify(scope) : null]
+    `INSERT INTO campaigns (client_id, name, status, type, start_date, end_date, budget, notes, scope, setup)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [client_id || null, name, status || 'draft', type || null, start_date || null, end_date || null, budget || null, notes || null, scope ? JSON.stringify(scope) : null, setup ? JSON.stringify(setup) : null]
   );
   const idResult = db.exec('SELECT last_insert_rowid() as id');
   const id = idResult[0].values[0][0];
@@ -169,6 +169,14 @@ router.patch('/:id/status', async (req, res) => {
   const db = await getDb();
   const { status } = req.body;
   db.run('UPDATE campaigns SET status=? WHERE id=?', [status, req.params.id]);
+  saveDb();
+  res.json({ ok: true });
+});
+
+router.patch('/:id/setup', async (req, res) => {
+  const db = await getDb();
+  const { setup } = req.body;
+  db.run('UPDATE campaigns SET setup=? WHERE id=?', [setup ? JSON.stringify(setup) : null, req.params.id]);
   saveDb();
   res.json({ ok: true });
 });

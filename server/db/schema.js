@@ -127,10 +127,14 @@ async function initSchema() {
   `);
   try { d.run(`ALTER TABLE strategies ADD COLUMN client_id INTEGER`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE strategies DROP COLUMN campaign_id`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE strategies ADD COLUMN submitted_by TEXT`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE strategies ADD COLUMN reviewer TEXT`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE strategies ADD COLUMN submitted_at TEXT`); db.saveDb(); } catch {}
 
   // Add columns that may not exist in older DBs
   try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN assignee TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaigns ADD COLUMN scope TEXT`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE campaigns ADD COLUMN setup TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE clients ADD COLUMN platforms TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE clients ADD COLUMN monthly_hours INTEGER`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN due_date TEXT`); db.saveDb(); } catch {}

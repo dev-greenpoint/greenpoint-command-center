@@ -21,19 +21,19 @@
       margin-bottom: 20px;
     }
     .tab-btn {
-      padding: 8px 20px;
+      padding: 7px 18px;
       font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
       background: none;
       border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
+      border-radius: 8px 8px 0 0;
       cursor: pointer;
-      transition: color 0.15s;
+      transition: color .15s, background .15s;
+      white-space: nowrap;
     }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+    .tab-btn:hover { color: var(--text); background: var(--surface-2); }
+    .tab-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
@@ -76,6 +76,25 @@
     .camp-status-drop.open { display:block; }
     .camp-status-opt { padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;white-space:nowrap; }
     .camp-status-opt:hover { background:var(--surface-2); }
+
+    .camp-tab {
+      padding: 7px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      transition: color .15s, background .15s;
+      white-space: nowrap;
+    }
+    .camp-tab:hover { color: var(--text); background: var(--surface-2); }
+    .camp-tab.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
 
     .section-label {
       font-size: 11px;
@@ -266,7 +285,7 @@
     <div class="drawer-body">
       <div class="form-group">
         <label>Type</label>
-        <select id="cd-type">
+        <select id="cd-type" onchange="updateCampDrawerSetup()">
           <option value="">Select type</option>
           <option value="PR">PR</option>
           <option value="PR Light">PR Light</option>
@@ -282,6 +301,7 @@
         <label>Campaign Name</label>
         <input type="text" id="cd-name" placeholder="e.g. Spring Launch PR">
       </div>
+      <div id="cd-setup-items" style="display:none;border-top:1px solid var(--border);padding-top:16px;margin-top:4px;"></div>
     </div>
     <div class="drawer-footer">
       <button class="btn btn-primary" id="cd-save">Create Campaign</button>
@@ -326,12 +346,12 @@
     const SERVICE_TYPE_MAP = {
       'PR':                                    'PR',
       'PR Light':                              'PR Light',
-      'Content - Social':                      'Content - Social',
-      'Content - eDM':                         'Content - Other',
-      'Content - Web/Blogs/Other Copy':        'Content - Other',
-      'Content - Influencer':                  'Content - Other',
-      'Content - Shortform Capture':           'Content - Other',
-      'Content - Video Production':            'Content - Other',
+      'Content - Social':                      'Social',
+      'Content - eDM':                         'Other',
+      'Content - Web/Blogs/Other Copy':        'Other',
+      'Content - Influencer':                  'Other',
+      'Content - Shortform Capture':           'Other',
+      'Content - Video Production':            'Other',
       'Brand Activation - Events & Partnerships': 'Events & Partnerships',
       'Awards':                                'Awards',
       'Paid Media':                            'Paid Media',
@@ -347,8 +367,8 @@
     const SECTION_DB_TYPE = {
       'PR':                  'PR',
       'PR Light':            'PR Light',
-      'Content - Social':    'Social Media',
-      'Content - Other':     'Content',
+      'Social':              'Social Media',
+      'Other':               'Content',
       'Events & Partnerships': 'Events & Partnerships',
       'Awards':              'Awards',
       'Paid Media':          'Paid Media',
@@ -364,13 +384,16 @@
     const expandedCamps = new Set();
     const campTasksData = {};
     let clientTeam = [];
+    let activeCampTypeTab = null;
+    let clientTasksAll = [];
+    let activeTaskTab = null;
 
     // Maps section label → which checklist categories belong in it
     const SECTION_CHECKLIST_CATEGORIES = {
       'PR':                    ['PR'],
       'PR Light':              ['PR Light'],
-      'Content - Social':      ['Content - Social'],
-      'Content - Other':       ['Content - eDM','Content - Web/Blogs/Other Copy','Content - Influencer','Content - Shortform Capture','Content - Video Production'],
+      'Social':                ['Content - Social'],
+      'Other':                 ['Content - eDM','Content - Web/Blogs/Other Copy','Content - Influencer','Content - Shortform Capture','Content - Video Production'],
       'Events & Partnerships': ['Brand Activation - Events & Partnerships'],
       'Awards':                ['Awards'],
       'Paid Media':            ['Paid Media'],
@@ -459,10 +482,12 @@
         return;
       }
       campaigns = campaignsRes.ok ? await campaignsRes.json() : [];
+      campaigns.forEach(c => expandedCamps.add(c.id));
       clientStrategies = strategiesRes.ok ? await strategiesRes.json() : [];
       const { client: clientData, checklist, tasks, team, contacts } = await profileRes.json();
       client = clientData;
       clientChecklist = checklist || [];
+      clientTasksAll = tasks || [];
       clientTeam = (team || []).map(m => m.name).filter(Boolean);
       renderShell({ pageId: 'client-' + clientId, title: client.name });
 
@@ -502,18 +527,22 @@
           <a href="/clients/${clientId}" class="btn btn-ghost" style="font-size:12px;">Edit Profile</a>
         </div>
 
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="switchTab('one', this)">One</button>
-          <button class="tab-btn" onclick="switchTab('two', this)">Two</button>
+        <div class="tab-bar" style="align-items:flex-end;">
+          <button class="tab-btn active" onclick="switchTab('one', this)">Campaigns</button>
+          <button class="tab-btn" onclick="switchTab('two', this)">Client Info</button>
+          <button class="tab-btn" onclick="switchTab('three', this)">Tasks</button>
         </div>
 
         <!-- Tab One — 2-column layout -->
         <div class="tab-panel active" id="tab-one">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+          <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start;">
             <!-- Column 1 — Campaigns -->
-            <div id="campaigns-sections"></div>
-            <!-- Column 2 — TBD -->
+            <div>
+              <div id="campaigns-sections"></div>
+            </div>
+            <!-- Column 2 — Documents -->
             <div id="tab-one-col2">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Documents</div>
               <!-- Strategy card -->
               <div class="card" style="margin-bottom:16px;" id="strategy-card">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -530,133 +559,109 @@
 
         <!-- Tab Two — Client Info -->
         <div class="tab-panel" id="tab-two">
-          <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start;">
 
-          <!-- Right — Brief, Scope, Team, Tasks -->
-          <div style="display:flex;flex-direction:column;gap:16px;">
+            <!-- Left — tabbed info -->
+            <div>
+              <div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+                <button class="camp-tab active" id="info-tab-brief" onclick="switchInfoTab('brief', this)">Brief</button>
+                <button class="camp-tab" id="info-tab-scope" onclick="switchInfoTab('scope', this)">Scope</button>
+                <button class="camp-tab" id="info-tab-team" onclick="switchInfoTab('team', this)">Team</button>
+              </div>
 
-            <div class="card">
-              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
-                Client Brief
-                <span class="toggle-icon">▼</span>
+              <!-- Brief -->
+              <div class="info-panel" id="info-panel-brief">
+                <div class="card">
+                  <p style="font-size:13px;line-height:1.8;color:var(--text);margin:0;">${client.research || '<span style="color:var(--text-muted);">No brief added yet.</span>'}</p>
+                </div>
               </div>
-              <div class="brief-body collapsed" style="margin-top:12px;">
-                <p style="font-size:13px;line-height:1.8;color:var(--text);margin:0;">${client.research || ''}</p>
+
+              <!-- Scope -->
+              <div class="info-panel" id="info-panel-scope" style="display:none;">
+                <div class="card">
+                  ${start ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Campaign Period</div>
+                    <div class="stat-row"><span>${client.start_date}</span><span>${client.end_date || '—'}</span></div>
+                    ${start && end ? `
+                    <div class="campaign-bar"><div class="campaign-bar-fill" style="width:${campaignPct}%"></div></div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${campaignPct}% through · ${campaignStatus}</div>
+                    ` : ''}
+                  </div>` : ''}
+
+                  ${client.monthly_hours ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Monthly Hours</div>
+                    <div style="font-size:15px;font-weight:600;">${client.monthly_hours} hrs</div>
+                  </div>` : ''}
+
+                  ${client.services ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Services</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                      ${client.services.split(',').map(s => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${s.trim()}</span>`).join('')}
+                    </div>
+                  </div>` : ''}
+
+                  ${contacts.length ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Contacts</div>
+                    ${contacts.map(c => `
+                      <div style="padding:6px 0;border-bottom:1px solid var(--border);">
+                        <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
+                        ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
+                        ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
+                      </div>`).join('')}
+                  </div>` : ''}
+
+                  ${client.website ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Website</div>
+                    <a href="${client.website}" target="_blank" style="font-size:13px;color:var(--accent);">${client.website}</a>
+                  </div>` : ''}
+
+                  ${client.platforms ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Platforms</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                      ${client.platforms.split(',').map(p => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${p.trim()}</span>`).join('')}
+                    </div>
+                  </div>` : ''}
+
+                  ${client.notes ? `
+                  <div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Notes</div>
+                    <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${client.notes}</p>
+                  </div>` : ''}
+                </div>
               </div>
+
+              <!-- Team -->
+              <div class="info-panel" id="info-panel-team" style="display:none;">
+                <div class="card" id="team-card"></div>
+              </div>
+
             </div>
 
-            <div class="card">
-              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
-                Scope & Client
-                <span class="toggle-icon">▼</span>
-              </div>
-              <div class="brief-body collapsed" style="margin-top:12px;">
-
-                ${start ? `
-                <div style="margin-bottom:14px;">
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Campaign</div>
-                  <div class="stat-row"><span>${client.start_date}</span><span>${client.end_date || '—'}</span></div>
-                  ${start && end ? `
-                  <div class="campaign-bar"><div class="campaign-bar-fill" style="width:${campaignPct}%"></div></div>
-                  <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${campaignPct}% through · ${campaignStatus}</div>
-                  ` : ''}
-                </div>` : ''}
-
-                ${client.monthly_hours ? `
-                <div style="margin-bottom:14px;">
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Monthly Hours</div>
-                  <div style="font-size:15px;font-weight:600;">${client.monthly_hours} hrs</div>
-                </div>` : ''}
-
-                ${client.services ? `
-                <div style="margin-bottom:14px;">
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Services</div>
-                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                    ${client.services.split(',').map(s => `
-                      <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${s.trim()}</span>
-                    `).join('')}
-                  </div>
-                </div>` : ''}
-
-                ${contacts.length ? `
-                <div style="margin-bottom:14px;">
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Contacts</div>
-                  ${contacts.map(c => `
-                    <div style="padding:5px 0;border-bottom:1px solid var(--border);">
-                      <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
-                      ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
-                      ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
-                    </div>
-                  `).join('')}
-                </div>` : ''}
-
-                ${client.website ? `
-                <div style="margin-bottom:14px;">
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Website</div>
-                  <a href="${client.website}" target="_blank" style="font-size:13px;color:var(--accent);">${client.website}</a>
-                </div>` : ''}
-
-                ${client.platforms ? `
-                <div style="margin-bottom:14px;">
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Platforms</div>
-                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                    ${client.platforms.split(',').map(p => `
-                      <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${p.trim()}</span>
-                    `).join('')}
-                  </div>
-                </div>` : ''}
-
-                ${client.notes ? `
-                <div>
-                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Notes</div>
-                  <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${client.notes}</p>
-                </div>` : ''}
-
-              </div>
-            </div>
-
-            <div class="card" id="team-card"></div>
-
-
-            <div class="card" id="client-tasks-card">
-              <div class="brief-toggle collapsed section-label" style="margin-bottom:0;" onclick="toggleBrief(this)">
-                <span>Tasks <span id="client-task-count" style="font-weight:400;color:var(--text-muted);font-size:11px;">${doneTasks}/${totalTasks} done</span></span>
-                <span class="toggle-icon">▼</span>
-              </div>
-              <div class="brief-body collapsed" style="margin-top:12px;">
-                <div class="campaign-bar" style="margin-bottom:12px;">
-                  <div class="campaign-bar-fill" id="task-progress-bar" style="width:${taskPct}%"></div>
-                </div>
-                ${totalTasks === 0 ? `<p id="tasks-empty" style="font-size:13px;color:var(--text-muted);">No tasks yet.</p>` : ''}
-                <div id="client-tasks-list">
-                  ${Object.entries(grouped).map(([svc, svctasks]) => `
-                    <div class="service-group" data-svc-group="${svc}">
-                      <div class="service-group-label">${svc}</div>
-                      <div class="cb-task-cols"><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>
-                      ${svctasks.map(t => clientTaskRowHtml(t)).join('')}
-                    </div>
-                  `).join('')}
-                </div>
-                <div class="cb-add-trigger" id="client-add-trigger" onclick="showClientAddForm()">+ Add task</div>
-                <div class="cb-add-form" id="client-add-form">
-                  <input id="client-task-input" placeholder="Task title…"
-                    onkeydown="if(event.key==='Enter')addClientTask();if(event.key==='Escape')hideClientAddForm()">
-                  <input id="client-task-assignee" placeholder="Assignee">
-                  <input type="date" id="client-task-due">
-                  <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addClientTask()">Add</button>
-                  <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideClientAddForm()">✕</button>
-                </div>
-              </div>
+            <!-- Right — placeholder cards -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="card" style="min-height:120px;"></div>
+              <div class="card" style="min-height:120px;"></div>
             </div>
 
           </div>
-          </div>
+        </div>
+
+        <!-- Tab Three — Tasks -->
+        <div class="tab-panel" id="tab-three">
+          <div id="tasks-tab-container"></div>
         </div>
       `;
 
       renderCampaigns();
       renderStrategyCard(clientStrategies);
       renderTeamCard(team);
+      renderTasksTab();
     }
 
     function switchTab(name, btn) {
@@ -664,6 +669,74 @@
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    function switchInfoTab(name, btn) {
+      document.querySelectorAll('#tab-two .camp-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#tab-two .info-panel').forEach(p => p.style.display = 'none');
+      btn.classList.add('active');
+      document.getElementById('info-panel-' + name).style.display = 'block';
+    }
+
+    function renderTasksTab() {
+      const container = document.getElementById('tasks-tab-container');
+      if (!container) return;
+
+      const grouped = {};
+      clientTasksAll.forEach(t => {
+        const svc = (t.service || 'General').replace(/^Content - /, '');
+        if (!grouped[svc]) grouped[svc] = [];
+        grouped[svc].push(t);
+      });
+
+      const svcs = Object.keys(grouped);
+      if (!svcs.length) {
+        container.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No tasks yet.</p></div>`;
+        return;
+      }
+
+      if (!activeTaskTab || !svcs.includes(activeTaskTab)) activeTaskTab = svcs[0];
+
+      const tabTasks = grouped[activeTaskTab] || [];
+      const done = tabTasks.filter(t => t.status === 'done').length;
+      const pct = tabTasks.length ? Math.round((done / tabTasks.length) * 100) : 0;
+
+      const tabBar = `<div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;">
+        ${svcs.map(s => `<button class="camp-tab ${s === activeTaskTab ? 'active' : ''}" onclick="switchTaskTab('${s.replace(/'/g,"\\'")}')">
+          ${s}
+        </button>`).join('')}
+      </div>`;
+
+      const rows = tabTasks.map(t => clientTaskRowHtml(t)).join('');
+      const empty = !tabTasks.length ? `<p style="font-size:13px;color:var(--text-muted);">No tasks yet.</p>` : '';
+
+      container.innerHTML = `
+        ${tabBar}
+        <div class="card" id="client-tasks-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:12px;color:var(--text-muted);" id="client-task-count">${done}/${tabTasks.length} done</span>
+          </div>
+          <div class="campaign-bar" style="margin-bottom:12px;">
+            <div class="campaign-bar-fill" id="task-progress-bar" style="width:${pct}%"></div>
+          </div>
+          ${empty}
+          <div class="cb-task-cols" ${!tabTasks.length ? 'style="display:none;"' : ''}><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>
+          <div id="client-tasks-list">${rows}</div>
+          <div class="cb-add-trigger" id="client-add-trigger" onclick="showClientAddForm()">+ Add task</div>
+          <div class="cb-add-form" id="client-add-form">
+            <input id="client-task-input" placeholder="Task title…"
+              onkeydown="if(event.key==='Enter')addClientTask();if(event.key==='Escape')hideClientAddForm()">
+            <input id="client-task-assignee" placeholder="Assignee">
+            <input type="date" id="client-task-due">
+            <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addClientTask()">Add</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideClientAddForm()">✕</button>
+          </div>
+        </div>`;
+    }
+
+    function switchTaskTab(svc) {
+      activeTaskTab = svc;
+      renderTasksTab();
     }
 
     // ── Section setup checklist ────────────────────────────────────────────────
@@ -704,54 +777,64 @@
       const container = document.getElementById('campaigns-sections');
       if (!container) return;
 
-      // Determine which sections to show: services from client + any campaign types not in services
+      // Build tab list from client services + any existing campaign types
       const clientServices = (client && client.services) ? client.services.split(',').map(s => s.trim()) : [];
       const serviceTypes = [...new Set(clientServices.map(s => SERVICE_TYPE_MAP[s]).filter(Boolean))];
-
-      // Add section labels for existing campaigns not already covered
-      const campSectionLabels = [...new Set(campaigns.map(c => {
+      campaigns.forEach(c => {
         const entry = Object.entries(SECTION_DB_TYPE).find(([, v]) => v === c.type);
-        return entry ? entry[0] : c.type;
-      }).filter(Boolean))];
-      campSectionLabels.forEach(t => { if (!serviceTypes.includes(t)) serviceTypes.push(t); });
+        const label = entry ? entry[0] : c.type;
+        if (label && !serviceTypes.includes(label)) serviceTypes.push(label);
+      });
 
-      // If no services and no campaigns, show generic empty state
       if (!serviceTypes.length && !campaigns.length) {
-        container.innerHTML = `<div class="card"><p style="font-size:13px;color:var(--text-muted);margin:0;">No campaigns yet.</p></div>`;
+        container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);">No campaigns yet.</p>`;
         return;
       }
 
-      // If no serviceTypes determined but campaigns exist, show all campaigns together
-      const sectionsToShow = serviceTypes.length ? serviceTypes : [''];
+      const tabs = serviceTypes.length ? serviceTypes : ['All'];
 
-      container.innerHTML = sectionsToShow.map(sectionLabel => {
-        const dbType = SECTION_DB_TYPE[sectionLabel] || sectionLabel;
-        const typeCampaigns = sectionLabel ? campaigns.filter(c => c.type === dbType) : campaigns;
-        const label = sectionLabel || 'Campaigns';
-        const items = typeCampaigns.map(c => renderCampItem(c)).join('');
-        const empty = typeCampaigns.length === 0
-          ? `<p style="font-size:13px;color:var(--text-muted);margin:0 0 4px;">No ${label} campaigns yet.</p>`
-          : '';
-        const cats = SECTION_CHECKLIST_CATEGORIES[sectionLabel] || [];
-        const setupItems = clientChecklist.filter(i => cats.includes(i.category));
-        const setupComplete = !setupItems.length || setupItems.every(i => i.completed);
-        const btnId = `camp-new-btn-${sectionLabel.replace(/[^a-zA-Z0-9]/g,'-')}`;
-        const newBtn = setupComplete
-          ? `<button class="btn btn-primary" id="${btnId}" style="font-size:11px;padding:4px 10px;" onclick="openCampDrawer('${dbType}')">+ New</button>`
-          : `<button class="btn btn-ghost" id="${btnId}" disabled style="font-size:11px;padding:4px 10px;opacity:0.4;cursor:not-allowed;" title="Complete setup before adding campaigns">+ New</button>`;
-        return `
-          <div class="card" style="margin-bottom:16px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div class="section-label" style="margin-bottom:0;">${label}</div>
-              ${newBtn}
-            </div>
-            ${sectionSetupHtml(sectionLabel)}
-            ${empty}${items}
-          </div>`;
-      }).join('');
+      // Default active tab
+      if (!activeCampTypeTab || !tabs.includes(activeCampTypeTab)) {
+        activeCampTypeTab = tabs[0];
+      }
 
-      // Reload tasks for any expanded campaigns
+      const dbType = SECTION_DB_TYPE[activeCampTypeTab] || activeCampTypeTab;
+      const tabCampaigns = activeCampTypeTab === 'All' ? campaigns : campaigns.filter(c => c.type === dbType);
+      const items = tabCampaigns.map(c => `<div id="camp-card-${c.id}">${renderCampItem(c)}</div>`).join('');
+      const empty = tabCampaigns.length === 0
+        ? `<p style="font-size:13px;color:var(--text-muted);padding:8px 0;">No ${activeCampTypeTab} campaigns yet.</p>`
+        : '';
+
+      const tabBar = `
+        <div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;">
+          ${tabs.map(t => `
+            <button class="camp-tab ${t === activeCampTypeTab ? 'active' : ''}"
+              onclick="switchCampTypeTab('${t.replace(/'/g,"\\'")}')">
+              ${t}
+            </button>`).join('')}
+          <div style="flex:1;"></div>
+          <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;margin:0 0 6px;" onclick="openCampDrawer('${dbType}')">+ New</button>
+        </div>`;
+
+      container.innerHTML = tabBar + empty + items;
+
       expandedCamps.forEach(id => loadCampTasks(id));
+    }
+
+    function renderCampCard(campId) {
+      const el = document.getElementById(`camp-card-${campId}`);
+      if (!el) return;
+      const c = campaigns.find(x => x.id === campId);
+      if (!c) return;
+      el.innerHTML = renderCampItem(c);
+      if (expandedCamps.has(campId)) loadCampTasks(campId);
+    }
+
+    function switchCampTypeTab(label) {
+      activeCampTypeTab = label;
+      const dbType = SECTION_DB_TYPE[label] || label;
+      campaigns.filter(c => c.type === dbType).forEach(c => expandedCamps.add(c.id));
+      renderCampaigns();
     }
 
     function renderCampItem(c) {
@@ -771,52 +854,59 @@
       const statusLabel = statusDef.label;
       const currentStageName = stages[currentStage] || 'Complete';
 
-      const stageListHtml = stages.map((s, i) => {
-        const done = i < currentStage;
-        const active = i === selStage;
-        return `<div class="camp-stage-row ${done ? 'done' : ''} ${active ? 'active' : ''}" onclick="selectCampStage(${c.id}, ${i})">
-          <div class="camp-stage-num">${i + 1}</div>
-          <div class="camp-stage-name">${s}</div>
-          <div class="camp-stage-tick">✓</div>
-        </div>`;
-      }).join('');
-
       const backBtn = selStage > 0
         ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;" onclick="advanceCampStage(${c.id},${selStage - 1},event)">← Back</button>`
         : '';
-      const advBtn = selStage < stages.length
-        ? `<button class="btn btn-primary" style="font-size:11px;padding:3px 8px;" onclick="advanceCampStage(${c.id},${selStage + 1},event)">${selStage + 1 < stages.length ? 'Advance →' : 'Complete'}</button>`
-        : '<span style="font-size:11px;color:var(--success);">All done ✓</span>';
+      const isLastStage = selStage + 1 === stages.length;
+      const pastEnd = selStage >= stages.length;
+      const advBtn = pastEnd
+        ? `<a href="/pages/reports.html?campaign=${c.id}" class="btn btn-primary" style="font-size:11px;padding:3px 8px;">View Report →</a>`
+        : `<button class="btn btn-primary" style="font-size:11px;padding:3px 8px;" onclick="${isLastStage ? `completeCampaign(${c.id},event)` : `advanceCampStage(${c.id},${selStage + 1},event)`}">${isLastStage ? 'Complete →' : 'Advance →'}</button>`;
+
+      const setup = c.setup ? (typeof c.setup === 'string' ? JSON.parse(c.setup) : c.setup) : null;
+      const setupHtml = setup ? (() => {
+        const parts = [];
+        if (setup.angle) parts.push(`<div style="margin-bottom:12px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:5px;">Campaign Angle</div><div style="font-size:13px;line-height:1.6;">${setup.angle}</div></div>`);
+        if (setup.keyMessages?.length) parts.push(`<div style="margin-bottom:12px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:5px;">Key Messages</div>${setup.keyMessages.map(m=>`<div style="font-size:13px;padding:3px 0;border-bottom:1px solid var(--border);">${m}</div>`).join('')}</div>`);
+        if (setup.spokespeople?.length) parts.push(`<div style="margin-bottom:4px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:5px;">Spokespeople</div>${setup.spokespeople.map(s=>`<div style="font-size:13px;padding:3px 0;border-bottom:1px solid var(--border);">${s}</div>`).join('')}</div>`);
+        return parts.length ? `<div style="background:var(--surface-2);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;">${parts.join('')}</div>` : '';
+      })() : '';
+
+      const stageTabs = stages.map((s, i) => {
+        const done = i < currentStage;
+        const active = i === selStage;
+        return `<button class="tab-btn ${active ? 'active' : ''}"
+          style="${done ? 'color:var(--success);' : ''}"
+          onclick="event.stopPropagation();selectCampStage(${c.id},${i})">
+          ${s}${done ? ' ✓' : ''}
+        </button>`;
+      }).join('');
 
       const expandedHtml = isExpanded ? `
         <div style="padding-bottom:14px;">
-          <!-- Stage list + task panel -->
-          <div style="display:grid;grid-template-columns:160px 1fr;gap:12px;">
-            <!-- Stage list -->
-            <div>${stageListHtml}</div>
-
-            <!-- Task panel -->
-            <div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <div class="section-label" style="margin-bottom:0;">${stages[selStage] || 'Complete'}</div>
-                <div style="display:flex;gap:6px;">${backBtn}${advBtn}</div>
-              </div>
-              <div id="camp-tasks-${c.id}">
-                <p style="font-size:12px;color:var(--text-muted);">Loading…</p>
-              </div>
-              <div id="cb-add-trigger-${c.id}" class="cb-add-trigger" onclick="showCbAddForm(${c.id})">+ Add task</div>
-              <div class="cb-add-form" id="cb-add-form-${c.id}">
-                <input id="camp-task-input-${c.id}" placeholder="Task title…"
-                  onkeydown="if(event.key==='Enter')addCampTask(${c.id});if(event.key==='Escape')hideCbAddForm(${c.id})">
-                <input id="camp-task-assignee-${c.id}" placeholder="Assignee">
-                <input type="date" id="camp-task-due-${c.id}">
-                <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addCampTask(${c.id})">Add</button>
-                <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideCbAddForm(${c.id})">✕</button>
-              </div>
+          ${setupHtml}
+          <!-- Stage tabs -->
+          <div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:14px;overflow-x:auto;">
+            ${stageTabs}
+          </div>
+          <!-- Task panel — fixed height so card doesn't shift cards below -->
+          <div style="height:240px;overflow-y:auto;display:flex;flex-direction:column;">
+            <div id="camp-tasks-${c.id}" style="flex:1;">
+              <p style="font-size:12px;color:var(--text-muted);">Loading…</p>
+            </div>
+            <div id="cb-add-trigger-${c.id}" class="cb-add-trigger" onclick="showCbAddForm(${c.id})">+ Add task</div>
+            <div class="cb-add-form" id="cb-add-form-${c.id}">
+              <input id="camp-task-input-${c.id}" placeholder="Task title…"
+                onkeydown="if(event.key==='Enter')addCampTask(${c.id});if(event.key==='Escape')hideCbAddForm(${c.id})">
+              <input id="camp-task-assignee-${c.id}" placeholder="Assignee">
+              <input type="date" id="camp-task-due-${c.id}">
+              <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addCampTask(${c.id})">Add</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideCbAddForm(${c.id})">✕</button>
             </div>
           </div>
-
-          <div style="margin-top:12px;text-align:right;">
+          <!-- Footer -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
+            <div style="display:flex;gap:6px;">${backBtn}${advBtn}</div>
             <a href="${campBoardUrl(c)}" style="font-size:11px;color:var(--accent);">Open full board →</a>
           </div>
         </div>
@@ -853,12 +943,12 @@
         expandedCamps.add(campId);
         if (selectedStages[campId] === undefined) selectedStages[campId] = currentStage;
       }
-      renderCampaigns();
+      renderCampCard(campId);
     }
 
     function selectCampStage(campId, stageIndex) {
       selectedStages[campId] = stageIndex;
-      renderCampaigns();
+      renderCampCard(campId);
     }
 
     async function advanceCampStage(campId, newStageIndex, event) {
@@ -874,7 +964,25 @@
       });
       camp.current_stage = clamped;
       selectedStages[campId] = clamped;
-      renderCampaigns();
+      renderCampCard(campId);
+    }
+
+    async function completeCampaign(campId, event) {
+      if (event) event.stopPropagation();
+      const camp = campaigns.find(c => c.id == campId);
+      if (!camp) return;
+      const stages = STAGES[camp.type] || STAGES.default;
+      await Promise.all([
+        fetch(`/api/campaigns/${campId}/stage`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage: stages.length })
+        }),
+        fetch(`/api/campaigns/${campId}/status`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'completed' })
+        }),
+      ]);
+      window.location.href = `/pages/reports.html?campaign=${campId}`;
     }
 
     async function loadCampTasks(campId) {
@@ -960,6 +1068,8 @@
             row.classList.toggle('done', sanitized === 'done');
             const cb = row.querySelector('input[type=checkbox]');
             if (cb) cb.checked = sanitized === 'done';
+            const t = clientTasksAll.find(x => x.id === taskId);
+            if (t) t.status = sanitized;
             updateClientTaskCount();
           } else if (field === 'assignee') {
             span.innerHTML = assigneeDisplay(sanitized);
@@ -981,8 +1091,8 @@
     async function deleteClientTask(taskId) {
       if (!confirm('Delete this task?')) return;
       await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
-      document.getElementById(`client-task-${taskId}`)?.remove();
-      updateClientTaskCount();
+      clientTasksAll = clientTasksAll.filter(t => t.id !== taskId);
+      renderTasksTab();
     }
 
     function showCbAddForm(campId) {
@@ -1040,8 +1150,77 @@
 
     // ── Campaign drawer ────────────────────────────────────────────────────────
 
+    function updateCampDrawerSetup() {
+      const type = document.getElementById('cd-type').value;
+      const container = document.getElementById('cd-setup-items');
+      if (!container) return;
+      container.style.display = type ? 'block' : 'none';
+      if (!type) return;
+      container.innerHTML = `
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:14px;">Campaign Setup</div>
+
+        <div class="form-group">
+          <label>Campaign Angle</label>
+          <textarea id="cd-angle" rows="3" placeholder="What's the core angle or hook?" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Key Messages</label>
+          <div id="cd-messages-list" style="margin-bottom:6px;"></div>
+          <div style="display:flex;gap:6px;">
+            <input id="cd-message-input" placeholder="Add a key message…" style="flex:1;"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addDrawerListItem('messages');}">
+            <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 10px;flex-shrink:0;" onclick="addDrawerListItem('messages')">+ Add</button>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px;margin-bottom:0;">
+          <label>Spokespeople</label>
+          <div id="cd-spokespeople-list" style="margin-bottom:6px;"></div>
+          <div style="display:flex;gap:6px;">
+            <input id="cd-spokesperson-input" placeholder="Add a spokesperson…" style="flex:1;"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addDrawerListItem('spokespeople');}">
+            <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 10px;flex-shrink:0;" onclick="addDrawerListItem('spokespeople')">+ Add</button>
+          </div>
+        </div>
+      `;
+    }
+
+    const drawerLists = { messages: [], spokespeople: [] };
+
+    function addDrawerListItem(type) {
+      const inputId = type === 'messages' ? 'cd-message-input' : 'cd-spokesperson-input';
+      const input = document.getElementById(inputId);
+      const val = input.value.trim();
+      if (!val) return;
+      drawerLists[type].push(val);
+      input.value = '';
+      renderDrawerList(type);
+      input.focus();
+    }
+
+    function removeDrawerListItem(type, index) {
+      drawerLists[type].splice(index, 1);
+      renderDrawerList(type);
+    }
+
+    function renderDrawerList(type) {
+      const listId = type === 'messages' ? 'cd-messages-list' : 'cd-spokespeople-list';
+      const el = document.getElementById(listId);
+      if (!el) return;
+      el.innerHTML = drawerLists[type].map((item, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surface-2);border-radius:5px;margin-bottom:4px;font-size:13px;">
+          <span style="flex:1;">${item}</span>
+          <button type="button" onclick="removeDrawerListItem('${type}',${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;line-height:1;padding:0;">×</button>
+        </div>
+      `).join('');
+    }
+
     function openCampDrawer(type) {
       const sel = document.getElementById('cd-type');
+      drawerLists.messages = [];
+      drawerLists.spokespeople = [];
+      document.getElementById('cd-name').value = '';
       if (type) {
         sel.value = type;
         sel.disabled = true;
@@ -1049,6 +1228,7 @@
         sel.value = '';
         sel.disabled = false;
       }
+      updateCampDrawerSetup();
       document.getElementById('camp-overlay').classList.add('open');
       document.getElementById('camp-drawer').classList.add('open');
     }
@@ -1064,18 +1244,28 @@
       const btn = document.getElementById('cd-save');
       btn.disabled = true;
       btn.textContent = 'Creating…';
+
+      const angle = document.getElementById('cd-angle')?.value.trim() || '';
+      const setup = {
+        angle,
+        keyMessages: [...drawerLists.messages],
+        spokespeople: [...drawerLists.spokespeople],
+      };
+      const hasSetup = angle || setup.keyMessages.length || setup.spokespeople.length;
+
+      const type = document.getElementById('cd-type').value;
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           client_id: clientId,
           name,
-          type: document.getElementById('cd-type').value || null,
+          type: type || null,
           status: 'draft',
+          setup: hasSetup ? setup : null,
         })
       });
       const { id } = await res.json();
-      const type = document.getElementById('cd-type').value;
       window.location.href = type === 'Social Media' ? `/social/${id}` : `/campaigns/${id}`;
     });
 
@@ -1248,7 +1438,7 @@
       });
       const camp = campaigns.find(c => c.id === campId);
       if (camp) camp.status = status;
-      renderCampaigns();
+      renderCampCard(campId);
     }
 
     async function toggleServiceItem(itemId, completed, el, sectionLabel) {
@@ -1441,10 +1631,9 @@
     }
 
     function updateClientTaskCount() {
-      const list = document.getElementById('client-tasks-list');
-      if (!list) return;
-      const total = list.querySelectorAll('.cb-task-row').length;
-      const done = list.querySelectorAll('.cb-task-row.done').length;
+      const tabTasks = clientTasksAll.filter(t => (t.service || 'General') === activeTaskTab);
+      const done = tabTasks.filter(t => t.status === 'done').length;
+      const total = tabTasks.length;
       const countEl = document.getElementById('client-task-count');
       if (countEl) countEl.textContent = `${done}/${total} done`;
       const bar = document.getElementById('task-progress-bar');
@@ -1452,45 +1641,34 @@
     }
 
     function showClientAddForm() {
-      document.getElementById('client-add-trigger').style.display = 'none';
-      document.getElementById('client-add-form').classList.add('open');
-      document.getElementById('client-task-input').focus();
+      document.getElementById('client-add-trigger')?.style.setProperty('display', 'none');
+      document.getElementById('client-add-form')?.classList.add('open');
+      document.getElementById('client-task-input')?.focus();
     }
 
     function hideClientAddForm() {
-      document.getElementById('client-add-form').classList.remove('open');
+      document.getElementById('client-add-form')?.classList.remove('open');
       const t = document.getElementById('client-add-trigger');
-      if (t) t.style.display = '';
+      if (t) t.style.removeProperty('display');
     }
 
     async function addClientTask() {
       const input = document.getElementById('client-task-input');
-      const title = input.value.trim();
+      const title = input?.value.trim();
       if (!title) return;
-      const assignee = document.getElementById('client-task-assignee').value.trim();
-      const due_date = document.getElementById('client-task-due').value;
-      input.value = '';
-      document.getElementById('client-task-assignee').value = '';
-      document.getElementById('client-task-due').value = '';
+      const assignee = document.getElementById('client-task-assignee')?.value.trim();
+      const due_date = document.getElementById('client-task-due')?.value;
+      const service = activeTaskTab && activeTaskTab !== 'General' ? activeTaskTab : null;
+      if (input) input.value = '';
+      if (document.getElementById('client-task-assignee')) document.getElementById('client-task-assignee').value = '';
+      if (document.getElementById('client-task-due')) document.getElementById('client-task-due').value = '';
       const res = await fetch('/api/tasks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: clientId, title, assignee: assignee || null, due_date: due_date || null })
+        body: JSON.stringify({ client_id: clientId, title, service, assignee: assignee || null, due_date: due_date || null })
       });
       const { id } = await res.json();
-      const newTask = { id, title, status: 'todo', assignee: assignee || null, due_date: due_date || null };
-      document.getElementById('tasks-empty')?.remove();
-      const list = document.getElementById('client-tasks-list');
-      let group = list.querySelector('[data-svc-group="General"]');
-      if (!group) {
-        group = document.createElement('div');
-        group.className = 'service-group';
-        group.dataset.svcGroup = 'General';
-        group.innerHTML = `<div class="service-group-label">General</div><div class="cb-task-cols"><div></div><div>Task</div><div>Status</div><div>Assignee</div><div>Due</div><div></div></div>`;
-        list.appendChild(group);
-      }
-      group.insertAdjacentHTML('beforeend', clientTaskRowHtml(newTask));
-      updateClientTaskCount();
-      hideClientAddForm();
+      clientTasksAll.push({ id, title, status: 'todo', service: service || 'General', assignee: assignee || null, due_date: due_date || null });
+      renderTasksTab();
     }
 
     load();

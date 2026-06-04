@@ -6,6 +6,70 @@
   <title>Approvals — Greenpoint</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .approval-tabs { display:flex; gap:4px; margin-bottom:20px; }
+    .approval-tab {
+      padding:6px 16px; border-radius:6px; border:1px solid var(--border);
+      background:transparent; color:var(--text-muted); font-size:13px;
+      cursor:pointer; transition:all .15s;
+    }
+    .approval-tab:hover { background:var(--bg-hover); color:var(--text); }
+    .approval-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .approval-tab .count {
+      display:inline-flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,.25); color:inherit;
+      width:18px; height:18px; border-radius:9px; font-size:11px;
+      margin-left:6px;
+    }
+    .approval-tab:not(.active) .count { background:var(--bg-hover); color:var(--text-muted); }
+
+    .status-chip {
+      display:inline-block; padding:2px 10px; border-radius:20px;
+      font-size:11px; font-weight:600; letter-spacing:.3px; white-space:nowrap;
+    }
+    .chip-pending  { background:#FFF3CD; color:#856404; }
+    .chip-update   { background:#FFE5D0; color:#7B3F00; }
+    .chip-approved { background:#D1FAE5; color:#065F46; }
+
+    .actions-cell { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+    .btn-approve  { background:#10B981; color:#fff; border:none; }
+    .btn-approve:hover { background:#059669; }
+    .btn-updates  { background:#F59E0B; color:#fff; border:none; }
+    .btn-updates:hover { background:#D97706; }
+    .btn-recall   { background:transparent; color:var(--text-muted); border:1px solid var(--border); }
+    .btn-recall:hover { color:var(--text); border-color:var(--text-muted); }
+
+    .reviewer-cell { display:flex; align-items:center; gap:6px; }
+    .reviewer-select {
+      font-size:12px; padding:3px 6px; border:1px solid var(--border);
+      border-radius:5px; background:var(--bg-card); color:var(--text);
+      cursor:pointer; max-width:130px;
+    }
+    .reviewer-select:focus { outline:none; border-color:var(--accent); }
+
+    .empty-state { text-align:center; padding:48px; color:var(--text-muted); }
+    .empty-icon { font-size:32px; margin-bottom:8px; }
+
+    /* Submit modal */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:flex; align-items:center; justify-content:center;
+      z-index:1000; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+      padding:28px; width:420px; max-width:90vw;
+    }
+    .modal h3 { margin:0 0 18px; font-size:16px; }
+    .modal label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; }
+    .modal select, .modal input {
+      width:100%; padding:8px 10px; border:1px solid var(--border);
+      border-radius:6px; background:var(--bg); color:var(--text);
+      font-size:13px; margin-bottom:14px; box-sizing:border-box;
+    }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -15,30 +79,35 @@
       <main class="page-content">
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost">Pending</button>
-            <button class="btn btn-ghost">Approved</button>
-            <button class="btn btn-ghost">Rejected</button>
+          <div class="approval-tabs">
+            <button class="approval-tab active" data-tab="pending">
+              Pending <span class="count" id="count-pending">0</span>
+            </button>
+            <button class="approval-tab" data-tab="updates_requested">
+              Update <span class="count" id="count-updates_requested">0</span>
+            </button>
+            <button class="approval-tab" data-tab="approved">
+              Approved <span class="count" id="count-approved">0</span>
+            </button>
           </div>
-          <button class="btn btn-primary">+ Submit for Approval</button>
+          <button class="btn btn-primary" onclick="openSubmitModal()">+ Submit for Approval</button>
         </div>
 
-        <div class="card">
-          <table>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;">
             <thead>
-              <tr>
-                <th>Item</th>
-                <th>Client</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Submitted</th>
-                <th>Reviewer</th>
+              <tr style="border-bottom:1px solid var(--border);">
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Strategy</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Client</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Submitted By</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Reviewer</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Status</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Submitted</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--text-muted);font-weight:600;">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td colspan="6" style="color:var(--text-muted);text-align:center;padding:32px;">No approvals pending</td>
-              </tr>
+            <tbody id="approvals-body">
+              <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div>Loading…</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -46,7 +115,233 @@
       </main>
     </div>
   </div>
+
+  <!-- Submit for Approval Modal -->
+  <div class="modal-overlay" id="submit-modal">
+    <div class="modal">
+      <h3>Submit Strategy for Approval</h3>
+      <label>Strategy</label>
+      <select id="modal-strategy"></select>
+      <label>Submitted By</label>
+      <select id="modal-submitted-by">
+        <option value="">— Select team member —</option>
+      </select>
+      <label>Reviewer / Approver</label>
+      <select id="modal-reviewer">
+        <option value="">— Select team member —</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeSubmitModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitForApproval()">Submit</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/components/shell.js"></script>
   <script>renderShell({ pageId: 'approvals', title: 'Approvals' });</script>
+  <script>
+    let allStrategies = [];
+    let teamMembers = [];
+    let activeTab = 'pending';
+
+    const tabMap = {
+      pending: 'awaiting_approval',
+      updates_requested: 'updates_requested',
+      approved: 'approved',
+    };
+
+    async function load() {
+      const [strategies, team] = await Promise.all([
+        fetch('/api/strategies').then(r => r.json()),
+        fetch('/api/team-members').then(r => r.json()).catch(() => []),
+      ]);
+      allStrategies = strategies;
+      teamMembers = team;
+      updateCounts();
+      render();
+      populateModalDropdowns();
+    }
+
+    function updateCounts() {
+      document.getElementById('count-pending').textContent =
+        allStrategies.filter(s => s.status === 'awaiting_approval').length;
+      document.getElementById('count-updates_requested').textContent =
+        allStrategies.filter(s => s.status === 'updates_requested').length;
+      document.getElementById('count-approved').textContent =
+        allStrategies.filter(s => s.status === 'approved').length;
+    }
+
+    function render() {
+      const dbStatus = tabMap[activeTab];
+      const filtered = allStrategies.filter(s => s.status === dbStatus);
+      const tbody = document.getElementById('approvals-body');
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+          <div class="empty-icon">✓</div>
+          No items in this view
+        </div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        const chip = statusChip(s.status);
+        const date = s.submitted_at
+          ? new Date(s.submitted_at).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' })
+          : (s.updated_at ? new Date(s.updated_at).toLocaleDateString('en-AU', { day:'numeric', month:'short' }) : '—');
+
+        const reviewerCell = reviewerDropdown(s);
+        const actions = actionsCell(s);
+
+        return `<tr style="border-bottom:1px solid var(--border);" data-id="${s.id}">
+          <td style="padding:14px 16px;">
+            <a href="/pages/strategy.html?id=${s.id}" style="font-weight:500;color:var(--text);text-decoration:none;">
+              ${s.title}
+            </a>
+          </td>
+          <td style="padding:14px 16px;font-size:13px;color:var(--text-muted);">${s.client_name || '—'}</td>
+          <td style="padding:14px 16px;font-size:13px;">${s.submitted_by || '—'}</td>
+          <td style="padding:14px 16px;">${reviewerCell}</td>
+          <td style="padding:14px 16px;">${chip}</td>
+          <td style="padding:14px 16px;font-size:13px;color:var(--text-muted);">${date}</td>
+          <td style="padding:14px 16px;"><div class="actions-cell">${actions}</div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function statusChip(status) {
+      if (status === 'awaiting_approval') return '<span class="status-chip chip-pending">Pending</span>';
+      if (status === 'updates_requested') return '<span class="status-chip chip-update">Update</span>';
+      if (status === 'approved')          return '<span class="status-chip chip-approved">Approved</span>';
+      return `<span class="status-chip">${status}</span>`;
+    }
+
+    function reviewerDropdown(s) {
+      const options = teamMembers.map(m =>
+        `<option value="${m.name}" ${m.name === s.reviewer ? 'selected' : ''}>${m.name}</option>`
+      ).join('');
+      return `<select class="reviewer-select" onchange="saveReviewer(${s.id}, this.value)">
+        <option value="">— Assign reviewer —</option>
+        ${options}
+      </select>`;
+    }
+
+    function actionsCell(s) {
+      const viewBtn = s.share_token
+        ? `<a href="/s/${s.share_token}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:12px;padding:4px 10px;">View</a>`
+        : `<span class="btn btn-ghost btn-sm" style="font-size:12px;padding:4px 10px;opacity:.4;cursor:default;">View</span>`;
+      if (s.status === 'awaiting_approval') {
+        return `
+          <button class="btn btn-approve btn-sm" style="font-size:12px;padding:4px 10px;" onclick="approve(${s.id})">Approve</button>
+          <button class="btn btn-updates btn-sm" style="font-size:12px;padding:4px 10px;" onclick="requestUpdates(${s.id})">Request Updates</button>
+          <button class="btn btn-recall btn-sm" style="font-size:12px;padding:4px 10px;" onclick="recall(${s.id})">Recall</button>
+          ${viewBtn}`;
+      }
+      if (s.status === 'updates_requested') {
+        return `
+          <button class="btn btn-approve btn-sm" style="font-size:12px;padding:4px 10px;" onclick="approve(${s.id})">Approve</button>
+          <button class="btn btn-updates btn-sm" style="font-size:12px;padding:4px 10px;" onclick="backToReview(${s.id})">Back to Review</button>
+          <button class="btn btn-recall btn-sm" style="font-size:12px;padding:4px 10px;" onclick="recall(${s.id})">Recall to Draft</button>
+          ${viewBtn}`;
+      }
+      if (s.status === 'approved') {
+        return `
+          <button class="btn btn-recall btn-sm" style="font-size:12px;padding:4px 10px;" onclick="recall(${s.id})">Recall</button>
+          ${viewBtn}`;
+      }
+      return viewBtn;
+    }
+
+    async function approve(id) {
+      await fetch(`/api/strategies/${id}/approve`, { method: 'POST' });
+      await load();
+    }
+
+    async function requestUpdates(id) {
+      await fetch(`/api/strategies/${id}/request-updates`, { method: 'POST' });
+      await load();
+    }
+
+    async function backToReview(id) {
+      await fetch(`/api/strategies/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'awaiting_approval' }),
+      });
+      await load();
+    }
+
+    async function recall(id) {
+      await fetch(`/api/strategies/${id}/recall`, { method: 'POST' });
+      await load();
+    }
+
+    async function saveReviewer(id, reviewer) {
+      await fetch(`/api/strategies/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewer }),
+      });
+      const s = allStrategies.find(x => x.id === id);
+      if (s) s.reviewer = reviewer;
+    }
+
+    // Tabs
+    document.querySelectorAll('.approval-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.approval-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        render();
+      });
+    });
+
+    // Submit modal
+    function populateModalDropdowns() {
+      const draftStrategies = allStrategies.filter(s => s.status === 'draft' || s.status === 'updates_requested');
+      const stratSel = document.getElementById('modal-strategy');
+      stratSel.innerHTML = draftStrategies.length
+        ? draftStrategies.map(s => `<option value="${s.id}">${s.title} — ${s.client_name}</option>`).join('')
+        : '<option value="">No draft strategies</option>';
+
+      const teamOptions = `<option value="">— Select —</option>` +
+        teamMembers.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+      document.getElementById('modal-submitted-by').innerHTML = teamOptions;
+      document.getElementById('modal-reviewer').innerHTML = teamOptions;
+    }
+
+    function openSubmitModal() {
+      populateModalDropdowns();
+      document.getElementById('submit-modal').classList.add('open');
+    }
+
+    function closeSubmitModal() {
+      document.getElementById('submit-modal').classList.remove('open');
+    }
+
+    document.getElementById('submit-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeSubmitModal();
+    });
+
+    async function submitForApproval() {
+      const id = document.getElementById('modal-strategy').value;
+      if (!id) return;
+      const submitted_by = document.getElementById('modal-submitted-by').value;
+      const reviewer = document.getElementById('modal-reviewer').value;
+      await fetch(`/api/strategies/${id}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submitted_by, reviewer }),
+      });
+      closeSubmitModal();
+      activeTab = 'pending';
+      document.querySelectorAll('.approval-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === 'pending');
+      });
+      await load();
+    }
+
+    load();
+  </script>
 </body>
 </html>

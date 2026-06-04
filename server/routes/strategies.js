@@ -38,6 +38,7 @@ router.get('/', async (req, res) => {
   const db = await getDb();
   const result = db.exec(`
     SELECT s.id, s.client_id, s.title, s.status, s.updated_at, s.created_at,
+           s.submitted_by, s.reviewer, s.submitted_at,
            cl.name as client_name
     FROM strategies s
     JOIN clients cl ON s.client_id = cl.id
@@ -125,7 +126,7 @@ router.post('/', async (req, res) => {
 
 // Update strategy
 router.put('/:id', async (req, res) => {
-  const { title, sections, active_sections, status } = req.body;
+  const { title, sections, active_sections, status, submitted_by, reviewer } = req.body;
   const db = await getDb();
   const parts = [];
   const vals = [];
@@ -133,6 +134,8 @@ router.put('/:id', async (req, res) => {
   if (sections !== undefined)        { parts.push('sections=?');       vals.push(JSON.stringify(sections)); }
   if (active_sections !== undefined) { parts.push('active_sections=?'); vals.push(JSON.stringify(active_sections)); }
   if (status !== undefined)          { parts.push('status=?');         vals.push(status); }
+  if (submitted_by !== undefined)    { parts.push('submitted_by=?');   vals.push(submitted_by); }
+  if (reviewer !== undefined)        { parts.push('reviewer=?');       vals.push(reviewer); }
   parts.push("updated_at=datetime('now')");
   vals.push(req.params.id);
   db.run(`UPDATE strategies SET ${parts.join(',')} WHERE id=?`, vals);
@@ -142,15 +145,22 @@ router.put('/:id', async (req, res) => {
 
 // Submit for approval — generates share token, sets awaiting_approval
 router.post('/:id/submit', async (req, res) => {
+  const { submitted_by, reviewer } = req.body;
   const db = await getDb();
   const result = db.exec('SELECT share_token FROM strategies WHERE id=?', [req.params.id]);
   if (!result.length || !result[0].values.length) return res.status(404).json({ error: 'Not found' });
   let token = result[0].values[0][0];
   if (!token) {
     token = crypto.randomBytes(16).toString('hex');
-    db.run('UPDATE strategies SET share_token=?, status=? WHERE id=?', [token, 'awaiting_approval', req.params.id]);
+    db.run(
+      `UPDATE strategies SET share_token=?, status='awaiting_approval', submitted_at=datetime('now'), submitted_by=?, reviewer=? WHERE id=?`,
+      [token, submitted_by || null, reviewer || null, req.params.id]
+    );
   } else {
-    db.run("UPDATE strategies SET status='awaiting_approval' WHERE id=?", [req.params.id]);
+    db.run(
+      `UPDATE strategies SET status='awaiting_approval', submitted_at=datetime('now'), submitted_by=?, reviewer=? WHERE id=?`,
+      [submitted_by || null, reviewer || null, req.params.id]
+    );
   }
   saveDb();
   res.json({ token });
@@ -160,6 +170,14 @@ router.post('/:id/submit', async (req, res) => {
 router.post('/:id/approve', async (req, res) => {
   const db = await getDb();
   db.run("UPDATE strategies SET status='approved' WHERE id=?", [req.params.id]);
+  saveDb();
+  res.json({ ok: true });
+});
+
+// Request updates
+router.post('/:id/request-updates', async (req, res) => {
+  const db = await getDb();
+  db.run("UPDATE strategies SET status='updates_requested' WHERE id=?", [req.params.id]);
   saveDb();
   res.json({ ok: true });
 });
