@@ -298,6 +298,8 @@
 
   <script src="/components/shell.js"></script>
   <script>
+    function escHtml(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
     renderShell({ pageId: 'clients', title: 'Clients' });
 
     const tbody = document.getElementById('clients-tbody');
@@ -368,11 +370,11 @@
         <tr>
           <td>
             <div style="display:flex;align-items:center;gap:6px;">
-              ${c.code ? `<span style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.06em;flex-shrink:0;">${c.code}</span><span style="color:var(--text-dim);">—</span>` : ''}
-              <strong>${c.name}</strong>
+              ${c.code ? `<span style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.06em;flex-shrink:0;">${escHtml(c.code)}</span><span style="color:var(--text-dim);">—</span>` : ''}
+              <strong>${escHtml(c.name)}</strong>
             </div>
           </td>
-          <td>${c.industry || '—'}</td>
+          <td>${escHtml(c.industry) || '—'}</td>
           <td>${statusDot(c.status)}</td>
           <td>${c.start_date || '—'}</td>
           <td>${c.end_date || '—'}</td>
@@ -403,7 +405,10 @@
       const months = parseInt(document.getElementById('f-campaign-length').value);
       if (!start || !months) return;
       const [y, m, day] = start.split('-').map(Number);
-      const d = new Date(y, m - 1 + months, day);
+      const targetMonth0 = (m - 1 + months) % 12;
+      const targetYear = y + Math.floor((m - 1 + months) / 12);
+      const lastDay = new Date(targetYear, targetMonth0 + 1, 0).getDate();
+      const d = new Date(targetYear, targetMonth0, Math.min(day, lastDay));
       const yy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -676,9 +681,9 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c)
         })));
 
-        // Auto-create Social Media campaign if Content - Social is selected and none exists yet
+        // Auto-create Social Media campaign if Social Media is selected and none exists yet
         const services = getServices() || '';
-        if (services.includes('Content - Social')) {
+        if (services.includes('Social Media')) {
           const existing = await fetch(`/api/campaigns/client/${clientId}`).then(r => r.json());
           const hasSocial = existing.some(c => c.type === 'Social Media');
           if (!hasSocial) {
