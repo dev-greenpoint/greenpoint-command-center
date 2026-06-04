@@ -84,8 +84,8 @@ router.put('/:id', async (req, res) => {
   const b = req.body;
   const val = k => (k in b ? (b[k] || null) : cur[k]);
   db.run(
-    `UPDATE campaigns SET client_id=?, name=?, status=?, type=?, start_date=?, end_date=?, budget=?, notes=? WHERE id=?`,
-    [val('client_id'), val('name'), val('status') || 'draft', val('type'), val('start_date'), val('end_date'), val('budget'), val('notes'), req.params.id]
+    `UPDATE campaigns SET client_id=?, name=?, status=?, type=?, start_date=?, end_date=?, budget=?, notes=?, campaign_period=? WHERE id=?`,
+    [val('client_id'), val('name'), val('status') || 'draft', val('type'), val('start_date'), val('end_date'), val('budget'), val('notes'), val('campaign_period'), req.params.id]
   );
 
   saveDb();

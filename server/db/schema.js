@@ -161,6 +161,7 @@ async function initSchema() {
   try { d.run(`ALTER TABLE campaign_tasks ADD COLUMN notes TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaigns ADD COLUMN sked_link TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaigns ADD COLUMN slack_channel TEXT`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE campaigns ADD COLUMN campaign_period TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE campaigns ADD COLUMN social_admin TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE social_posts ADD COLUMN title TEXT`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE social_posts ADD COLUMN content_pillar TEXT`); db.saveDb(); } catch {}

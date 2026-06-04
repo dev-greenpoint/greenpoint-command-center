@@ -519,7 +519,8 @@
 
       const taskRow = (t) => {
         const dateStr = t.due_date ? new Date(t.due_date+'T00:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}) : '';
-        const overdue = t.due_date && !t.done && new Date(t.due_date+'T00:00:00') < new Date();
+        const _today = new Date(); _today.setHours(0,0,0,0);
+        const overdue = t.due_date && !t.done && new Date(t.due_date+'T00:00:00') < _today;
         return `
           <div class="task-row ${t.done ? 'task-done' : ''}">
             <input type="checkbox" class="task-check" ${t.done?'checked':''} onchange="toggleTask(${t.id}, this.checked)">
@@ -774,10 +775,11 @@
         const res = await fetch(`/api/campaigns/${campaignId}/posts/${editingPostId}`, {
           method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload),
         });
-        if (res.ok) {
-          const post = socialPosts.find(p => p.id === editingPostId);
-          if (post) Object.assign(post, payload);
+        if (!res.ok) {
+          alert('Failed to save'); btn.disabled = false; btn.textContent = 'Save'; return;
         }
+        const post = socialPosts.find(p => p.id === editingPostId);
+        if (post) Object.assign(post, payload);
       } else {
         const res = await fetch(`/api/campaigns/${campaignId}/posts`, {
           method:'POST', headers:{'Content-Type':'application/json'},
@@ -825,9 +827,10 @@
         fetch(`/api/campaigns/${campaignId}`, {
           method:'PUT', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
-            name:   document.getElementById('f-name').value.trim(),
-            status: document.getElementById('f-status').value,
-            notes:  document.getElementById('f-notes').value.trim() || null,
+            name:            document.getElementById('f-name').value.trim(),
+            status:          document.getElementById('f-status').value,
+            campaign_period: document.getElementById('f-period').value.trim() || null,
+            notes:           document.getElementById('f-notes').value.trim() || null,
           }),
         }),
         fetch(`/api/campaigns/${campaignId}/links`, {
