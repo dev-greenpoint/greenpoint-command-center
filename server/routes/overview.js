@@ -14,18 +14,9 @@ router.get('/', async (req, res) => {
 
   const clients   = rows(db.exec('SELECT * FROM clients ORDER BY created_at DESC'));
   const campaigns = rows(db.exec('SELECT * FROM campaigns WHERE status != "completed" ORDER BY created_at DESC'));
-  const checklist = rows(db.exec('SELECT * FROM onboarding_checklist'));
-  const team      = rows(db.exec('SELECT * FROM client_team'));
 
   const active     = clients.filter(c => c.status === 'active');
   const onboarding = clients.filter(c => c.status === 'onboarding');
-
-  // Onboarding progress per client
-  const onboardingProgress = onboarding.map(c => {
-    const items = checklist.filter(i => i.client_id === c.id);
-    const done  = items.filter(i => i.completed).length;
-    return { id: c.id, name: c.name, total: items.length, done };
-  });
 
   // Active clients with campaigns bundled in
   const today = new Date();
@@ -46,14 +37,6 @@ router.get('/', async (req, res) => {
       currentStage: camp.current_stage,
     }));
     return { id: c.id, name: c.name, services: c.services, pct, daysLeft, campaigns: clientCampaigns };
-  });
-
-  // Team workload
-  const workload = {};
-  team.forEach(m => {
-    if (!workload[m.name]) workload[m.name] = { name: m.name, clients: [] };
-    const client = clients.find(c => c.id === m.client_id);
-    if (client) workload[m.name].clients.push({ id: client.id, name: client.name, role: m.role, status: client.status });
   });
 
   res.json({

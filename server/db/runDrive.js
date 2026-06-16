@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { google } = require('googleapis');
 const { getDb, saveDb } = require('./database');
 
@@ -15,7 +17,8 @@ async function getAuthClient() {
 
   let credentials;
   if (keyPath) {
-    credentials = require(require('path').resolve(keyPath));
+    const resolved = path.resolve(keyPath);
+    credentials = JSON.parse(fs.readFileSync(resolved, 'utf8'));
   } else if (keyRaw) {
     try {
       credentials = JSON.parse(Buffer.from(keyRaw, 'base64').toString());

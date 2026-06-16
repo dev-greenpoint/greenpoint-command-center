@@ -436,11 +436,17 @@
         }
       }
 
-      await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
+      const res = await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ done: !!done })
       });
+      if (!res.ok) {
+        const task = allTasks.find(t => t.id === taskId);
+        if (task) task.done = done ? 0 : 1;
+        render();
+        console.error('Failed to update task');
+      }
     }
 
     function toggleStage(stageIdx) {
@@ -461,8 +467,10 @@
         if (data.error) throw new Error(data.error);
 
         // Save to setup.research
-        let setup = null;
-        try { setup = campaign.setup ? JSON.parse(campaign.setup) : {}; } catch { setup = {}; }
+        let setup = {};
+        try {
+          if (campaign.setup) setup = typeof campaign.setup === 'string' ? JSON.parse(campaign.setup) : campaign.setup;
+        } catch { setup = {}; }
         setup.research = data.brief;
         campaign.setup = JSON.stringify(setup);
         await saveSetupField(setup);
@@ -480,8 +488,10 @@
     }
 
     async function saveResearch(value) {
-      let setup = null;
-      try { setup = campaign.setup ? JSON.parse(campaign.setup) : {}; } catch { setup = {}; }
+      let setup = {};
+      try {
+        if (campaign.setup) setup = typeof campaign.setup === 'string' ? JSON.parse(campaign.setup) : campaign.setup;
+      } catch { setup = {}; }
       setup.research = value;
       campaign.setup = JSON.stringify(setup);
       await saveSetupField(setup);

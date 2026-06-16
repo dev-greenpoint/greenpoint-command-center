@@ -81,7 +81,7 @@ function renderShell({ pageId, title }) {
       `).join('');
     })
     .catch(() => {
-      document.getElementById('sidebar-clients').innerHTML = '';
+      document.getElementById('sidebar-clients').innerHTML = '<span style="font-size:11px;color:var(--text-dim);padding:4px 16px;">Failed to load clients</span>';
     });
 
 }

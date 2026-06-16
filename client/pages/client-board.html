@@ -902,7 +902,7 @@
                 ${clientMeetings.filter(m => m.notes).map(m => `
                   <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
                     <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${m.title}${m.scheduled_date ? ' · ' + new Date(m.scheduled_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
-                    <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${m.notes}</p>
+                    <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${escHtml(m.notes)}</p>
                   </div>`).join('')}
               </div>` : ''}
               <div class="card">
@@ -2744,7 +2744,8 @@
       }
 
       closeMeetingModal();
-      document.querySelector('.quick-cards-grid').innerHTML = quickCardsHtml();
+      const qcg = document.querySelector('.quick-cards-grid');
+      if (qcg) qcg.innerHTML = quickCardsHtml();
     }
 
     // ── AI Research modal ─────────────────────────────────────────────────────

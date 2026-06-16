@@ -277,8 +277,6 @@ async function initSchema() {
       created_at TEXT DEFAULT (datetime('now'))
     )
   `);
-  try { d.run(`ALTER TABLE pitch_lists ADD COLUMN campaign_id INTEGER`); db.saveDb(); } catch {}
-
   d.run(`
     CREATE TABLE IF NOT EXISTS brain_entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

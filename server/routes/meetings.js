@@ -4,7 +4,7 @@ const { getDb, saveDb } = require('../db/database');
 
 router.get('/:id/meetings', async (req, res) => {
   const db = await getDb();
-  const rows = db.exec(`SELECT * FROM client_meetings WHERE client_id = ${Number(req.params.id)} ORDER BY id`);
+  const rows = db.exec(`SELECT * FROM client_meetings WHERE client_id = ? ORDER BY id`, [Number(req.params.id)]);
   res.json(rows[0] ? rows[0].values.map(r => ({
     id: r[0], client_id: r[1], title: r[2], scheduled_date: r[3], meeting_type: r[4], notes: r[5], created_at: r[6]
   })) : []);

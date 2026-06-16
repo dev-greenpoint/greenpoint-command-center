@@ -147,6 +147,12 @@
   <script>
     renderShell({ pageId: 'overview', title: 'Overview' });
 
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str ?? '';
+      return div.innerHTML;
+    }
+
     const TYPE_LABEL = { pr: 'PR', social: 'Social', events: 'Events', paid: 'Paid Media', design: 'Design', edm: 'eDM' };
 
     async function load() {
@@ -177,8 +183,8 @@
         ${activeProgress.map((c, i) => `
           <div class="client-block" id="block-${c.id}">
             <div class="client-block-header" onclick="toggleClient('${c.id}')">
-              <div class="client-block-name">${c.name}</div>
-              ${c.services ? `<div class="client-block-meta">${c.services}</div>` : ''}
+              <div class="client-block-name">${escHtml(c.name)}</div>
+              ${c.services ? `<div class="client-block-meta">${escHtml(c.services)}</div>` : ''}
               <div class="client-block-meta">${c.campaigns.length} campaign${c.campaigns.length !== 1 ? 's' : ''}</div>
               ${c.pct !== null ? `<div class="client-block-meta">${c.daysLeft}d left</div>` : ''}
               <div class="client-block-chevron">▼</div>
@@ -192,7 +198,7 @@
                 ? `<div style="padding:12px 20px;font-size:13px;color:var(--text-muted);">No active campaigns.</div>`
                 : c.campaigns.map(camp => `
                   <a class="campaign-link" href="/campaigns/${camp.id}">
-                    <span class="campaign-link-name">${camp.name}</span>
+                    <span class="campaign-link-name">${escHtml(camp.name)}</span>
                     ${camp.type ? `<span class="tag">${TYPE_LABEL[camp.type] || camp.type}</span>` : ''}
                     <span class="campaign-stage">Stage ${(camp.currentStage || 0) + 1}</span>
                   </a>

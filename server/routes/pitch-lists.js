@@ -14,18 +14,20 @@ function rows(result) {
 
 // Get all pitch lists for a client (summary — for the client board card)
 router.get('/client/:clientId', async (req, res) => {
-  const db = await getDb();
-  const lists = rows(db.exec(
-    `SELECT pl.*, c.name as campaign_name, c.type as campaign_type,
-            (SELECT COUNT(*) FROM pitch_contacts pc WHERE pc.list_id = pl.id) as contact_count,
-            (SELECT COUNT(*) FROM pitch_contacts pc WHERE pc.list_id = pl.id AND pc.status IN ('Pitched','Coverage Received')) as pitched_count
-     FROM pitch_lists pl
-     LEFT JOIN campaigns c ON pl.campaign_id = c.id
-     WHERE pl.client_id = ?
-     ORDER BY pl.created_at DESC`,
-    [req.params.clientId]
-  ));
-  res.json(lists);
+  try {
+    const db = await getDb();
+    const lists = rows(db.exec(
+      `SELECT pl.*, c.name as campaign_name, c.type as campaign_type,
+              (SELECT COUNT(*) FROM pitch_contacts pc WHERE pc.list_id = pl.id) as contact_count,
+              (SELECT COUNT(*) FROM pitch_contacts pc WHERE pc.list_id = pl.id AND pc.status IN ('Pitched','Coverage Received')) as pitched_count
+       FROM pitch_lists pl
+       LEFT JOIN campaigns c ON pl.campaign_id = c.id
+       WHERE pl.client_id = ?
+       ORDER BY pl.created_at DESC`,
+      [req.params.clientId]
+    ));
+    res.json(lists);
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Get or create pitch list for a campaign
@@ -135,13 +137,13 @@ router.post('/:listId/contacts', async (req, res) => {
 router.patch('/:listId/contacts/:contactId', async (req, res) => {
   const db = await getDb();
   const editable = ['category', 'publication', 'journalist_name', 'journalist_title', 'email', 'phone', 'status', 'pitched_date', 'followup_date', 'notes'];
+  const sets = [], vals = [];
   for (const field of editable) {
-    if (field in req.body) {
-      db.run(
-        `UPDATE pitch_contacts SET ${field}=? WHERE id=? AND list_id=?`,
-        [req.body[field] ?? null, req.params.contactId, req.params.listId]
-      );
-    }
+    if (field in req.body) { sets.push(`${field}=?`); vals.push(req.body[field] ?? null); }
+  }
+  if (sets.length) {
+    db.run(`UPDATE pitch_contacts SET ${sets.join(',')} WHERE id=? AND list_id=?`,
+      [...vals, req.params.contactId, req.params.listId]);
   }
   saveDb();
   res.json({ ok: true });

@@ -470,6 +470,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      if (!res.ok) { alert('Failed to add contact'); return; }
       const data = await res.json();
       contacts.push({ id: data.id, ...body });
       closeModal();

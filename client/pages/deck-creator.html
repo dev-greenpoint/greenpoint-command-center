@@ -223,16 +223,32 @@
       'kickoff-workshop':         'Kickoff Workshop',
     };
 
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     let pendingType = null;
 
     async function selectDeck(type) {
       pendingType = type;
       document.getElementById('modalDeckTitle').textContent = DECK_TITLES[type] || type;
 
-      const clients = await fetch('/api/clients').then(r => r.json());
+      let clients;
+      try {
+        const res = await fetch('/api/clients');
+        if (!res.ok) throw new Error('Failed to load clients');
+        clients = await res.json();
+      } catch (err) {
+        alert('Failed to load clients. Please try again.');
+        closeModal();
+        return;
+      }
+
       const sel = document.getElementById('modalClientSelect');
       sel.innerHTML = '<option value="">Select a client…</option>' +
-        clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        clients.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
 
       document.getElementById('clientModal').classList.add('open');
     }
@@ -244,17 +260,25 @@
 
     async function createDeck() {
       const clientId = document.getElementById('modalClientSelect').value;
-      if (!clientId) return;
+      if (!clientId) {
+        alert('Please select a client');
+        return;
+      }
 
       const title = DECK_TITLES[pendingType] || 'Untitled';
-      const res = await fetch('/api/strategies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: Number(clientId), title }),
-      });
-      const data = await res.json();
-      if (data.id) {
+      try {
+        const res = await fetch('/api/strategies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: Number(clientId), title }),
+        });
+        if (!res.ok) throw new Error(`Failed to create deck: ${res.status}`);
+        const data = await res.json();
+        if (!data.id) throw new Error('Invalid response from server');
         window.location = `/strategy/${data.id}`;
+      } catch (err) {
+        alert('Failed to create deck. Please try again.');
+        console.error(err);
       }
     }
 
