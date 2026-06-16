@@ -49,25 +49,6 @@
       color: var(--text-dim);
       padding: 10px 0 4px;
     }
-    .task-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 7px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-    }
-    .task-item:last-child { border-bottom: none; }
-    .task-item select {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text);
-      font-size: 11px;
-      padding: 2px 6px;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
     .status-chip {
       display: inline-flex;
       align-items: center;
@@ -93,6 +74,198 @@
       border-radius: 2px;
       transition: width 0.3s ease;
     }
+    .int-badge {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4a1a00;
+      color: #ff6b35;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: help;
+      border: 1px solid #ff6b35;
+      flex-shrink: 0;
+    }
+    .int-badge::after {
+      content: attr(data-tip);
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text);
+      width: 220px;
+      line-height: 1.5;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 10;
+      white-space: normal;
+    }
+    .int-badge:hover::after { opacity: 1; }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 7px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .15s, background .15s;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover:not(.active) { color: var(--text); background: var(--surface-2); }
+    .tab-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* Snapshot */
+    .snapshot-card {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+    }
+    .snapshot-section { display: flex; flex-direction: column; gap: 5px; }
+    .snapshot-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); }
+    .snapshot-value { font-size: 13px; color: var(--text); }
+
+    /* Brain feed */
+    .brain-overview-row { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px; }
+    .brain-overview-card { min-height:90px; }
+    .brain-overview-label { font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px; }
+    .brain-overview-list { margin:0;padding-left:16px;font-size:12px;line-height:1.8;max-height:180px;overflow-y:auto; }
+    .brain-overview-actions { max-height:180px;overflow-y:auto; }
+    @media (max-width:900px) { .brain-overview-row { grid-template-columns:1fr; } }
+
+    .brain-group { margin-bottom:4px; }
+    .brain-group-header { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px; }
+    .brain-group-header.clickable { cursor:pointer; }
+    .brain-group-header.clickable:hover { color:var(--text); }
+    .brain-group-count { font-weight:400;opacity:.7; }
+    .brain-group-toggle { margin-left:auto;font-size:10px; }
+
+    .brain-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .brain-controls select,
+    .brain-controls input[type=text] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      padding: 6px 10px;
+    }
+    .brain-controls input[type=text] { flex: 1; min-width: 160px; }
+    .brain-controls select { min-width: 130px; }
+
+    .brain-add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .brain-add-form .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .brain-add-form select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      padding: 6px 10px;
+      min-width: 160px;
+    }
+    .brain-add-form textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .brain-entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+    }
+    .brain-entry.pinned { border-left: 3px solid var(--accent); }
+    .brain-entry-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .brain-entry-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .brain-entry-body { font-size: 13px; line-height: 1.65; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+    .type-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .camp-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 9px;
+      border-radius: 100px;
+      font-size: 11px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .brain-ts { font-size: 11px; color: var(--text-dim); }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1;
+    }
+    .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+    .icon-btn.pin-on { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -110,6 +283,13 @@
   <script>
     const clientId = location.pathname.split('/').pop();
 
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function escHtml(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function escAttr(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    }
     function avatarColor(name) {
       const palette = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
       let h = 0;
@@ -119,12 +299,330 @@
     function initials(name) {
       return (name||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     }
-
     function calcEndDate(startDate, months) {
       if (!startDate || !months) return '';
       const d = new Date(startDate);
       d.setMonth(d.getMonth() + parseInt(months));
       return d.toISOString().split('T')[0];
+    }
+    function fmtDate(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      const h = (now - d) / 3600000;
+      if (h < 1) return 'Just now';
+      if (h < 24) return `${Math.floor(h)}h ago`;
+      if (h < 48) return 'Yesterday';
+      return d.toLocaleDateString('en-AU', {
+        day: 'numeric', month: 'short',
+        ...(d.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {})
+      });
+    }
+
+    // ── Brain state ────────────────────────────────────────────────────────────
+    let brainLoaded = false;
+    let brainCampaigns = [];
+    let brainCache = [];
+    let searchTimer;
+
+    const TYPE_COLORS = {
+      'Meeting Notes':             '#60a5fa',
+      'Client Feedback':           '#f59e0b',
+      'Coverage Win':              '#22c55e',
+      'General Note':              '#94a3b8',
+      'Link / Resource':           '#c084fc',
+      'Newsroom Research':         '#22d3ee',
+      'Client / Project Research': '#22d3ee',
+      'Angles':                    '#fbbf24',
+      'Publication Research':      '#22d3ee',
+      'Strategy Summary':          '#a78bfa',
+      'Campaign Update':           '#34d399',
+    };
+
+    const ALL_TYPES = [
+      ['Meeting Notes', 'Meeting Notes'],
+      ['Client Feedback', 'Client Feedback'],
+      ['Coverage Win', 'Coverage Win'],
+      ['General Note', 'General Note'],
+      ['Link / Resource', 'Link / Resource'],
+      ['Newsroom Research', 'Newsroom Research'],
+      ['Client / Project Research', 'Client / Project Research'],
+      ['Angles', 'Angles'],
+      ['Publication Research', 'Publication Research'],
+      ['Strategy Summary', 'Strategy Summary'],
+      ['Campaign Update', 'Campaign Update'],
+    ];
+
+    function typeOptions(selected) {
+      return ALL_TYPES.map(([v]) =>
+        `<option value="${escAttr(v)}"${v === selected ? ' selected' : ''}>${escHtml(v)}</option>`
+      ).join('');
+    }
+
+    // ── Tab switching ──────────────────────────────────────────────────────────
+    function showTab(id) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = p.id === 'tab-' + id ? '' : 'none');
+      if (id === 'brain' && !brainLoaded) {
+        brainLoaded = true;
+        loadBrain();
+      }
+    }
+
+    // ── Brain: init ────────────────────────────────────────────────────────────
+    function renderBrainOverview({ summary, updates = [], action_items = [] }) {
+      const s = document.getElementById('brain-card-summary');
+      const u = document.getElementById('brain-card-updates');
+      const a = document.getElementById('brain-card-actions');
+      if (s) s.innerHTML = `<div class="brain-overview-label">Summary</div>
+        ${summary
+          ? `<p style="font-size:13px;line-height:1.7;margin:0;">${escHtml(summary)}</p>`
+          : '<p style="color:var(--text-dim);font-size:13px;margin:0;">No summary yet.</p>'}`;
+      if (u) u.innerHTML = `<div class="brain-overview-label">Updates</div>
+        ${updates.length
+          ? `<ul class="brain-overview-list">${updates.map(x => `<li>${escHtml(x)}</li>`).join('')}</ul>`
+          : '<p style="color:var(--text-dim);font-size:13px;margin:0;">No updates yet.</p>'}`;
+      if (a) a.innerHTML = `<div class="brain-overview-label">Action Items</div>
+        ${action_items.length
+          ? `<div class="brain-overview-actions">${action_items.map(x => `
+              <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px;font-size:13px;">
+                ${x.who ? `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600;white-space:nowrap;">${escHtml(x.who)}</span>` : ''}
+                ${x.what ? `<span>${escHtml(x.what)}</span>` : ''}
+                ${x.where ? `<span style="color:var(--text-muted);">@ ${escHtml(x.where)}</span>` : ''}
+              </div>`).join('')}</div>`
+          : '<p style="color:var(--text-dim);font-size:13px;margin:0;">No action items yet.</p>'}`;
+    }
+
+    async function loadBrainOverview(regenerate = false) {
+      const btn = document.getElementById('brain-summarise-btn');
+      if (btn) btn.disabled = true;
+      try {
+        const url = `/api/clients/${clientId}/brain/summary${regenerate ? '?regenerate=true' : ''}`;
+        const data = await fetch(url).then(r => r.json());
+        renderBrainOverview(data);
+        if (btn) {
+          btn.style.background = '';
+          btn.style.color = '';
+          btn.textContent = regenerate ? '✓ Updated' : 'Regenerate';
+          btn.disabled = false;
+          if (regenerate) setTimeout(() => { btn.textContent = 'Regenerate'; }, 2000);
+        }
+      } catch {
+        if (btn) { btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }
+      }
+    }
+
+    function loadBrainSummary() { loadBrainOverview(true); }
+
+    async function loadBrain() {
+      loadBrainOverview(false);
+      brainCampaigns = await fetch(`/api/campaigns/client/${clientId}`).then(r => r.json()).catch(() => []);
+      const filterSel = document.getElementById('filter-campaign');
+      const addSel = document.getElementById('add-campaign');
+      brainCampaigns.forEach(c => {
+        const opt = `<option value="${c.id}">${escHtml(c.name)}</option>`;
+        filterSel.insertAdjacentHTML('beforeend', opt);
+        addSel.insertAdjacentHTML('beforeend', opt);
+      });
+      await fetchAndRenderEntries();
+    }
+
+    // ── Brain: fetch & render ──────────────────────────────────────────────────
+    async function fetchAndRenderEntries() {
+      const type = document.getElementById('filter-type')?.value || '';
+      const camp = document.getElementById('filter-campaign')?.value || '';
+      const q    = document.getElementById('brain-search')?.value || '';
+      const params = new URLSearchParams();
+      if (type) params.set('type', type);
+      if (camp) params.set('campaign_id', camp);
+      if (q)    params.set('q', q);
+      const entries = await fetch(`/api/clients/${clientId}/brain?${params}`).then(r => r.json()).catch(() => []);
+      brainCache = entries;
+      renderFeed(entries);
+    }
+
+    function groupEntries(entries) {
+      const now = new Date();
+      const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+      const weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+      const groups = { pinned: [], today: [], week: [], older: [] };
+      entries.forEach(e => {
+        if (e.pinned) { groups.pinned.push(e); return; }
+        const d = new Date(e.created_at);
+        if (d >= todayStart)     groups.today.push(e);
+        else if (d >= weekStart) groups.week.push(e);
+        else                     groups.older.push(e);
+      });
+      return groups;
+    }
+
+    function renderGroupedFeed(entries) {
+      const { pinned, today, week, older } = groupEntries(entries);
+      let html = '';
+      if (pinned.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header">📌 Pinned</div>
+          ${pinned.map(renderEntry).join('')}
+        </div>`;
+      if (today.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header">Today</div>
+          ${today.map(renderEntry).join('')}
+        </div>`;
+      if (week.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header clickable" onclick="toggleBrainGroup(this)">
+            This Week <span class="brain-group-count">(${week.length})</span>
+            <span class="brain-group-toggle">▴</span>
+          </div>
+          <div class="brain-group-body">${week.map(renderEntry).join('')}</div>
+        </div>`;
+      if (older.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header clickable" onclick="toggleBrainGroup(this)">
+            Older <span class="brain-group-count">(${older.length})</span>
+            <span class="brain-group-toggle">▾</span>
+          </div>
+          <div class="brain-group-body" style="display:none;">${older.map(renderEntry).join('')}</div>
+        </div>`;
+      return html;
+    }
+
+    function toggleBrainGroup(header) {
+      const body = header.nextElementSibling;
+      const open = body.style.display !== 'none';
+      body.style.display = open ? 'none' : '';
+      header.querySelector('.brain-group-toggle').textContent = open ? '▾' : '▴';
+    }
+
+    function renderFeed(entries) {
+      const el  = document.getElementById('brain-feed');
+      const btn = document.getElementById('brain-summarise-btn');
+      if (btn) btn.style.display = entries.length ? 'inline-flex' : 'none';
+      if (!entries.length) {
+        el.innerHTML = '<p style="color:var(--text-dim);font-size:13px;margin-top:8px;">No entries yet.</p>';
+        return;
+      }
+      el.innerHTML = renderGroupedFeed(entries);
+    }
+
+    function renderEntry(e) {
+      const col = TYPE_COLORS[e.type] || '#94a3b8';
+      const bg  = col + '22';
+      return `
+        <div class="brain-entry${e.pinned ? ' pinned' : ''}" id="entry-${e.id}">
+          <div class="brain-entry-meta">
+            <span class="type-chip" style="color:${col};background:${bg};">${escHtml(e.type)}</span>
+            ${e.campaign_name ? `<span class="camp-chip">${escHtml(e.campaign_name)}</span>` : ''}
+            <span class="brain-ts">${fmtDate(e.created_at)}</span>
+            <div class="brain-entry-actions">
+              <button class="icon-btn${e.pinned ? ' pin-on' : ''}" onclick="togglePin(${e.id},${!!e.pinned})" title="${e.pinned ? 'Unpin' : 'Pin'}">📌</button>
+              <button class="icon-btn" onclick="startEdit(${e.id})" title="Edit">✎</button>
+              <button class="icon-btn" onclick="deleteEntry(${e.id})" title="Delete">✕</button>
+            </div>
+          </div>
+          <div class="brain-entry-body">${escHtml(e.body)}</div>
+        </div>`;
+    }
+
+    // ── Brain: add ─────────────────────────────────────────────────────────────
+    function toggleAddForm() {
+      const form = document.getElementById('brain-add-form');
+      const visible = form.style.display !== 'none';
+      form.style.display = visible ? 'none' : '';
+      if (!visible) document.getElementById('add-body').focus();
+    }
+
+    async function submitAddForm() {
+      const type        = document.getElementById('add-type').value;
+      const body        = document.getElementById('add-body').value.trim();
+      const campaign_id = document.getElementById('add-campaign').value || null;
+      if (!body) return;
+      await fetch(`/api/clients/${clientId}/brain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, body, campaign_id })
+      });
+      document.getElementById('add-body').value = '';
+      document.getElementById('brain-add-form').style.display = 'none';
+      fetchAndRenderEntries();
+      const btn = document.getElementById('brain-summarise-btn');
+      if (btn && btn.textContent === 'Regenerate') {
+        btn.textContent = 'Update Summary';
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
+      }
+    }
+
+    // ── Brain: edit ────────────────────────────────────────────────────────────
+    function startEdit(id) {
+      const e = brainCache.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById(`entry-${id}`).innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <select id="edit-type-${id}" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:5px 8px;">
+            ${typeOptions(e.type)}
+          </select>
+        </div>
+        <textarea id="edit-body-${id}" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:10px;resize:vertical;min-height:80px;font-family:inherit;box-sizing:border-box;">${escHtml(e.body)}</textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="cancelEdit(${id})">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEdit(${id})">Save</button>
+        </div>`;
+    }
+
+    async function saveEdit(id) {
+      const body = document.getElementById(`edit-body-${id}`)?.value?.trim();
+      const type = document.getElementById(`edit-type-${id}`)?.value;
+      if (!body) return;
+      await fetch(`/api/brain/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body, type })
+      });
+      fetchAndRenderEntries();
+    }
+
+    function cancelEdit(id) {
+      const e = brainCache.find(x => x.id === id);
+      if (!e) return fetchAndRenderEntries();
+      const el = document.getElementById(`entry-${id}`);
+      el.outerHTML = renderEntry(e);
+    }
+
+    // ── Brain: delete / pin ────────────────────────────────────────────────────
+    async function deleteEntry(id) {
+      if (!confirm('Delete this entry?')) return;
+      await fetch(`/api/brain/${id}`, { method: 'DELETE' });
+      fetchAndRenderEntries();
+    }
+
+    async function togglePin(id, currentPinned) {
+      await fetch(`/api/brain/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: !currentPinned })
+      });
+      fetchAndRenderEntries();
+    }
+
+    function debouncedSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(fetchAndRenderEntries, 300);
+    }
+
+    // ── Onboarding helpers ─────────────────────────────────────────────────────
+    async function toggleOnboarding(itemId, completed) {
+      const el = document.getElementById(`ob-item-${itemId}`);
+      if (el) {
+        const newDone = !completed;
+        el.classList.toggle('done', newDone);
+        el.querySelector('input[type=checkbox]').checked = newDone;
+      }
+      await fetch(`/api/onboarding/${clientId}/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !completed })
+      });
     }
 
     async function saveEndDate(value) {
@@ -135,113 +633,150 @@
       });
     }
 
+    // ── Main load ──────────────────────────────────────────────────────────────
     async function load() {
       const res = await fetch(`/api/clients/${clientId}/profile`);
-      if (!res.ok) { document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Client not found.</p>'; return; }
+      if (!res.ok) {
+        document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Client not found.</p>';
+        return;
+      }
       const { client, checklist, tasks, team, contacts } = await res.json();
 
       renderShell({ pageId: 'clients', title: client.name });
 
-      // Only show general onboarding items on this page
-      const onboardingItems = checklist.filter(i => (i.category || 'general') === 'general');
-      const completed = onboardingItems.filter(i => i.completed).length;
-      const total = onboardingItems.length;
-      const pct = total ? Math.round((completed / total) * 100) : 100;
-
+      const onboardingItems = checklist.filter(i => i.parent_id && i.stage_index <= 1);
+      const cxItems = checklist.filter(i => i.parent_id && i.stage_index === 2);
       const statusClass = client.status === 'active' ? 'chip-active' : client.status === 'onboarding' ? 'chip-onboarding' : 'chip-inactive';
       const statusLabel = client.status.charAt(0).toUpperCase() + client.status.slice(1);
+      const endDate = client.end_date || calcEndDate(client.start_date, client.campaign_length);
+      const primaryContact = contacts[0];
+      const servicesList = client.services ? client.services.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-      document.getElementById('page-content').innerHTML = `
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-          <a href="/clients" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Clients</a>
-          <h1 style="font-size:20px;font-weight:700;">${client.name}</h1>
-          <span class="status-chip ${statusClass}">${statusLabel}</span>
-          ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${client.industry}</span>` : ''}
-          <div style="flex:1;"></div>
-          <a href="/clients/${clientId}/board" class="btn btn-ghost" style="font-size:13px;">View Board</a>
-          ${client.status === 'onboarding' ? `<button class="btn btn-primary" id="complete-btn" ${pct < 100 ? 'disabled title="Complete all checklist items first"' : ''}>Mark as Active</button>` : ''}
-        </div>
+      // ── Snapshot card ────────────────────────────────────────────────────────
+      const snapshotHtml = `
+        <div class="card snapshot-card">
+          ${servicesList.length ? `
+          <div class="snapshot-section">
+            <div class="snapshot-label">Services</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              ${servicesList.map(s => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-size:12px;">${escHtml(s)}</span>`).join('')}
+            </div>
+          </div>` : ''}
+          ${endDate ? `
+          <div class="snapshot-section">
+            <div class="snapshot-label">Retainer Ends</div>
+            <div class="snapshot-value">${escHtml(endDate)}</div>
+          </div>` : ''}
+          ${primaryContact ? `
+          <div class="snapshot-section">
+            <div class="snapshot-label">Primary Contact</div>
+            <div class="snapshot-value" style="font-weight:500;">${escHtml(primaryContact.name)}</div>
+            ${primaryContact.email ? `<div style="font-size:12px;"><a href="mailto:${escAttr(primaryContact.email)}" style="color:var(--accent);text-decoration:none;">${escHtml(primaryContact.email)}</a></div>` : ''}
+          </div>` : ''}
+          ${client.slack_channel ? `
+          <div class="snapshot-section">
+            <div class="snapshot-label">Slack</div>
+            <div class="snapshot-value">
+              ${client.slack_channel.startsWith('http')
+                ? `<a href="${escAttr(client.slack_channel)}" target="_blank" style="color:var(--accent);text-decoration:none;">${escHtml(client.slack_channel)} ↗</a>`
+                : `<span style="color:var(--text-muted);">#${escHtml(client.slack_channel)}</span>`}
+            </div>
+          </div>` : ''}
+          ${client.drive_folder_url ? `
+          <div class="snapshot-section">
+            <div class="snapshot-label">Drive</div>
+            <div class="snapshot-value"><a href="${escAttr(client.drive_folder_url)}" target="_blank" style="color:var(--accent);text-decoration:none;">Open folder ↗</a></div>
+          </div>` : ''}
+        </div>`;
 
+      // ── Overview tab content ─────────────────────────────────────────────────
+      const overviewHtml = `
         <div class="profile-grid">
 
-          <!-- Left column -->
           <div style="display:flex;flex-direction:column;gap:16px;">
 
-            <!-- Research -->
             ${client.research ? `
             <div class="card">
               <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:10px;">Research</div>
-              <p style="font-size:13px;line-height:1.7;color:var(--text);">${client.research}</p>
+              <p style="font-size:13px;line-height:1.7;color:var(--text);">${escHtml(client.research)}</p>
             </div>` : ''}
 
-            <!-- Services + Details side by side -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
 
-              <!-- Services in Scope -->
               <div class="card">
                 <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Services in Scope</div>
-                ${client.services ? `
+                ${servicesList.length ? `
                 <div style="display:flex;flex-direction:column;gap:6px;">
-                  ${client.services.split(',').map(s => s.trim()).filter(Boolean).map(s => `
-                    <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:12px;font-weight:500;">${s}</span>
-                  `).join('')}
+                  ${servicesList.map(s => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:12px;font-weight:500;">${escHtml(s)}</span>`).join('')}
                 </div>` : '<p style="font-size:13px;color:var(--text-dim);">None selected</p>'}
                 ${client.platforms ? `
                 <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
                   <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Platforms</div>
                   <div style="display:flex;flex-wrap:wrap;gap:5px;">
-                    ${client.platforms.split(',').map(p => p.trim()).filter(Boolean).map(p => `
-                      <span style="background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 9px;font-size:11px;color:var(--text-muted);">${p}</span>
-                    `).join('')}
+                    ${client.platforms.split(',').map(p => p.trim()).filter(Boolean).map(p => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 9px;font-size:11px;color:var(--text-muted);">${escHtml(p)}</span>`).join('')}
                   </div>
                 </div>` : ''}
               </div>
 
-              <!-- Client Details -->
               <div class="card">
                 <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:12px;">Client Details</div>
-                ${client.website ? `<div class="detail-row"><span class="detail-label">Website</span><a href="${client.website}" target="_blank" style="color:var(--accent);font-size:13px;">${client.website}</a></div>` : ''}
-                ${client.monthly_hours ? `<div class="detail-row"><span class="detail-label">Monthly Hours</span>${client.monthly_hours} hrs</div>` : ''}
-                ${client.start_date ? `<div class="detail-row"><span class="detail-label">Start Date</span>${client.start_date}</div>` : ''}
-                ${client.campaign_length ? `<div class="detail-row"><span class="detail-label">Campaign Length</span>${client.campaign_length} month${client.campaign_length > 1 ? 's' : ''}</div>` : ''}
+                ${client.website ? `<div class="detail-row"><span class="detail-label">Website</span><a href="${escAttr(client.website)}" target="_blank" style="color:var(--accent);font-size:13px;">${escHtml(client.website)}</a></div>` : ''}
+                ${client.monthly_hours ? `<div class="detail-row"><span class="detail-label">Monthly Hours</span>${escHtml(String(client.monthly_hours))} hrs</div>` : ''}
+                ${client.start_date ? `<div class="detail-row"><span class="detail-label">Start Date</span>${escHtml(client.start_date)}</div>` : ''}
+                ${client.campaign_length ? `<div class="detail-row"><span class="detail-label">Campaign Length</span>${escHtml(String(client.campaign_length))} month${client.campaign_length > 1 ? 's' : ''}</div>` : ''}
                 <div class="detail-row">
                   <span class="detail-label">End Date</span>
-                  <input type="date" id="end-date-input" value="${client.end_date || calcEndDate(client.start_date, client.campaign_length)}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;padding:0;cursor:pointer;" onchange="saveEndDate(this.value)">
+                  <input type="date" id="end-date-input" value="${escAttr(endDate)}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:13px;padding:0;cursor:pointer;" onchange="saveEndDate(this.value)">
                 </div>
                 ${contacts.length ? `
                 <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
                   <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Contacts</div>
                   ${contacts.map(c => `
                     <div style="margin-bottom:8px;">
-                      <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
-                      ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
-                      ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
+                      <div style="font-size:13px;font-weight:600;">${escHtml(c.name)}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${escHtml(c.role)}</span>` : ''}</div>
+                      ${c.email ? `<div style="font-size:12px;"><a href="mailto:${escAttr(c.email)}" style="color:var(--accent);text-decoration:none;">${escHtml(c.email)}</a></div>` : ''}
+                      ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${escHtml(c.phone)}</div>` : ''}
                     </div>
                   `).join('')}
                 </div>` : ''}
-                ${client.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted);line-height:1.6;">${client.notes}</div>` : ''}
+                ${client.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--text-muted);line-height:1.6;">${escHtml(client.notes)}</div>` : ''}
               </div>
 
             </div>
-
           </div>
 
-          <!-- Right: Onboarding Checklist + Team -->
           <div style="display:flex;flex-direction:column;gap:16px;position:sticky;top:24px;align-self:start;">
 
             <div class="card">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Onboarding</div>
-                <span style="font-size:12px;color:var(--text-muted);">${completed}/${total}</span>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Onboarding Setup</div>
+                <span class="int-badge" data-tip="Slack channel and Google Drive folder will be auto-created when automation is connected.">!</span>
               </div>
-              <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:${pct}%"></div></div>
-              <div id="checklist">
-                ${onboardingItems.map(item => `
-                  <label class="checklist-item ${item.completed ? 'done' : ''}">
-                    <input type="checkbox" data-id="${item.id}" ${item.completed ? 'checked' : ''} onchange="toggleItem(${item.id}, this.checked, this)">
-                    ${item.item}
-                  </label>
-                `).join('')}
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                ${onboardingItems.map(item => {
+                  const typeLabel = item.auto_type === 'slack' ? 'Slack' : item.auto_type === 'drive' ? 'Drive' : null;
+                  return `
+                  <label id="ob-item-${item.id}" class="checklist-item${item.completed ? ' done' : ''}" onclick="toggleOnboarding(${item.id}, ${!!item.completed})">
+                    <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="event.preventDefault()">
+                    <span style="flex:1;">${escHtml(item.item)}</span>
+                    ${typeLabel ? `<span style="font-size:10px;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:1px 7px;">${typeLabel}</span>` : ''}
+                  </label>`;
+                }).join('')}
+              </div>
+            </div>
+
+            <div class="card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">CX</div>
+                <span class="int-badge" data-tip="Onboarding email will be auto-sent to the client contact once email automation is connected.">!</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                ${cxItems.map(item => `
+                  <label id="ob-item-${item.id}" class="checklist-item${item.completed ? ' done' : ''}" onclick="toggleOnboarding(${item.id}, ${!!item.completed})">
+                    <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="event.preventDefault()">
+                    <span style="flex:1;">${escHtml(item.item)}</span>
+                    <span style="font-size:10px;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:1px 7px;">Email</span>
+                  </label>`).join('')}
               </div>
             </div>
 
@@ -253,8 +788,8 @@
                   <div style="display:flex;align-items:center;gap:10px;">
                     <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor(m.name)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${initials(m.name)}</div>
                     <div>
-                      <div style="font-size:13px;font-weight:500;">${m.name}</div>
-                      ${m.role ? `<div style="font-size:11px;color:var(--text-muted);">${m.role}</div>` : ''}
+                      <div style="font-size:13px;font-weight:500;">${escHtml(m.name)}</div>
+                      ${m.role ? `<div style="font-size:11px;color:var(--text-muted);">${escHtml(m.role)}</div>` : ''}
                     </div>
                   </div>
                 `).join('')}
@@ -262,7 +797,84 @@
             </div>` : ''}
 
           </div>
+        </div>`;
 
+      // ── Brain tab content ────────────────────────────────────────────────────
+      const brainHtml = `
+        <div class="brain-controls">
+          <select id="filter-type" onchange="fetchAndRenderEntries()">
+            <option value="">All types</option>
+            ${ALL_TYPES.map(([v]) => `<option value="${escAttr(v)}">${escHtml(v)}</option>`).join('')}
+          </select>
+          <select id="filter-campaign" onchange="fetchAndRenderEntries()">
+            <option value="">All entries</option>
+            <option value="client">Client-level only</option>
+          </select>
+          <input id="brain-search" type="text" placeholder="Search entries…" oninput="debouncedSearch()">
+          <button id="brain-summarise-btn" class="btn btn-ghost" onclick="loadBrainSummary()" style="display:none;">Summarise</button>
+          <button class="btn btn-primary" onclick="toggleAddForm()">+ Add Entry</button>
+        </div>
+
+        <div id="brain-add-form" class="brain-add-form" style="display:none;">
+          <div class="form-row">
+            <select id="add-type">
+              ${ALL_TYPES.map(([v]) => `<option value="${escAttr(v)}">${escHtml(v)}</option>`).join('')}
+            </select>
+            <select id="add-campaign">
+              <option value="">Client-level</option>
+            </select>
+          </div>
+          <textarea id="add-body" placeholder="Add notes, links, feedback, research…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+            <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitAddForm()">Add Entry</button>
+          </div>
+        </div>
+
+<div id="brain-feed">
+          <p style="color:var(--text-dim);font-size:13px;">Loading…</p>
+        </div>`;
+
+      // ── Assemble page ────────────────────────────────────────────────────────
+      document.getElementById('page-content').innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+          <a href="/clients" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Clients</a>
+          <h1 style="font-size:20px;font-weight:700;">${escHtml(client.name)}</h1>
+          <span class="status-chip ${statusClass}">${escHtml(statusLabel)}</span>
+          ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${escHtml(client.industry)}</span>` : ''}
+          <div style="flex:1;"></div>
+          <a href="/clients/${clientId}/board" class="btn btn-ghost" style="font-size:13px;">View Board</a>
+          ${client.status === 'onboarding' ? `<button class="btn btn-primary" id="complete-btn">Mark as Active</button>` : ''}
+        </div>
+
+        ${snapshotHtml}
+
+        <div class="brain-overview-row">
+          <div class="card brain-overview-card" id="brain-card-summary">
+            <div class="brain-overview-label">Summary</div>
+            <p style="color:var(--text-dim);font-size:13px;margin:0;">Add brain entries to generate.</p>
+          </div>
+          <div class="card brain-overview-card" id="brain-card-updates">
+            <div class="brain-overview-label">Updates</div>
+            <p style="color:var(--text-dim);font-size:13px;margin:0;">No updates yet.</p>
+          </div>
+          <div class="card brain-overview-card" id="brain-card-actions">
+            <div class="brain-overview-label">Action Items</div>
+            <p style="color:var(--text-dim);font-size:13px;margin:0;">No action items yet.</p>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="overview" onclick="showTab('overview')">Overview</button>
+          <button class="tab-btn" data-tab="brain" onclick="showTab('brain')">Brain</button>
+        </div>
+
+        <div id="tab-overview" class="tab-panel">
+          ${overviewHtml}
+        </div>
+
+        <div id="tab-brain" class="tab-panel" style="display:none;">
+          ${brainHtml}
         </div>
       `;
 
@@ -274,26 +886,6 @@
           load();
         });
       }
-    }
-
-    async function toggleItem(itemId, completed, el) {
-      await fetch(`/api/clients/${clientId}/checklist/${itemId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed })
-      });
-      el.closest('.checklist-item').classList.toggle('done', completed);
-
-      // Refresh progress
-      const checkboxes = document.querySelectorAll('#checklist input[type=checkbox]');
-      const total = checkboxes.length;
-      const done = Array.from(checkboxes).filter(c => c.checked).length;
-      const pct = total ? Math.round((done / total) * 100) : 0;
-      document.getElementById('progress-fill').style.width = pct + '%';
-      document.querySelector('[style*="flex:1"]')?.nextElementSibling?.removeAttribute('disabled');
-
-      const completeBtn = document.getElementById('complete-btn');
-      if (completeBtn) completeBtn.disabled = pct < 100;
     }
 
     load();

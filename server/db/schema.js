@@ -193,6 +193,7 @@ async function initSchema() {
   try { d.run(`ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'Medium'`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE tasks ADD COLUMN progress TEXT DEFAULT 'On track'`); db.saveDb(); } catch {}
   try { d.run(`ALTER TABLE tasks ADD COLUMN parent_id INTEGER`); db.saveDb(); } catch {}
+  try { d.run(`ALTER TABLE clients ADD COLUMN brain_summary TEXT`); db.saveDb(); } catch {}
 
   d.run(`
     CREATE TABLE IF NOT EXISTS media_hubs (
@@ -253,6 +254,61 @@ async function initSchema() {
       insights TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       UNIQUE(hub_id, month)
+    )
+  `);
+
+  d.run(`
+    CREATE TABLE IF NOT EXISTS client_meetings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+      title TEXT NOT NULL DEFAULT 'Internal Brief',
+      scheduled_date TEXT,
+      meeting_type TEXT DEFAULT 'online',
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  d.run(`
+    CREATE TABLE IF NOT EXISTS pitch_lists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+      campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  try { d.run(`ALTER TABLE pitch_lists ADD COLUMN campaign_id INTEGER`); db.saveDb(); } catch {}
+
+  d.run(`
+    CREATE TABLE IF NOT EXISTS brain_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL,
+      type TEXT NOT NULL,
+      body TEXT NOT NULL,
+      author TEXT,
+      pinned INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  d.run(`
+    CREATE TABLE IF NOT EXISTS pitch_contacts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      list_id INTEGER REFERENCES pitch_lists(id) ON DELETE CASCADE,
+      category TEXT DEFAULT 'General',
+      publication TEXT,
+      journalist_name TEXT,
+      journalist_title TEXT,
+      email TEXT,
+      phone TEXT,
+      status TEXT DEFAULT '',
+      pitched_date TEXT,
+      followup_date TEXT,
+      notes TEXT,
+      sort_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
     )
   `);
 

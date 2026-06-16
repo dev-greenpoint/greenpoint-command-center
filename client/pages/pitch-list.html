@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pitch List — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .pl-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .pl-title { font-size: 20px; font-weight: 700; }
+    .pl-title span { color: var(--text-muted); font-weight: 400; }
+
+    .pl-wrap { overflow-x: auto; }
+
+    .pl-table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .pl-table th {
+      text-align: left;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .pl-table td {
+      padding: 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .pl-table tr:hover td { background: var(--surface-2); }
+
+    .pl-cat-row td {
+      padding: 14px 10px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text-dim);
+      background: transparent !important;
+      border-bottom: none;
+    }
+
+    .pl-cell {
+      padding: 8px 10px;
+      cursor: text;
+      min-width: 80px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .pl-cell:empty::before { content: '—'; color: var(--text-dim); }
+    .pl-cell[contenteditable=true]:focus {
+      outline: none;
+      background: var(--surface);
+      box-shadow: inset 0 0 0 1px var(--accent);
+      border-radius: 4px;
+      white-space: normal;
+      max-width: none;
+    }
+
+    .pl-email { color: var(--accent); }
+    .pl-email:empty::before { content: '—'; color: var(--text-dim); }
+
+    /* Status chip */
+    .status-cell { min-width: 110px; }
+    .pl-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .pl-status.s-empty   { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); }
+    .pl-status.s-pitched { background: #0d2f4d; color: #4da8ff; }
+    .pl-status.s-followup { background: #3d2a00; color: #f5a623; }
+    .pl-status.s-coverage { background: #0d3323; color: #3ecf6e; }
+    .pl-status.s-noresponse { background: var(--surface-2); color: var(--text-muted); }
+
+    /* Status dropdown */
+    .status-wrap { position: relative; display: inline-block; }
+    .pl-status-drop {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+      z-index: 20;
+      min-width: 160px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    }
+    .pl-status-drop.open { display: block; }
+    .pl-status-opt {
+      padding: 7px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .pl-status-opt:hover { background: var(--surface-2); }
+
+    .pl-delete {
+      padding: 0 8px;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    tr:hover .pl-delete { opacity: 1; }
+    .pl-delete button {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    .pl-delete button:hover { background: rgba(255,80,80,.12); }
+
+    .pl-add-row td {
+      padding: 8px 10px;
+      border-bottom: none;
+    }
+
+    /* Add contact modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      width: 480px;
+      max-width: 95vw;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 20px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+    .form-group input, .form-group select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content" id="page-content">
+        <p style="color:var(--text-muted);">Loading…</p>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add contact modal -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal-box">
+      <div class="modal-title">Add Contact</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Category</label>
+          <input id="f-category" type="text" placeholder="e.g. Mainstream - Property" list="cat-list">
+          <datalist id="cat-list"></datalist>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Publication</label>
+          <input id="f-publication" type="text" placeholder="Daily Telegraph">
+        </div>
+        <div class="form-group">
+          <label>Journalist Name</label>
+          <input id="f-name" type="text" placeholder="Jane Smith">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Title</label>
+          <input id="f-title" type="text" placeholder="Senior Reporter">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="f-email" type="email" placeholder="jane@publication.com.au">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Phone</label>
+          <input id="f-phone" type="text" placeholder="04xx xxx xxx">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="">Not Pitched</option>
+            <option value="Pitched">Pitched</option>
+            <option value="Follow Up">Follow Up</option>
+            <option value="Coverage Received">Coverage Received</option>
+            <option value="No Response">No Response</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date Pitched</label>
+          <input id="f-pitched-date" type="date">
+        </div>
+        <div class="form-group">
+          <label>Follow Up Date</label>
+          <input id="f-followup-date" type="date">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveContact()">Add Contact</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    const campaignId = location.pathname.split('/')[2];
+    let listId = null;
+    let contacts = [];
+    let clientId = null;
+
+    const STATUS_CLASS = {
+      'Pitched':           's-pitched',
+      'Follow Up':         's-followup',
+      'Coverage Received': 's-coverage',
+      'No Response':       's-noresponse',
+      '':                  's-empty',
+    };
+    const STATUS_LABEL = {
+      'Pitched':           'Pitched',
+      'Follow Up':         'Follow Up',
+      'Coverage Received': 'Coverage',
+      'No Response':       'No Response',
+      '':                  'Not Pitched',
+    };
+
+    function escHtml(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function statusChip(status) {
+      const cls = STATUS_CLASS[status] || 's-empty';
+      const lbl = STATUS_LABEL[status] || 'Not Pitched';
+      return `<div class="status-wrap">
+        <span class="pl-status ${cls}" onclick="toggleStatusDrop(event,this)">${lbl}</span>
+        <div class="pl-status-drop">
+          ${['','Pitched','Follow Up','Coverage Received','No Response'].map(s =>
+            `<div class="pl-status-opt" onclick="setStatus(event,this,'${s}')">${STATUS_LABEL[s]||'Not Pitched'}</div>`
+          ).join('')}
+        </div>
+      </div>`;
+    }
+
+    function groupedRows(contacts) {
+      const cats = {};
+      contacts.forEach(c => {
+        const cat = c.category || 'General';
+        if (!cats[cat]) cats[cat] = [];
+        cats[cat].push(c);
+      });
+      return Object.entries(cats);
+    }
+
+    function renderTable() {
+      const groups = groupedRows(contacts);
+      if (!groups.length) {
+        return `<div style="padding:40px;text-align:center;color:var(--text-dim);">No contacts yet. Add your first journalist above.</div>`;
+      }
+
+      let html = `<div class="pl-wrap"><table class="pl-table">
+        <thead>
+          <tr>
+            <th>Publication</th>
+            <th>Name</th>
+            <th>Title</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Date Pitched</th>
+            <th>Follow Up</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      for (const [cat, rows] of groups) {
+        html += `<tr class="pl-cat-row"><td colspan="9">${escHtml(cat)}</td></tr>`;
+        for (const c of rows) {
+          html += `<tr data-id="${c.id}">
+            <td><div class="pl-cell" contenteditable="true" onblur="saveField(${c.id},'publication',this)">${escHtml(c.publication||'')}</div></td>
+            <td><div class="pl-cell" contenteditable="true" onblur="saveField(${c.id},'journalist_name',this)">${escHtml(c.journalist_name||'')}</div></td>
+            <td><div class="pl-cell" contenteditable="true" onblur="saveField(${c.id},'journalist_title',this)">${escHtml(c.journalist_title||'')}</div></td>
+            <td><div class="pl-cell pl-email" contenteditable="true" onblur="saveField(${c.id},'email',this)">${escHtml(c.email||'')}</div></td>
+            <td><div class="pl-cell" contenteditable="true" onblur="saveField(${c.id},'phone',this)">${escHtml(c.phone||'')}</div></td>
+            <td class="status-cell" style="padding:0 10px;">${statusChip(c.status||'')}</td>
+            <td><div class="pl-cell"><input type="date" value="${c.pitched_date||''}" style="background:transparent;border:none;color:var(--text);font-size:12px;padding:0;width:110px;cursor:pointer;" onchange="saveField(${c.id},'pitched_date',this)"></div></td>
+            <td><div class="pl-cell"><input type="date" value="${c.followup_date||''}" style="background:transparent;border:none;color:var(--text);font-size:12px;padding:0;width:110px;cursor:pointer;" onchange="saveField(${c.id},'followup_date',this)"></div></td>
+            <td class="pl-delete"><button onclick="deleteContact(${c.id})" title="Remove">✕</button></td>
+          </tr>`;
+        }
+      }
+
+      html += `</tbody></table></div>`;
+      return html;
+    }
+
+    async function load() {
+      const res = await fetch(`/api/pitch-lists/campaign/${campaignId}`);
+      if (!res.ok) { document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Campaign not found.</p>'; return; }
+      const data = await res.json();
+      listId = data.list.id;
+      clientId = data.client_id;
+      contacts = data.contacts;
+      renderShell({ pageId: 'clients', title: (data.client_name || 'Client') + ' — Pitch List' });
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="pl-header">
+          <a href="/clients/${clientId}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← ${escHtml(data.client_name||'Client')}</a>
+          <div style="flex:1;"></div>
+          <button class="btn btn-primary" onclick="openModal()">+ Add Contact</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+          <div style="font-size:20px;font-weight:700;">
+            ${escHtml(data.client_name||'')}
+            <span style="color:var(--text-muted);font-weight:400;"> — Pitch List</span>
+          </div>
+          <span style="font-size:12px;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 10px;">${escHtml(data.campaign_name||'')}</span>
+          <span style="font-size:12px;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 10px;">${contacts.length} contact${contacts.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div id="table-wrap">${renderTable()}</div>
+      `;
+
+      updateCatList();
+    }
+
+    function updateCatList() {
+      const cats = [...new Set(contacts.map(c => c.category).filter(Boolean))];
+      document.getElementById('cat-list').innerHTML = cats.map(c => `<option value="${escHtml(c)}">`).join('');
+    }
+
+    async function saveField(contactId, field, el) {
+      const value = field === 'pitched_date' || field === 'followup_date' ? el.value : el.innerText.trim();
+      const contact = contacts.find(c => c.id === contactId);
+      if (contact && contact[field] === value) return;
+      if (contact) contact[field] = value;
+      await fetch(`/api/pitch-lists/${listId}/contacts/${contactId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value || null })
+      });
+    }
+
+    async function deleteContact(contactId) {
+      if (!confirm('Remove this contact?')) return;
+      contacts = contacts.filter(c => c.id !== contactId);
+      document.querySelector(`tr[data-id="${contactId}"]`)?.remove();
+      await fetch(`/api/pitch-lists/${listId}/contacts/${contactId}`, { method: 'DELETE' });
+    }
+
+    function toggleStatusDrop(e, chip) {
+      e.stopPropagation();
+      const drop = chip.nextElementSibling;
+      const wasOpen = drop.classList.contains('open');
+      document.querySelectorAll('.pl-status-drop.open').forEach(d => d.classList.remove('open'));
+      if (!wasOpen) drop.classList.add('open');
+    }
+
+    async function setStatus(e, opt, value) {
+      e.stopPropagation();
+      const wrap = opt.closest('.status-wrap');
+      const chip = wrap.querySelector('.pl-status');
+      const drop = wrap.querySelector('.pl-status-drop');
+      const row = opt.closest('tr');
+      const contactId = Number(row.dataset.id);
+
+      chip.className = `pl-status ${STATUS_CLASS[value] || 's-empty'}`;
+      chip.textContent = STATUS_LABEL[value] || 'Not Pitched';
+      drop.classList.remove('open');
+
+      const contact = contacts.find(c => c.id === contactId);
+      if (contact) contact.status = value;
+
+      await fetch(`/api/pitch-lists/${listId}/contacts/${contactId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: value })
+      });
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.pl-status-drop.open').forEach(d => d.classList.remove('open'));
+    });
+
+    function openModal() {
+      document.getElementById('f-category').value = '';
+      document.getElementById('f-publication').value = '';
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-title').value = '';
+      document.getElementById('f-email').value = '';
+      document.getElementById('f-phone').value = '';
+      document.getElementById('f-status').value = '';
+      document.getElementById('f-pitched-date').value = '';
+      document.getElementById('f-followup-date').value = '';
+      document.getElementById('addModal').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('addModal').classList.remove('open');
+    }
+    document.getElementById('addModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    async function saveContact() {
+      const body = {
+        category:        document.getElementById('f-category').value.trim() || 'General',
+        publication:     document.getElementById('f-publication').value.trim() || null,
+        journalist_name: document.getElementById('f-name').value.trim() || null,
+        journalist_title:document.getElementById('f-title').value.trim() || null,
+        email:           document.getElementById('f-email').value.trim() || null,
+        phone:           document.getElementById('f-phone').value.trim() || null,
+        status:          document.getElementById('f-status').value || '',
+        pitched_date:    document.getElementById('f-pitched-date').value || null,
+        followup_date:   document.getElementById('f-followup-date').value || null,
+      };
+      const res = await fetch(`/api/pitch-lists/${listId}/contacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      contacts.push({ id: data.id, ...body });
+      closeModal();
+      document.getElementById('table-wrap').innerHTML = renderTable();
+      updateCatList();
+    }
+
+    load();
+  </script>
+</body>
+</html>

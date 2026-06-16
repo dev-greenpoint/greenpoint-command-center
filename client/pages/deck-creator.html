@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deck Creator — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <style>
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .page-title { font-size: 20px; font-weight: 700; }
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+    }
+
+    .section-block { margin-bottom: 40px; }
+
+    .section-heading {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    .deck-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .deck-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .deck-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    .deck-card-icon {
+      font-size: 24px;
+      line-height: 1;
+      color: var(--accent);
+    }
+
+    .deck-card-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .deck-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .deck-card-sections {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 860px) {
+      .deck-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .deck-grid { grid-template-columns: 1fr; }
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      width: 420px;
+      max-width: 95vw;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .modal-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+    .modal-select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content">
+
+        <div class="page-header">
+          <div class="page-title">Deck Creator</div>
+        </div>
+        <div class="page-subtitle">Choose a deck type to get started.</div>
+
+        <!-- Strategies -->
+        <div class="section-block">
+          <div class="section-heading">Strategies</div>
+          <div class="deck-grid">
+
+            <div class="deck-card" onclick="selectDeck('pr-comms-strategy')">
+              <div class="deck-card-icon">◐</div>
+              <div class="deck-card-name">PR & Comms Strategy</div>
+              <div class="deck-card-desc">Full communications strategy covering objectives, audiences, key messages, channels, and tactical plan.</div>
+              <div class="deck-card-sections">Overview → Strategy → Channels → Timeline</div>
+            </div>
+
+            <div class="deck-card" onclick="selectDeck('social-strategy')">
+              <div class="deck-card-icon">◉</div>
+              <div class="deck-card-name">Social Media Strategy</div>
+              <div class="deck-card-desc">Platform strategy, content pillars, tone of voice, posting cadence, and community management approach.</div>
+              <div class="deck-card-sections">Overview → Platforms → Content → Schedule</div>
+            </div>
+
+            <div class="deck-card" onclick="selectDeck('creative-campaign-strategy')">
+              <div class="deck-card-icon">◧</div>
+              <div class="deck-card-name">Creative Campaigns Strategy</div>
+              <div class="deck-card-desc">Campaign concept, creative direction, moodboard, channels, and activation plan.</div>
+              <div class="deck-card-sections">Overview → Creative → Moodboard → Activation</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Decks -->
+        <div class="section-block">
+          <div class="section-heading">Decks</div>
+          <div class="deck-grid">
+
+            <div class="deck-card" onclick="selectDeck('campaign-proposal')">
+              <div class="deck-card-icon">◆</div>
+              <div class="deck-card-name">Campaign & Launch Proposal</div>
+              <div class="deck-card-desc">Campaign concept, deliverables, timeline, and budget overview for client sign-off.</div>
+              <div class="deck-card-sections">Overview → Concept → Deliverables → Budget</div>
+            </div>
+
+            <div class="deck-card" onclick="selectDeck('campaign-report')">
+              <div class="deck-card-icon">▦</div>
+              <div class="deck-card-name">Campaign Report</div>
+              <div class="deck-card-desc">Results summary, media coverage, KPI performance, and learnings from a completed campaign.</div>
+              <div class="deck-card-sections">Summary → Coverage → KPIs → Learnings</div>
+            </div>
+
+            <div class="deck-card" onclick="selectDeck('kickoff-workshop')">
+              <div class="deck-card-icon">◇</div>
+              <div class="deck-card-name">Kickoff Workshop</div>
+              <div class="deck-card-desc">Workshop agenda, brand discovery questions, immersion framework, and agreed next steps.</div>
+              <div class="deck-card-sections">Agenda → Discovery → Immersion → Next Steps</div>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Client picker modal -->
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal-box">
+      <div class="modal-title" id="modalDeckTitle"></div>
+      <div class="modal-subtitle">Which client is this for?</div>
+      <select class="modal-select" id="modalClientSelect">
+        <option value="">Select a client…</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="createDeck()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    renderShell({ pageId: 'deck-creator', title: 'Deck Creator' });
+
+    const DECK_TITLES = {
+      'pr-comms-strategy':        'PR & Comms Strategy',
+      'social-strategy':          'Social Media Strategy',
+      'creative-campaign-strategy': 'Creative Campaigns Strategy',
+      'campaign-proposal':        'Campaign & Launch Proposal',
+      'campaign-report':          'Campaign Report',
+      'kickoff-workshop':         'Kickoff Workshop',
+    };
+
+    let pendingType = null;
+
+    async function selectDeck(type) {
+      pendingType = type;
+      document.getElementById('modalDeckTitle').textContent = DECK_TITLES[type] || type;
+
+      const clients = await fetch('/api/clients').then(r => r.json());
+      const sel = document.getElementById('modalClientSelect');
+      sel.innerHTML = '<option value="">Select a client…</option>' +
+        clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+      document.getElementById('clientModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('clientModal').classList.remove('open');
+      pendingType = null;
+    }
+
+    async function createDeck() {
+      const clientId = document.getElementById('modalClientSelect').value;
+      if (!clientId) return;
+
+      const title = DECK_TITLES[pendingType] || 'Untitled';
+      const res = await fetch('/api/strategies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: Number(clientId), title }),
+      });
+      const data = await res.json();
+      if (data.id) {
+        window.location = `/strategy/${data.id}`;
+      }
+    }
+
+    // Close modal on overlay click
+    document.getElementById('clientModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

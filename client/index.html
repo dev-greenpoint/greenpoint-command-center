@@ -65,14 +65,6 @@
       color: var(--text-muted);
       margin-bottom: 10px;
     }
-    .overview-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 900px) {
-      .overview-grid { grid-template-columns: 1fr; }
-    }
     .tag {
       display: inline-block;
       background: var(--surface-2);
@@ -81,6 +73,62 @@
       font-size: 11px;
       padding: 2px 7px;
       color: var(--text-muted);
+    }
+
+    .client-block {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .client-block-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      background: var(--surface);
+      user-select: none;
+    }
+    .client-block-header:hover { background: var(--surface-2); }
+    .client-block-name {
+      font-weight: 600;
+      font-size: 14px;
+      flex: 1;
+    }
+    .client-block-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .client-block-chevron {
+      font-size: 9px;
+      color: var(--text-dim);
+      transition: transform 0.2s;
+    }
+    .client-block.open .client-block-chevron { transform: rotate(180deg); }
+    .client-block-campaigns {
+      display: none;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .client-block.open .client-block-campaigns { display: block; }
+    .campaign-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 13px;
+      transition: background 0.1s;
+    }
+    .campaign-link:last-child { border-bottom: none; }
+    .campaign-link:hover { background: var(--surface); color: var(--accent); }
+    .campaign-link-name { flex: 1; }
+    .campaign-stage {
+      font-size: 11px;
+      color: var(--text-dim);
     }
   </style>
 </head>
@@ -99,13 +147,14 @@
   <script>
     renderShell({ pageId: 'overview', title: 'Overview' });
 
+    const TYPE_LABEL = { pr: 'PR', social: 'Social', events: 'Events', paid: 'Paid Media', design: 'Design', edm: 'eDM' };
+
     async function load() {
       const res = await fetch('/api/overview');
-      const { stats, activeProgress, onboardingProgress, workload } = await res.json();
+      const { stats, activeProgress } = await res.json();
 
       document.getElementById('page-content').innerHTML = `
 
-        <!-- Stats -->
         <div class="stat-grid">
           <div class="stat-card">
             <div class="stat-label">Active Clients</div>
@@ -116,82 +165,51 @@
             <div class="stat-value warning">${stats.onboardingClients}</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Tasks To Do</div>
-            <div class="stat-value">${stats.tasksTodo}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">In Progress</div>
-            <div class="stat-value">${stats.tasksInProgress}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Tasks Done</div>
-            <div class="stat-value">${stats.tasksDone}</div>
+            <div class="stat-label">Active Campaigns</div>
+            <div class="stat-value">${stats.activeCampaigns}</div>
           </div>
         </div>
 
-        <div class="overview-grid">
+        <div class="section-title">Active Clients</div>
 
-          <!-- Active Clients -->
-          <div class="card">
-            <div class="section-title">Active Clients</div>
-            ${activeProgress.length === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No active clients yet.</p>` : ''}
-            ${activeProgress.map(c => `
-              <a class="client-row" href="/clients/${c.id}/board">
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;margin-bottom:2px;">${c.name}</div>
-                  ${c.services ? `<div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.services}</div>` : ''}
-                  ${c.pct !== null ? `
-                  <div class="progress-bar"><div class="progress-fill" style="width:${c.pct}%"></div></div>
-                  <div style="font-size:11px;color:var(--text-dim);">${c.pct}% through campaign${c.daysLeft !== null ? ` · ${c.daysLeft}d left` : ''}</div>
-                  ` : ''}
-                </div>
-                <div style="text-align:right;flex-shrink:0;">
-                  <div style="font-size:12px;color:var(--text-muted);">${c.taskDone}/${c.taskTotal} tasks</div>
-                </div>
-              </a>
-            `).join('')}
-          </div>
+        ${activeProgress.length === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No active clients yet.</p>` : ''}
 
-          <!-- Onboarding -->
-          <div class="card">
-            <div class="section-title">Onboarding</div>
-            ${onboardingProgress.length === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No clients onboarding.</p>` : ''}
-            ${onboardingProgress.map(c => `
-              <a class="client-row" href="/clients/${c.id}">
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;margin-bottom:2px;">${c.name}</div>
-                  <div class="progress-bar"><div class="progress-fill" style="width:${c.total ? Math.round((c.done/c.total)*100) : 0}%;background:var(--warning);"></div></div>
-                  <div style="font-size:11px;color:var(--text-dim);">${c.done}/${c.total} checklist items</div>
-                </div>
-              </a>
-            `).join('')}
-          </div>
-
-          <!-- Team Workload -->
-          <div class="card">
-            <div class="section-title">Team Workload</div>
-            ${workload.length === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No team assignments yet.</p>` : ''}
-            ${workload.map(m => `
-              <div style="padding:8px 0;border-bottom:1px solid var(--border);">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                  <span style="font-size:13px;font-weight:600;">${m.name}</span>
-                  <span style="font-size:11px;color:var(--text-muted);">${m.clients.length} client${m.clients.length !== 1 ? 's' : ''}</span>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                  ${m.clients.map(c => `<span class="tag">${c.name}${c.role ? ' · ' + c.role : ''}</span>`).join('')}
-                </div>
+        ${activeProgress.map((c, i) => `
+          <div class="client-block" id="block-${c.id}">
+            <div class="client-block-header" onclick="toggleClient('${c.id}')">
+              <div class="client-block-name">${c.name}</div>
+              ${c.services ? `<div class="client-block-meta">${c.services}</div>` : ''}
+              <div class="client-block-meta">${c.campaigns.length} campaign${c.campaigns.length !== 1 ? 's' : ''}</div>
+              ${c.pct !== null ? `<div class="client-block-meta">${c.daysLeft}d left</div>` : ''}
+              <div class="client-block-chevron">▼</div>
+            </div>
+            ${c.pct !== null ? `
+            <div style="height:3px;background:var(--surface-2);">
+              <div style="height:100%;width:${c.pct}%;background:var(--accent);"></div>
+            </div>` : ''}
+            <div class="client-block-campaigns">
+              ${c.campaigns.length === 0
+                ? `<div style="padding:12px 20px;font-size:13px;color:var(--text-muted);">No active campaigns.</div>`
+                : c.campaigns.map(camp => `
+                  <a class="campaign-link" href="/campaigns/${camp.id}">
+                    <span class="campaign-link-name">${camp.name}</span>
+                    ${camp.type ? `<span class="tag">${TYPE_LABEL[camp.type] || camp.type}</span>` : ''}
+                    <span class="campaign-stage">Stage ${(camp.currentStage || 0) + 1}</span>
+                  </a>
+                `).join('')
+              }
+              <div style="padding:10px 20px;border-top:1px solid var(--border);">
+                <a href="/clients/${c.id}/board" style="font-size:12px;color:var(--accent);text-decoration:none;">View client board →</a>
               </div>
-            `).join('')}
+            </div>
           </div>
-
-          <!-- Tasks snapshot -->
-          <div class="card">
-            <div class="section-title">Tasks In Progress</div>
-            ${stats.tasksInProgress === 0 ? `<p style="font-size:13px;color:var(--text-muted);">No tasks in progress.</p>` : `<p style="font-size:13px;color:var(--text-muted);">View tasks from the client board.</p>`}
-          </div>
-
-        </div>
+        `).join('')}
       `;
+    }
+
+    function toggleClient(id) {
+      const block = document.getElementById('block-' + id);
+      block.classList.toggle('open');
     }
 
     load();

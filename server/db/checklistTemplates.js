@@ -62,9 +62,9 @@ const ONBOARDING_STAGES = [
   },
   {
     index: 1,
-    name: 'Assign Onboarding Tasks',
+    name: 'Assign Client Set Up Tasks',
     tasks: [
-      { item: 'Assign onboarding tasks to team', auto_type: null },
+      { item: 'Assign client set up tasks to team', auto_type: null },
     ],
   },
   {

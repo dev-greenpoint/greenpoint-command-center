@@ -83,20 +83,19 @@
     .camp-status-opt:hover { background:var(--surface-2); }
 
     .camp-tab {
-      padding: 8px 16px;
+      padding: 5px 14px;
       font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
-      background: none;
-      border: none;
-      border-radius: 8px 8px 0 0;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
       cursor: pointer;
-      transition: color .15s, background .15s;
+      transition: color .15s, background .15s, border-color .15s;
       white-space: nowrap;
-      margin-bottom: -1px;
     }
-    .camp-tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
-    .camp-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .camp-tab:hover:not(.active) { color: var(--text); border-color: var(--text-dim); }
+    .camp-tab.active { background: var(--accent); color: #fff; font-weight: 600; border-color: var(--accent); }
 
     /* ── Onboarding panel ── */
     .ob-stage { margin-bottom: 12px; }
@@ -274,6 +273,26 @@
     .cb-task-row:hover .cb-del { color: var(--text-dim); }
     .cb-del:hover { color: var(--danger) !important; }
 
+    /* Campaign task buttons */
+    .cb-task-btn {
+      display: flex; flex-direction: column; gap: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px;
+      min-width: 140px; max-width: 220px;
+      cursor: pointer; text-align: left;
+      transition: border-color .15s, background .15s;
+    }
+    .cb-task-btn:hover { border-color: var(--accent); background: var(--surface-2); }
+    .cb-task-btn.done { background: rgba(72,187,120,0.07); border-color: rgba(72,187,120,0.3); }
+    .cb-task-btn.done span { color: var(--text-muted); text-decoration: line-through; }
+    .cb-task-check {
+      width: 13px; height: 13px; border-radius: 50%;
+      border: 1.5px solid var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; color: #fff;
+    }
+    .cb-task-btn.done .cb-task-check { background: var(--success); border-color: var(--success); }
+
     /* Progress chips */
     .progress-chip { display: inline-block; padding: 2px 7px; border-radius: 100px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
     .pc-not-assigned { background: var(--surface-2); color: var(--text-dim); }
@@ -388,6 +407,49 @@
       color: var(--text-dim);
       font-size: 12px;
     }
+
+    /* Snapshot */
+    .snapshot-card { display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;padding:12px 16px;margin-bottom:20px; }
+    .snapshot-section { display:flex;flex-direction:column;gap:4px; }
+    .snapshot-label { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim); }
+    .snapshot-value { font-size:13px;color:var(--text); }
+
+    /* Brain overview cards */
+    .brain-overview-row { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px; }
+    .brain-overview-card { min-height:90px; }
+    .brain-overview-label { font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px; }
+    .brain-overview-list { margin:0;padding-left:16px;font-size:12px;line-height:1.8;max-height:180px;overflow-y:auto; }
+    .brain-overview-actions { max-height:180px;overflow-y:auto; }
+    @media (max-width:900px) { .brain-overview-row { grid-template-columns:1fr; } }
+
+    /* Brain groups */
+    .brain-group { margin-bottom:4px; }
+    .brain-group-header { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px; }
+    .brain-group-header.clickable { cursor:pointer; }
+    .brain-group-header.clickable:hover { color:var(--text); }
+    .brain-group-count { font-weight:400;opacity:.7; }
+    .brain-group-toggle { margin-left:auto;font-size:10px; }
+
+    /* Brain feed */
+    .brain-controls { display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap; }
+    .brain-controls select, .brain-controls input[type=text] { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:6px 10px; }
+    .brain-controls input[type=text] { flex:1;min-width:160px; }
+    .brain-controls select { min-width:130px; }
+    .brain-add-form { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px; }
+    .brain-add-form .form-row { display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap; }
+    .brain-add-form select { background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:6px 10px;min-width:160px; }
+    .brain-add-form textarea { width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:10px 12px;resize:vertical;min-height:80px;font-family:inherit;box-sizing:border-box; }
+    .brain-entry { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px; }
+    .brain-entry.pinned { border-left:3px solid var(--accent); }
+    .brain-entry-meta { display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap; }
+    .brain-entry-actions { margin-left:auto;display:flex;align-items:center;gap:2px;flex-shrink:0; }
+    .brain-entry-body { font-size:13px;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word; }
+    .type-chip { display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:600; }
+    .camp-chip { display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;font-size:11px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted); }
+    .brain-ts { font-size:11px;color:var(--text-dim); }
+    .icon-btn { background:none;border:none;cursor:pointer;color:var(--text-dim);padding:4px 6px;border-radius:4px;font-size:13px;line-height:1; }
+    .icon-btn:hover { background:var(--surface-2);color:var(--text); }
+    .icon-btn.pin-on { color:var(--accent); }
   </style>
 </head>
 <body>
@@ -418,8 +480,6 @@
           <option value="Social Media">Social Media</option>
           <option value="Content">Content</option>
           <option value="Events & Partnerships">Events & Partnerships</option>
-          <option value="Awards">Awards</option>
-          <option value="Paid Media">Paid Media</option>
           <option value="Design">Design</option>
         </select>
       </div>
@@ -477,8 +537,6 @@
       'PR Light':                                 'PR Light',
       'Social Media':                             'Social Media',
       'Brand Activation - Events & Partnerships': 'Events & Partnerships',
-      'Awards':                                   'Awards',
-      'Paid Media':                               'Paid Media',
       'Design':                                   'Design',
     };
 
@@ -510,6 +568,7 @@
     let activeCampTypeTab = null;
     let clientTasksAll = [];
     let activeTaskTab = null;
+    let clientMeetings = [];
 
     // Maps section label → which checklist categories belong in it
     const SECTION_CHECKLIST_CATEGORIES = {
@@ -517,8 +576,6 @@
       'PR Light':              ['PR Light'],
       'Social Media':          ['Social Media'],
       'Events & Partnerships': ['Brand Activation - Events & Partnerships'],
-      'Awards':                ['Awards'],
-      'Paid Media':            ['Paid Media'],
       'Design':                ['Design'],
     };
 
@@ -639,54 +696,51 @@
           ? `<a onclick="switchTab('one',document.querySelector('.tab-btn'));switchCampTypeTab('PR')" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`
           : `<a onclick="switchTab('one',document.querySelector('.tab-btn'));openCampDrawer('PR')" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">+ New →</a>`);
 
-      // 3 — Social
+      const clientServices = (client.services||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const hasSocial = clientServices.includes('Social Media');
+
+      // 3 — Social (only if Social Media is in scope)
       const socialCamps = campaigns.filter(c => c.type === 'Social Media');
       const activeSocial = socialCamps.filter(c => c.status === 'active');
-      const socialCard = quickCard('Social Content',
+      const socialCard = hasSocial ? quickCard('Social Content',
         socialCamps.length ? `${socialCamps.length} campaign${socialCamps.length>1?'s':''}` : '<span style="color:var(--text-dim);">No social campaigns</span>',
         activeSocial.length ? `${activeSocial.length} active` : socialCamps.length ? 'None active' : '',
         '', socialCamps.length
           ? `<a onclick="switchTab('one',document.querySelector('.tab-btn'));switchCampTypeTab('Social Media')" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`
-          : '');
+          : '') : '';
 
       // 4 — Media Hub
-      const hasPR = (client.services||'').split(',').map(s=>s.trim()).some(s=>s==='PR'||s==='PR Light');
+      const hasPR = clientServices.some(s => s === 'PR' || s === 'PR Light');
       const mediaCard = quickCard('Media Hub',
         hasPR ? `${escHtml(client.code||client.name)} Coverage` : '<span style="color:var(--text-dim);">Not available</span>',
         hasPR ? new Date().getFullYear() + ' media coverage' : 'Add PR service to enable',
         '', hasPR ? `<a href="/media-hub/${clientId}" style="font-size:11px;color:var(--accent);font-weight:500;">Open →</a>` : '');
 
-      // 5 — Onboarding
-      const obItems = (onboardingData?.items||[]).filter(i=>i.parent_id);
-      const obDone = obItems.filter(i=>i.completed).length;
-      const obPct = obItems.length ? Math.round((obDone/obItems.length)*100) : 0;
-      const obCard = quickCard('Onboarding',
-        obItems.length ? `${obDone}/${obItems.length} tasks` : 'No tasks',
-        '',
-        obItems.length ? `<div style="height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:2px;"><div style="height:100%;background:${obPct===100?'var(--success)':'var(--accent)'};border-radius:2px;width:${obPct}%;"></div></div>` : '',
-        `<a onclick="switchTab('admin',document.getElementById('tab-btn-admin'))" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`);
+      // 7 — Meetings
+      const internalBrief = clientMeetings.find(m => m.title === 'Internal Brief') || null;
+      const mtgDate = internalBrief?.scheduled_date
+        ? new Date(internalBrief.scheduled_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+        : null;
+      const mtgType = internalBrief?.meeting_type === 'in-person' ? 'In Person' : 'Online';
+      const obCard = quickCard('Meetings',
+        'Internal Brief',
+        mtgDate ? `${mtgDate} · ${mtgType}` : 'Not scheduled',
+        mtgDate ? `<span style="background:#0d3323;color:#3ecf6e;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:100px;">Booked</span>` : '',
+        `<a href="#" onclick="openMeetingModal(${internalBrief ? internalBrief.id : 'null'})" style="font-size:11px;color:var(--accent);font-weight:500;">${internalBrief ? 'Edit →' : 'Book →'}</a>`);
 
-      // 6 — Tasks
-      const doneTasks = clientTasksAll.filter(t=>t.status==='done').length;
-      const totalTasks = clientTasksAll.length;
-      const taskPct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
-      const tasksCard = quickCard('Tasks',
-        totalTasks ? `${doneTasks}/${totalTasks} done` : 'No tasks',
-        totalTasks ? `${taskPct}% complete` : '',
-        '', `<a onclick="switchTab('three',document.querySelectorAll('.tab-btn')[2])" href="#" style="font-size:11px;color:var(--accent);font-weight:500;">View →</a>`);
-
-      return [stratCard, prCard, socialCard, mediaCard, obCard, tasksCard].join('');
+      return [stratCard, prCard, socialCard, mediaCard, obCard].filter(Boolean).join('');
     }
 
     // ── Main load ──────────────────────────────────────────────────────────────
 
     async function load() {
-      const [profileRes, campaignsRes, strategiesRes, teamMembersRes, onboardingRes] = await Promise.all([
+      const [profileRes, campaignsRes, strategiesRes, teamMembersRes, onboardingRes, meetingsRes] = await Promise.all([
         fetch(`/api/clients/${clientId}/profile`),
         fetch(`/api/campaigns/client/${clientId}`),
         fetch(`/api/strategies/client/${clientId}`),
         fetch('/api/team-members'),
-        fetch(`/api/onboarding/${clientId}`)
+        fetch(`/api/onboarding/${clientId}`),
+        fetch(`/api/clients/${clientId}/meetings`)
       ]);
       allTeamMembers = teamMembersRes.ok ? await teamMembersRes.json() : [];
       if (!profileRes.ok) {
@@ -697,6 +751,7 @@
       campaigns.forEach(c => expandedCamps.add(c.id));
       clientStrategies = strategiesRes.ok ? await strategiesRes.json() : [];
       onboardingData = onboardingRes.ok ? await onboardingRes.json() : null;
+      clientMeetings = meetingsRes.ok ? await meetingsRes.json() : [];
       const { client: clientData, checklist, tasks, team, contacts } = await profileRes.json();
       client = clientData;
       clientChecklist = checklist || [];
@@ -730,6 +785,10 @@
         grouped[svc].push(t);
       });
 
+      const snapshotEndDate = client.end_date || '';
+      const snapshotContact = contacts[0] || null;
+      const snapshotServices = (client.services || '').split(',').map(s => s.trim()).filter(Boolean);
+
       document.getElementById('page-content').innerHTML = `
         <div class="board-header">
           <h1 style="font-size:20px;font-weight:700;">
@@ -738,165 +797,224 @@
           <span class="status-chip ${statusClass}">${statusLabel}</span>
           ${client.industry ? `<span style="font-size:12px;color:var(--text-muted);">${escHtml(client.industry)}</span>` : ''}
           <div style="flex:1;"></div>
-          ${client.status === 'onboarding' ? `<button class="btn btn-primary" style="font-size:12px;" id="complete-onboarding-btn" onclick="completeOnboarding()">Complete Onboarding</button>` : ''}
           <a href="/clients/${clientId}" class="btn btn-ghost" style="font-size:12px;">Edit Profile</a>
         </div>
 
+        ${snapshotServices.length || snapshotEndDate || snapshotContact || client.slack_channel || client.drive_folder_url ? `
+        <div class="card snapshot-card">
+          ${snapshotServices.length ? `<div class="snapshot-section">
+            <div class="snapshot-label">Services</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              ${snapshotServices.map(s => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-size:12px;">${escHtml(s)}</span>`).join('')}
+            </div>
+          </div>` : ''}
+          ${snapshotEndDate ? `<div class="snapshot-section">
+            <div class="snapshot-label">Retainer Ends</div>
+            <div class="snapshot-value">${escHtml(snapshotEndDate)}</div>
+          </div>` : ''}
+          ${snapshotContact ? `<div class="snapshot-section">
+            <div class="snapshot-label">Primary Contact</div>
+            <div class="snapshot-value" style="font-weight:500;">${escHtml(snapshotContact.name)}</div>
+            ${snapshotContact.email ? `<div style="font-size:12px;"><a href="mailto:${escAttr(snapshotContact.email)}" style="color:var(--accent);text-decoration:none;">${escHtml(snapshotContact.email)}</a></div>` : ''}
+          </div>` : ''}
+          ${client.slack_channel ? `<div class="snapshot-section">
+            <div class="snapshot-label">Slack</div>
+            <div class="snapshot-value">${client.slack_channel.startsWith('http') ? `<a href="${escAttr(client.slack_channel)}" target="_blank" style="color:var(--accent);text-decoration:none;">${escHtml(client.slack_channel)} ↗</a>` : `<span style="color:var(--text-muted);">#${escHtml(client.slack_channel)}</span>`}</div>
+          </div>` : ''}
+          ${client.drive_folder_url ? `<div class="snapshot-section">
+            <div class="snapshot-label">Drive</div>
+            <div class="snapshot-value"><a href="${escAttr(client.drive_folder_url)}" target="_blank" style="color:var(--accent);text-decoration:none;">Open folder ↗</a></div>
+          </div>` : ''}
+        </div>` : ''}
+
+        <div class="brain-overview-row">
+          <div class="card brain-overview-card" id="brain-card-summary">
+            <div class="brain-overview-label">Summary</div>
+            <p style="color:var(--text-dim);font-size:13px;margin:0;">Add brain entries to generate.</p>
+          </div>
+          <div class="card brain-overview-card" id="brain-card-updates">
+            <div class="brain-overview-label">Updates</div>
+            <p style="color:var(--text-dim);font-size:13px;margin:0;">No updates yet.</p>
+          </div>
+          <div class="card brain-overview-card" id="brain-card-actions">
+            <div class="brain-overview-label">Action Items</div>
+            <p style="color:var(--text-dim);font-size:13px;margin:0;">No action items yet.</p>
+          </div>
+        </div>
+
         <div class="tab-bar" style="align-items:flex-end;">
-          <button class="tab-btn active" onclick="switchTab('one', this)">Campaigns</button>
-          <button class="tab-btn" onclick="switchTab('two', this)">Client Info</button>
-          <button class="tab-btn" onclick="switchTab('three', this)">Tasks</button>
-          <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin', this)">Admin</button>
+          <button class="tab-btn active" onclick="switchTab('two', this)">Brain</button>
+          <button class="tab-btn" onclick="switchTab('one', this)">Campaigns</button>
+          <button class="tab-btn" onclick="switchTab('brief', this)">Brief</button>
+          <button class="tab-btn" onclick="switchTab('scope', this)">Scope</button>
+          <button class="tab-btn" onclick="switchTab('team', this)">Team</button>
         </div>
 
-        <!-- Quick-link content cards -->
-        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
-          ${quickCardsHtml()}
-        </div>
+        <!-- Main 2-column layout — persists across both tabs -->
+        <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start;">
 
-        <!-- Tab One — 2-column layout -->
-        <div class="tab-panel active" id="tab-one">
-          <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start;">
-            <!-- Column 1 — Campaigns -->
-            <div>
+          <!-- Left: tab panels -->
+          <div>
+            <!-- Tab One — Campaigns -->
+            <div class="tab-panel" id="tab-one">
               <div id="campaigns-sections"></div>
             </div>
-            <!-- Column 2 — Documents -->
-            <div id="tab-one-col2">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Documents</div>
-              <!-- Strategy card -->
-              <div class="card" style="margin-bottom:16px;" id="strategy-card">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Strategy</div>
-                  <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" id="strategy-new-btn" onclick="newStrategy()">+ New</button>
+
+            <!-- Tab Two — Brain -->
+            <div class="tab-panel active" id="tab-two">
+              <div class="brain-controls">
+                <select id="filter-type" onchange="fetchAndRenderEntries()">
+                  <option value="">All types</option>
+                  ${ALL_TYPES.map(([v]) => `<option value="${escAttr(v)}">${escHtml(v)}</option>`).join('')}
+                </select>
+                <select id="filter-campaign" onchange="fetchAndRenderEntries()">
+                  <option value="">All entries</option>
+                  <option value="client">Client-level only</option>
+                </select>
+                <input id="brain-search" type="text" placeholder="Search entries…" oninput="debouncedSearch()">
+                <button id="brain-summarise-btn" class="btn btn-ghost" onclick="loadBrainSummary()" style="display:none;">Summarise</button>
+                <button class="btn btn-primary" onclick="toggleAddForm()">+ Add Entry</button>
+              </div>
+              <div id="brain-add-form" class="brain-add-form" style="display:none;">
+                <div class="form-row">
+                  <select id="add-type">
+                    ${ALL_TYPES.map(([v]) => `<option value="${escAttr(v)}">${escHtml(v)}</option>`).join('')}
+                  </select>
+                  <select id="add-campaign">
+                    <option value="">Client-level</option>
+                  </select>
                 </div>
-                <div id="strategy-list">
-                  <p style="font-size:13px;color:var(--text-dim);">Loading…</p>
+                <textarea id="add-body" placeholder="Add notes, links, feedback, research…"></textarea>
+                <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+                  <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+                  <button class="btn btn-primary" onclick="submitAddForm()">Add Entry</button>
                 </div>
               </div>
-              <!-- Media Hub card — shown for clients with PR service -->
-              <div class="card" id="media-hub-card" style="display:none;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Media Hub</div>
-                </div>
-                <div id="media-hub-link-wrap"></div>
+<div id="brain-feed"><p style="color:var(--text-dim);font-size:13px;">Loading…</p></div>
+
+            </div>
+
+            <!-- Tab: Brief -->
+            <div class="tab-panel" id="tab-brief">
+              ${clientMeetings.some(m => m.notes) ? `
+              <div class="card" style="margin-bottom:14px;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Meeting Notes</div>
+                ${clientMeetings.filter(m => m.notes).map(m => `
+                  <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">${m.title}${m.scheduled_date ? ' · ' + new Date(m.scheduled_date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
+                    <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${m.notes}</p>
+                  </div>`).join('')}
+              </div>` : ''}
+              <div class="card">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Research</div>
+                <p style="font-size:13px;line-height:1.8;color:var(--text);margin:0;">${client.research || '<span style="color:var(--text-muted);">No research yet.</span>'}</p>
               </div>
+            </div>
+
+            <!-- Tab: Scope -->
+            <div class="tab-panel" id="tab-scope">
+              <div class="card">
+                ${start ? `
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Campaign Period</div>
+                  <div class="stat-row"><span>${client.start_date}</span><span>${client.end_date || '—'}</span></div>
+                  ${start && end ? `
+                  <div class="campaign-bar"><div class="campaign-bar-fill" style="width:${campaignPct}%"></div></div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${campaignPct}% through · ${campaignStatus}</div>` : ''}
+                </div>` : ''}
+                ${client.monthly_hours ? `
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Monthly Hours</div>
+                  <div style="font-size:15px;font-weight:600;">${client.monthly_hours} hrs</div>
+                </div>` : ''}
+                ${client.services ? `
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Services</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    ${client.services.split(',').map(s => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${s.trim()}</span>`).join('')}
+                  </div>
+                </div>` : ''}
+                ${contacts.length ? `
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Contacts</div>
+                  ${contacts.map(c => `
+                    <div style="padding:6px 0;border-bottom:1px solid var(--border);">
+                      <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
+                      ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
+                      ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
+                    </div>`).join('')}
+                </div>` : ''}
+                ${client.website ? `
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Website</div>
+                  <a href="${client.website}" target="_blank" style="font-size:13px;color:var(--accent);">${client.website}</a>
+                </div>` : ''}
+                ${client.platforms ? `
+                <div style="margin-bottom:16px;">
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Platforms</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    ${client.platforms.split(',').map(p => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${p.trim()}</span>`).join('')}
+                  </div>
+                </div>` : ''}
+                ${client.notes ? `
+                <div>
+                  <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Notes</div>
+                  <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${client.notes}</p>
+                </div>` : ''}
+              </div>
+            </div>
+
+            <!-- Tab: Team -->
+            <div class="tab-panel" id="tab-team">
+              <div class="card" id="team-card"></div>
             </div>
           </div>
-        </div>
 
-        <!-- Tab Two — Client Info -->
-        <div class="tab-panel" id="tab-two">
-          <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start;">
-
-            <!-- Left — tabbed info -->
-            <div>
-              <div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;">
-                <button class="camp-tab active" id="info-tab-brief" onclick="switchInfoTab('brief', this)">Brief</button>
-                <button class="camp-tab" id="info-tab-scope" onclick="switchInfoTab('scope', this)">Scope</button>
-                <button class="camp-tab" id="info-tab-team" onclick="switchInfoTab('team', this)">Team</button>
+          <!-- Right: persistent documents column -->
+          <div id="tab-one-col2">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:12px;">Documents</div>
+            <!-- Strategy card -->
+            <div class="card" style="margin-bottom:16px;" id="strategy-card">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Strategy</div>
+                <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px;" id="strategy-new-btn" onclick="newStrategy()">+ New</button>
               </div>
-
-              <!-- Brief -->
-              <div class="info-panel" id="info-panel-brief">
-                <div class="card">
-                  <p style="font-size:13px;line-height:1.8;color:var(--text);margin:0;">${client.research || '<span style="color:var(--text-muted);">No brief added yet.</span>'}</p>
-                </div>
+              <div id="strategy-list">
+                <p style="font-size:13px;color:var(--text-dim);">Loading…</p>
               </div>
-
-              <!-- Scope -->
-              <div class="info-panel" id="info-panel-scope" style="display:none;">
-                <div class="card">
-                  ${start ? `
-                  <div style="margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Campaign Period</div>
-                    <div class="stat-row"><span>${client.start_date}</span><span>${client.end_date || '—'}</span></div>
-                    ${start && end ? `
-                    <div class="campaign-bar"><div class="campaign-bar-fill" style="width:${campaignPct}%"></div></div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${campaignPct}% through · ${campaignStatus}</div>
-                    ` : ''}
-                  </div>` : ''}
-
-                  ${client.monthly_hours ? `
-                  <div style="margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Monthly Hours</div>
-                    <div style="font-size:15px;font-weight:600;">${client.monthly_hours} hrs</div>
-                  </div>` : ''}
-
-                  ${client.services ? `
-                  <div style="margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Services</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                      ${client.services.split(',').map(s => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${s.trim()}</span>`).join('')}
-                    </div>
-                  </div>` : ''}
-
-                  ${contacts.length ? `
-                  <div style="margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Contacts</div>
-                    ${contacts.map(c => `
-                      <div style="padding:6px 0;border-bottom:1px solid var(--border);">
-                        <div style="font-size:13px;font-weight:600;">${c.name}${c.role ? ` <span style="font-weight:400;color:var(--text-muted);">· ${c.role}</span>` : ''}</div>
-                        ${c.email ? `<div style="font-size:12px;color:var(--text-muted);">${c.email}</div>` : ''}
-                        ${c.phone ? `<div style="font-size:12px;color:var(--text-muted);">${c.phone}</div>` : ''}
-                      </div>`).join('')}
-                  </div>` : ''}
-
-                  ${client.website ? `
-                  <div style="margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Website</div>
-                    <a href="${client.website}" target="_blank" style="font-size:13px;color:var(--accent);">${client.website}</a>
-                  </div>` : ''}
-
-                  ${client.platforms ? `
-                  <div style="margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Platforms</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                      ${client.platforms.split(',').map(p => `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px 10px;font-size:12px;font-weight:500;">${p.trim()}</span>`).join('')}
-                    </div>
-                  </div>` : ''}
-
-                  ${client.notes ? `
-                  <div>
-                    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Notes</div>
-                    <p style="font-size:13px;line-height:1.7;color:var(--text);margin:0;">${client.notes}</p>
-                  </div>` : ''}
-                </div>
-              </div>
-
-              <!-- Team -->
-              <div class="info-panel" id="info-panel-team" style="display:none;">
-                <div class="card" id="team-card"></div>
-              </div>
-
             </div>
-
-            <!-- Right — placeholder cards -->
-            <div style="display:flex;flex-direction:column;gap:16px;">
-              <div class="card" style="min-height:120px;"></div>
-              <div class="card" style="min-height:120px;"></div>
+            <!-- Press Release card — shown for PR clients -->
+            <div class="card" id="press-release-card" style="display:none;margin-bottom:16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Press Release</div>
+              </div>
+              <p style="font-size:13px;color:var(--text-dim);margin:0;">No press release yet.</p>
             </div>
-
+            <!-- Pitch List card — shown for PR clients -->
+            <div class="card" id="pitch-list-card" style="display:none;margin-bottom:16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Pitch List</div>
+              </div>
+              <div id="pitch-list-summary" style="font-size:13px;color:var(--text-dim);">Loading…</div>
+            </div>
+            <!-- Media Hub card — shown for clients with PR service -->
+            <div class="card" id="media-hub-card" style="display:none;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);">Media Hub</div>
+              </div>
+              <div id="media-hub-link-wrap"></div>
+            </div>
           </div>
+
         </div>
 
-        <!-- Tab Three — Tasks -->
-        <div class="tab-panel" id="tab-three">
-          <div id="tasks-tab-container"></div>
-        </div>
-
-        <!-- Tab Admin -->
-        <div class="tab-panel" id="tab-admin">
-          <div id="admin-tab-container"></div>
-        </div>
       `;
 
       renderCampaigns();
       renderStrategyCard(clientStrategies);
       renderMediaHubCard();
       renderTeamCard(team);
-      renderTasksTab();
-      renderAdminTab();
+      loadBrainFeed();
     }
 
     // ── Admin / Onboarding tab ────────────────────────────────────────────────
@@ -965,47 +1083,6 @@
             </div>
           </div>
 
-          <!-- Progress -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);">Onboarding Progress</div>
-            <div style="font-size:12px;color:${pct===100?'var(--success)':'var(--text-muted)'};">${done}/${total} tasks · ${pct}%</div>
-          </div>
-          <div class="ob-progress-bar" style="margin-bottom:20px;">
-            <div class="ob-progress-fill" style="width:${pct}%;"></div>
-          </div>
-
-          <!-- Onboarding task table -->
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Onboarding Tasks</div>
-          <div class="ob-tbl-wrap">
-            <div class="ob-tbl-hdr">
-              <div></div>
-              <div>Task / Notes</div>
-              <div>Time</div>
-              <div>Due Date</div>
-              <div>Approver</div>
-              <div>Assignee</div>
-              <div>Task Type</div>
-              <div>Priority</div>
-              <div>Progress</div>
-            </div>
-            ${parents.map(parent => {
-              const kids = childMap[parent.id] || [];
-              const kidsDone = kids.filter(k => k.completed).length;
-              const allDone = kidsDone === kids.length && kids.length > 0;
-              const openByDefault = !allDone;
-              return `
-                <div>
-                  <div class="ob-parent-row${openByDefault ? ' open' : ''}" id="ob-par-${parent.id}" onclick="toggleObParent(${parent.id})">
-                    <span class="ob-parent-expand">▶</span>
-                    <span class="ob-parent-name">${escHtml(parent.item)}</span>
-                    <span class="ob-parent-prog${allDone ? ' done' : ''}">${allDone ? '✓ Complete' : `${kidsDone}/${kids.length}`}</span>
-                  </div>
-                  <div class="ob-children${openByDefault ? ' open' : ''}" id="ob-children-${parent.id}">
-                    ${kids.map(task => renderObTaskRow(task, slack_channel, drive_folder_url, slackName, driveName)).join('')}
-                  </div>
-                </div>`;
-            }).join('')}
-          </div>
         </div>
       `;
 
@@ -1183,15 +1260,16 @@
 
       const grouped = {};
       clientTasksAll.forEach(t => {
-        const svc = t.service || 'General';
+        let svc = t.service || 'General';
+        if (svc === 'Project Admin') svc = "To Do's";
         if (!grouped[svc]) grouped[svc] = [];
         grouped[svc].push(t);
       });
 
       const svcs = Object.keys(grouped);
-      const allTabs = ['Onboarding', ...svcs];
+      const allTabs = ['Client Set Up', ...svcs];
 
-      if (!activeTaskTab || !allTabs.includes(activeTaskTab)) activeTaskTab = 'Onboarding';
+      if (!activeTaskTab || !allTabs.includes(activeTaskTab)) activeTaskTab = 'Client Set Up';
 
       const tabBar = `<div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;">
         ${allTabs.map(s => `<button class="camp-tab ${s === activeTaskTab ? 'active' : ''}" onclick="switchTaskTab('${s.replace(/'/g,"\\'")}')">
@@ -1199,27 +1277,35 @@
         </button>`).join('')}
       </div>`;
 
-      if (activeTaskTab === 'Onboarding') {
-        const obItems = (onboardingData?.items || []).filter(i => i.parent_id);
-        const done = obItems.filter(i => i.completed).length;
-        const total = obItems.length;
-        const pct = total ? Math.round((done / total) * 100) : 0;
-        const rows = obItems.map(t => obTaskRowHtml(t)).join('');
+      if (activeTaskTab === 'Client Set Up') {
+        const acctTasks = (onboardingData?.items || []).filter(i => i.parent_id && i.stage_index >= 3);
+        const clientServices = (client?.services || '').split(',').map(s => s.trim()).filter(Boolean);
+        const svcGroups = clientServices
+          .map(svc => ({ svc, items: clientChecklist.filter(i => i.category === svc) }))
+          .filter(g => g.items.length);
+
+        function setupSectionHtml(title, tasks, toggleFn) {
+          const done = tasks.filter(t => t.completed).length;
+          const pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+          return `
+            <div class="card" style="margin-bottom:16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);">${escHtml(title)}</div>
+                <span style="font-size:11px;color:var(--text-muted);">${done}/${tasks.length}</span>
+              </div>
+              <div class="campaign-bar" style="margin-bottom:12px;"><div class="campaign-bar-fill" style="width:${pct}%"></div></div>
+              ${tasks.map(t => `
+                <label style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+                  <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="${toggleFn}(${t.id}, this.checked, this)" style="accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;">
+                  <span style="font-size:13px;${t.completed ? 'text-decoration:line-through;color:var(--text-muted);' : ''}">${escHtml(t.item)}</span>
+                </label>`).join('')}
+            </div>`;
+        }
+
         container.innerHTML = `
           ${tabBar}
-          <div class="card">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <span style="font-size:12px;color:var(--text-muted);">${done}/${total} done</span>
-            </div>
-            <div class="campaign-bar" style="margin-bottom:12px;">
-              <div class="campaign-bar-fill" style="width:${pct}%"></div>
-            </div>
-            ${!obItems.length ? '<p style="font-size:13px;color:var(--text-muted);margin:0;">No onboarding tasks.</p>' : ''}
-            <div class="cb-task-wrap" ${!obItems.length ? 'style="display:none;"' : ''}>
-              <div class="cb-task-cols"><div></div><div>Time</div><div>Task / Notes</div><div>Due Date</div><div>Approver</div><div>Assignee</div><div>Task Type</div><div>Priority</div><div>Progress</div><div></div></div>
-              <div>${rows}</div>
-            </div>
-          </div>`;
+          ${setupSectionHtml('Account Admin', acctTasks, 'toggleSetupObTask')}
+          ${svcGroups.map(g => setupSectionHtml(g.svc, g.items, 'toggleSetupSvcTask')).join('')}`;
         return;
       }
 
@@ -1409,48 +1495,41 @@
       const container = document.getElementById('campaigns-sections');
       if (!container) return;
 
-      // Build tab list from client services + any existing campaign types
-      const clientServices = (client && client.services) ? client.services.split(',').map(s => s.trim()) : [];
-      const serviceTypes = [...new Set(clientServices.map(s => SERVICE_TYPE_MAP[s]).filter(Boolean))];
-      campaigns.forEach(c => {
-        const entry = Object.entries(SECTION_DB_TYPE).find(([, v]) => v === c.type);
-        const label = entry ? entry[0] : c.type;
-        if (label && !serviceTypes.includes(label)) serviceTypes.push(label);
-      });
-
-      if (!serviceTypes.length && !campaigns.length) {
-        container.innerHTML = `<p style="font-size:13px;color:var(--text-muted);">No campaigns yet.</p>`;
+      if (!campaigns.length) {
+        container.innerHTML = `
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">No campaigns yet.</p>
+          <button class="btn btn-primary" style="font-size:12px;" onclick="openCampDrawer()">+ New Campaign</button>`;
         return;
       }
 
-      const tabs = serviceTypes.length ? serviceTypes : ['All'];
+      const TYPE_COLOURS = {
+        'PR': '#6366f1', 'PR Light': '#818cf8', 'Social Media': '#10b981',
+        'Events & Partnerships': '#f59e0b', 'Paid Media': '#ef4444',
+        'Design': '#ec4899', 'Reporting': '#64748b'
+      };
 
-      // Default active tab
-      if (!activeCampTypeTab || !tabs.includes(activeCampTypeTab)) {
-        activeCampTypeTab = tabs[0];
-      }
+      const cards = campaigns.map(c => {
+        const colour = TYPE_COLOURS[c.type] || '#94a3b8';
+        const stages = STAGES[c.type] || STAGES.default;
+        const stage  = stages[c.current_stage] || stages[0] || '';
+        const boardUrl = c.type === 'Social Media' ? `/social/${c.id}` : `/campaigns/${c.id}`;
+        return `
+          <a href="${boardUrl}" style="text-decoration:none;">
+            <div class="card" style="cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='${colour}'" onmouseout="this.style.borderColor=''">
+              <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+                <span style="background:${colour}22;color:${colour};border:1px solid ${colour}44;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap;">${escHtml(c.type)}</span>
+                <span style="font-size:13px;font-weight:600;color:var(--text);line-height:1.4;">${escHtml(c.name)}</span>
+              </div>
+              ${stage ? `<div style="font-size:11px;color:var(--text-muted);">Stage: ${escHtml(stage)}</div>` : ''}
+            </div>
+          </a>`;
+      }).join('');
 
-      const dbType = SECTION_DB_TYPE[activeCampTypeTab] || activeCampTypeTab;
-      const tabCampaigns = activeCampTypeTab === 'All' ? campaigns : campaigns.filter(c => c.type === dbType);
-      const items = tabCampaigns.map(c => `<div id="camp-card-${c.id}">${renderCampItem(c)}</div>`).join('');
-      const empty = tabCampaigns.length === 0
-        ? `<p style="font-size:13px;color:var(--text-muted);padding:8px 0;">No ${activeCampTypeTab} campaigns yet.</p>`
-        : '';
-
-      const tabBar = `
-        <div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;">
-          ${tabs.map(t => `
-            <button class="camp-tab ${t === activeCampTypeTab ? 'active' : ''}"
-              onclick="switchCampTypeTab('${t.replace(/'/g,"\\'")}')">
-              ${t}
-            </button>`).join('')}
-          <div style="flex:1;"></div>
-          <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;margin:0 0 6px;" onclick="openCampDrawer('${dbType}')">+ New</button>
-        </div>`;
-
-      container.innerHTML = tabBar + empty + items;
-
-      expandedCamps.forEach(id => loadCampTasks(id));
+      container.innerHTML = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <button class="btn btn-primary" style="font-size:12px;" onclick="event.preventDefault();openCampDrawer()">+ New Campaign</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">${cards}</div>`;
     }
 
     function renderCampCard(campId) {
@@ -1521,35 +1600,65 @@
         </button>`;
       }).join('');
 
-      const expandedHtml = isExpanded ? `
+      // Social campaigns show platform/frequency setup instead of stage workflow
+      const isSocial = c.type === 'Social Media';
+      let socialAdmin = {};
+      if (isSocial && c.social_admin) {
+        try { socialAdmin = typeof c.social_admin === 'string' ? JSON.parse(c.social_admin) : c.social_admin; } catch(e) {}
+      }
+      const ALL_PLATFORMS = ['Instagram','Facebook','TikTok','LinkedIn','YouTube','Pinterest','Threads','X'];
+      const FREQ_OPTIONS  = ['Daily','2x / week','3x / week','4x / week','5x / week','Weekly','Fortnightly','Monthly'];
+      const activePlatforms = socialAdmin.platforms || [];
+      const frequencies     = socialAdmin.frequencies || {};
+
+      const socialSetupHtml = isSocial ? `
         <div style="padding-bottom:14px;">
-          ${setupHtml}
-          <!-- Stage tabs -->
-          <div style="display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--border);margin-bottom:14px;overflow-x:auto;">
-            ${stageTabs}
-          </div>
-          <!-- Task panel — fixed height so card doesn't shift cards below -->
-          <div style="height:240px;overflow-y:auto;display:flex;flex-direction:column;">
-            <div id="camp-tasks-${c.id}" style="flex:1;">
-              <p style="font-size:12px;color:var(--text-muted);">Loading…</p>
+          <div style="background:var(--surface-2);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;">
+
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Platforms</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+              ${ALL_PLATFORMS.map(p => `
+                <button onclick="toggleSocialPlatform(${c.id},'${p}')" style="
+                  padding:4px 12px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all 0.15s;
+                  ${activePlatforms.includes(p)
+                    ? 'background:var(--accent);color:#000;border-color:var(--accent);'
+                    : 'background:none;color:var(--text-muted);border-color:var(--border);'}
+                ">${p}</button>
+              `).join('')}
             </div>
-            <div id="cb-add-trigger-${c.id}" class="cb-add-trigger" onclick="showCbAddForm(${c.id})">+ Add task</div>
-            <div class="cb-add-form" id="cb-add-form-${c.id}">
-              <input id="camp-task-input-${c.id}" placeholder="Task title…"
-                onkeydown="if(event.key==='Enter')addCampTask(${c.id});if(event.key==='Escape')hideCbAddForm(${c.id})">
-              <input id="camp-task-assignee-${c.id}" placeholder="Assignee">
-              <input type="date" id="camp-task-due-${c.id}">
-              <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;" onclick="addCampTask(${c.id})">Add</button>
-              <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;" onclick="hideCbAddForm(${c.id})">✕</button>
-            </div>
+
+            ${activePlatforms.length ? `
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:10px;">Post Frequency</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              ${activePlatforms.map(p => `
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:13px;font-weight:500;width:100px;flex-shrink:0;">${p}</span>
+                  <select onchange="saveSocialFrequency(${c.id},'${p}',this.value)" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;padding:4px 8px;flex:1;">
+                    <option value="">— select —</option>
+                    ${FREQ_OPTIONS.map(f => `<option value="${f}" ${frequencies[p]===f?'selected':''}>${f}</option>`).join('')}
+                  </select>
+                </div>
+              `).join('')}
+            </div>` : ''}
+
           </div>
-          <!-- Footer -->
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
-            <div style="display:flex;gap:6px;">${backBtn}${advBtn}</div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;">
             <a href="${campBoardUrl(c)}" style="font-size:11px;color:var(--accent);">Open full board →</a>
           </div>
         </div>
       ` : '';
+
+      const expandedHtml = isExpanded ? (isSocial ? socialSetupHtml : `
+        <div style="padding-bottom:14px;">
+          ${setupHtml}
+          <div id="camp-tasks-${c.id}" style="margin-bottom:14px;min-height:60px;">
+            <p style="font-size:12px;color:var(--text-muted);">Loading…</p>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <a href="${campBoardUrl(c)}" style="font-size:11px;color:var(--accent);">Open full board →</a>
+          </div>
+        </div>
+      `) : '';
 
       return `
         <div class="camp-item" data-camp-id="${c.id}">
@@ -1571,6 +1680,51 @@
           ${expandedHtml}
         </div>
       `;
+    }
+
+    // ── Social setup helpers ───────────────────────────────────────────────────
+
+    async function getSocialAdmin(campId) {
+      const c = campaigns.find(x => x.id === campId);
+      let admin = {};
+      if (c && c.social_admin) {
+        try { admin = typeof c.social_admin === 'string' ? JSON.parse(c.social_admin) : c.social_admin; } catch(e) {}
+      }
+      return admin;
+    }
+
+    async function saveSocialAdmin(campId, patch) {
+      const admin = await getSocialAdmin(campId);
+      const updated = { ...admin, ...patch };
+      await fetch(`/api/campaigns/${campId}/social-admin`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ social_admin: updated }),
+      });
+      const c = campaigns.find(x => x.id === campId);
+      if (c) c.social_admin = updated;
+    }
+
+    async function toggleSocialPlatform(campId, platform) {
+      const admin = await getSocialAdmin(campId);
+      const platforms = admin.platforms || [];
+      const idx = platforms.indexOf(platform);
+      if (idx === -1) platforms.push(platform);
+      else {
+        platforms.splice(idx, 1);
+        const freqs = admin.frequencies || {};
+        delete freqs[platform];
+        admin.frequencies = freqs;
+      }
+      await saveSocialAdmin(campId, { platforms });
+      renderCampCard(campId);
+    }
+
+    async function saveSocialFrequency(campId, platform, value) {
+      const admin = await getSocialAdmin(campId);
+      const frequencies = admin.frequencies || {};
+      frequencies[platform] = value;
+      await saveSocialAdmin(campId, { frequencies });
     }
 
     // ── Campaign expand / stage / task actions ─────────────────────────────────
@@ -1625,9 +1779,8 @@
     }
 
     async function loadCampTasks(campId) {
-      const selStage = selectedStages[campId] !== undefined ? selectedStages[campId] : 0;
-      const res = await fetch(`/api/campaigns/${campId}/tasks/${selStage}`);
-      const tasks = res.ok ? await res.json() : [];
+      const res = await fetch(`/api/campaigns/${campId}/tasks`);
+      const tasks = (res.ok ? await res.json() : []).sort((a,b) => a.stage_index - b.stage_index);
       campTasksData[campId] = tasks;
       const list = document.getElementById(`camp-tasks-${campId}`);
       if (!list) return;
@@ -1635,69 +1788,37 @@
         list.innerHTML = `<p style="font-size:12px;color:var(--text-muted);margin:0;">No tasks yet.</p>`;
         return;
       }
-      list.innerHTML = `
-        <div class="cb-task-wrap">
-          <div class="cb-task-cols"><div></div><div>Time</div><div>Task / Notes</div><div>Due Date</div><div>Approver</div><div>Assignee</div><div>Task Type</div><div>Priority</div><div>Progress</div><div></div></div>
-          ${tasks.map(t => {
-            const prog = t.progress || 'Not Assigned';
-            return `
-            <div class="cb-task-row ${t.done ? 'done' : ''}" id="camp-task-${t.id}">
-              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleCampTask(${campId}, ${t.id}, this.checked)">
-              <div class="cb-cell cb-cell-time" onclick="cbEditCell(this)">
-                <span>${escHtml(t.estimated_time||'—')}</span>
-                <input type="text" value="${(t.estimated_time||'').replace(/"/g,'&quot;')}" placeholder="e.g. 2h"
-                  onblur="cbSaveCampField(${campId},${t.id},'estimated_time',this.value)"
-                  onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
+      const camp = campaigns.find(c => c.id === campId);
+      const isPR = camp && (camp.type === 'PR' || camp.type === 'PR Light');
+      const stages = STAGES[camp?.type] || STAGES.default;
+      const stagesHtml = stages.map((stageName, stageIdx) => {
+        const stageTasks = tasks.filter(t => t.stage_index === stageIdx);
+        if (!stageTasks.length) return '';
+        const btns = stageTasks.map(t => {
+          const isDone = !!t.done;
+          const isResearchTask = isPR && t.title && (t.title.toLowerCase().includes('research articles') || t.title.toLowerCase().includes('conduct campaign research'));
+          const researchAction = isResearchTask
+            ? `<div style="display:flex;gap:5px;margin-top:5px;">
+                <button class="btn btn-ghost" style="font-size:10px;padding:2px 7px;" onclick="event.stopPropagation();openCbResearch(${campId})">✦ Research</button>
+                <a href="/pitch-list/${campId}" class="btn btn-ghost" style="font-size:10px;padding:2px 7px;">Pitch List →</a>
+               </div>`
+            : '';
+          return `
+            <div class="cb-task-btn ${isDone ? 'done' : ''}" id="camp-task-${t.id}" onclick="toggleCampTask(${campId},${t.id},${isDone ? 0 : 1})">
+              <div style="display:flex;align-items:center;gap:7px;">
+                <div class="cb-task-check">${isDone ? '✓' : ''}</div>
+                <span style="font-size:12px;font-weight:500;">${escHtml(t.title)}</span>
               </div>
-              <div class="cb-title-col">
-                <div class="cb-cell cb-cell-title" onclick="cbEditCell(this)">
-                  <span>${escHtml(t.title)}</span>
-                  <input type="text" value="${(t.title||'').replace(/"/g,'&quot;')}"
-                    onblur="cbSaveCampField(${campId},${t.id},'title',this.value)"
-                    onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cbCancelCell(this.parentElement)">
-                </div>
-                <textarea class="cb-task-desc" placeholder="Add description…"
-                  onblur="cbSaveCampField(${campId},${t.id},'notes',this.value)"
-                  onclick="event.stopPropagation()">${escHtml(t.notes||'')}</textarea>
-              </div>
-              <div class="cb-cell cb-cell-due" onclick="cbEditCell(this)">
-                <span>${t.due_date||'<span style=color:var(--text-dim)>—</span>'}</span>
-                <input type="date" value="${t.due_date||''}"
-                  onchange="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
-                  onblur="cbSaveCampField(${campId},${t.id},'due_date',this.value)"
-                  onkeydown="if(event.key==='Escape')cbCancelCell(this.parentElement)">
-              </div>
-              <div class="cb-cell cb-cell-approver" onclick="openCbApproverSelector(event,${t.id},'cc${campId}')">
-                <span>${assigneeDisplay(t.approver)}</span>
-                ${avDropdownHtml(`av-drop-ap-cc${campId}-${t.id}`, `selectCampApprover(${campId},${t.id},`)}
-              </div>
-              <div class="cb-cell cb-cell-assignee" onclick="openCbAssigneeSelector(event,${t.id},'cc${campId}')">
-                <span>${assigneeDisplay(t.assignee)}</span>
-                ${avDropdownHtml(`av-drop-cc${campId}-${t.id}`, `selectCampAssignee(${campId},${t.id},`)}
-              </div>
-              <div class="cb-cell cb-cell-type" onclick="cbEditCell(this)">
-                <span>${escHtml(t.task_type||'—')}</span>
-                <select onchange="cbSaveCampField(${campId},${t.id},'task_type',this.value)" onblur="cbCancelCell(this.parentElement)">
-                  <option value="">—</option>
-                  ${TASK_TYPES.map(o=>`<option${o===t.task_type?' selected':''}>${escHtml(o)}</option>`).join('')}
-                </select>
-              </div>
-              <div class="cb-cell cb-cell-priority" onclick="cbEditCell(this)">
-                <span>${escHtml(t.priority||'Medium')}</span>
-                <select onchange="cbSaveCampField(${campId},${t.id},'priority',this.value)" onblur="cbCancelCell(this.parentElement)">
-                  ${PRIORITIES.map(o=>`<option${o===(t.priority||'Medium')?' selected':''}>${o}</option>`).join('')}
-                </select>
-              </div>
-              <div class="cb-cell cb-cell-progress" onclick="cbEditCell(this)">
-                <span><span class="progress-chip ${progressClass(prog)}">${escHtml(prog)}</span></span>
-                <select onchange="cbSaveCampField(${campId},${t.id},'progress',this.value)" onblur="cbCancelCell(this.parentElement)">
-                  ${PROGRESS_VALS.map(o=>`<option${o===prog?' selected':''}>${o}</option>`).join('')}
-                </select>
-              </div>
-              <button class="cb-del" onclick="deleteCampTask(${campId},${t.id})" title="Delete">×</button>
+              ${researchAction}
             </div>`;
-          }).join('')}
-        </div>`;
+        }).join('');
+        return `
+          <div style="margin-bottom:10px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${escHtml(stageName)}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">${btns}</div>
+          </div>`;
+      }).filter(Boolean).join('');
+      list.innerHTML = stagesHtml || `<p style="font-size:12px;color:var(--text-muted);margin:0;">No tasks yet.</p>`;
     }
 
     async function cbSaveCampField(campId, taskId, field, value) {
@@ -1811,12 +1932,19 @@
     }
 
     async function toggleCampTask(campId, taskId, done) {
-      const row = document.getElementById(`camp-task-${taskId}`);
-      if (row) row.classList.toggle('done', done);
+      const btn = document.getElementById(`camp-task-${taskId}`);
+      if (btn) {
+        btn.classList.toggle('done', !!done);
+        const check = btn.querySelector('.cb-task-check');
+        if (check) check.textContent = done ? '✓' : '';
+        btn.onclick = () => toggleCampTask(campId, taskId, done ? 0 : 1);
+      }
+      const task = (campTasksData[campId] || []).find(t => t.id === taskId);
+      if (task) task.done = done;
       await fetch(`/api/campaigns/${campId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ done })
+        body: JSON.stringify({ done: !!done })
       });
     }
 
@@ -1836,40 +1964,98 @@
 
     // ── Campaign drawer ────────────────────────────────────────────────────────
 
+    const ALL_DRAWER_PLATFORMS = ['Instagram','Facebook','TikTok','LinkedIn','YouTube','Pinterest','Threads','X'];
+    const DRAWER_FREQ_OPTIONS  = ['Daily','2x / week','3x / week','4x / week','5x / week','Weekly','Fortnightly','Monthly'];
+    let drawerPlatforms = [];
+
     function updateCampDrawerSetup() {
       const type = document.getElementById('cd-type').value;
       const container = document.getElementById('cd-setup-items');
       if (!container) return;
       container.style.display = type ? 'block' : 'none';
       if (!type) return;
-      container.innerHTML = `
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:14px;">Campaign Setup</div>
 
-        <div class="form-group">
-          <label>Campaign Angle</label>
-          <textarea id="cd-angle" rows="3" placeholder="What's the core angle or hook?" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
-        </div>
-
-        <div class="form-group" style="margin-bottom:0;">
-          <label>Key Messages</label>
-          <div id="cd-messages-list" style="margin-bottom:6px;"></div>
-          <div style="display:flex;gap:6px;">
-            <input id="cd-message-input" placeholder="Add a key message…" style="flex:1;"
-              onkeydown="if(event.key==='Enter'){event.preventDefault();addDrawerListItem('messages');}">
-            <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 10px;flex-shrink:0;" onclick="addDrawerListItem('messages')">+ Add</button>
+      if (type === 'Social Media') {
+        drawerPlatforms = [];
+        container.innerHTML = `
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:14px;">Social Setup</div>
+          <div class="form-group">
+            <label>Platforms</label>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;" id="cd-platform-chips">
+              ${ALL_DRAWER_PLATFORMS.map(p => `
+                <button type="button" onclick="toggleDrawerPlatform('${p}', this)" style="
+                  padding:4px 12px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);
+                  background:none;color:var(--text-muted);transition:all 0.15s;" data-platform="${p}">${p}</button>
+              `).join('')}
+            </div>
           </div>
-        </div>
-
-        <div class="form-group" style="margin-top:14px;margin-bottom:0;">
-          <label>Spokespeople</label>
-          <div id="cd-spokespeople-list" style="margin-bottom:6px;"></div>
-          <div style="display:flex;gap:6px;">
-            <input id="cd-spokesperson-input" placeholder="Add a spokesperson…" style="flex:1;"
-              onkeydown="if(event.key==='Enter'){event.preventDefault();addDrawerListItem('spokespeople');}">
-            <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 10px;flex-shrink:0;" onclick="addDrawerListItem('spokespeople')">+ Add</button>
+          <div class="form-group" id="cd-freq-group" style="display:none;margin-bottom:0;">
+            <label>Post Frequency</label>
+            <div id="cd-freq-list" style="display:flex;flex-direction:column;gap:8px;"></div>
           </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:14px;">Campaign Setup</div>
+
+          <div class="form-group">
+            <label>Campaign Angle</label>
+            <textarea id="cd-angle" rows="3" placeholder="What's the core angle or hook?" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Key Messages</label>
+            <div id="cd-messages-list" style="margin-bottom:6px;"></div>
+            <div style="display:flex;gap:6px;">
+              <input id="cd-message-input" placeholder="Add a key message…" style="flex:1;"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();addDrawerListItem('messages');}">
+              <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 10px;flex-shrink:0;" onclick="addDrawerListItem('messages')">+ Add</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:14px;margin-bottom:0;">
+            <label>Spokespeople</label>
+            <div id="cd-spokespeople-list" style="margin-bottom:6px;"></div>
+            <div style="display:flex;gap:6px;">
+              <input id="cd-spokesperson-input" placeholder="Add a spokesperson…" style="flex:1;"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();addDrawerListItem('spokespeople');}">
+              <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 10px;flex-shrink:0;" onclick="addDrawerListItem('spokespeople')">+ Add</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function toggleDrawerPlatform(platform, btn) {
+      const idx = drawerPlatforms.indexOf(platform);
+      if (idx === -1) {
+        drawerPlatforms.push(platform);
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#000';
+        btn.style.borderColor = 'var(--accent)';
+      } else {
+        drawerPlatforms.splice(idx, 1);
+        btn.style.background = 'none';
+        btn.style.color = 'var(--text-muted)';
+        btn.style.borderColor = 'var(--border)';
+      }
+      renderDrawerFrequencies();
+    }
+
+    function renderDrawerFrequencies() {
+      const group = document.getElementById('cd-freq-group');
+      const list  = document.getElementById('cd-freq-list');
+      if (!group || !list) return;
+      group.style.display = drawerPlatforms.length ? 'block' : 'none';
+      list.innerHTML = drawerPlatforms.map(p => `
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:13px;font-weight:500;width:100px;flex-shrink:0;">${p}</span>
+          <select id="cd-freq-${p}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:12px;padding:4px 8px;flex:1;">
+            <option value="">— select —</option>
+            ${DRAWER_FREQ_OPTIONS.map(f => `<option value="${f}">${f}</option>`).join('')}
+          </select>
         </div>
-      `;
+      `).join('');
     }
 
     const drawerLists = { messages: [], spokespeople: [] };
@@ -1931,15 +2117,24 @@
       btn.disabled = true;
       btn.textContent = 'Creating…';
 
-      const angle = document.getElementById('cd-angle')?.value.trim() || '';
-      const setup = {
-        angle,
-        keyMessages: [...drawerLists.messages],
-        spokespeople: [...drawerLists.spokespeople],
-      };
-      const hasSetup = angle || setup.keyMessages.length || setup.spokespeople.length;
-
       const type = document.getElementById('cd-type').value;
+
+      let setup = null;
+      let socialAdmin = null;
+
+      if (type === 'Social Media') {
+        const frequencies = {};
+        drawerPlatforms.forEach(p => {
+          const val = document.getElementById(`cd-freq-${p}`)?.value;
+          if (val) frequencies[p] = val;
+        });
+        if (drawerPlatforms.length) socialAdmin = { platforms: drawerPlatforms, frequencies };
+      } else {
+        const angle = document.getElementById('cd-angle')?.value.trim() || '';
+        const s = { angle, keyMessages: [...drawerLists.messages], spokespeople: [...drawerLists.spokespeople] };
+        if (angle || s.keyMessages.length || s.spokespeople.length) setup = s;
+      }
+
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1948,10 +2143,19 @@
           name,
           type: type || null,
           status: 'draft',
-          setup: hasSetup ? setup : null,
+          setup: setup,
         })
       });
       const { id } = await res.json();
+
+      if (socialAdmin) {
+        await fetch(`/api/campaigns/${id}/social-admin`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ social_admin: socialAdmin }),
+        });
+      }
+
       window.location.href = type === 'Social Media' ? `/social/${id}` : `/campaigns/${id}`;
     });
 
@@ -2087,6 +2291,23 @@
       const hasPR = services.some(s => s === 'PR' || s === 'PR Light');
       if (!hasPR) return;
 
+      const prCard = document.getElementById('press-release-card');
+      const plCard = document.getElementById('pitch-list-card');
+      if (prCard) prCard.style.display = '';
+      if (plCard) {
+        plCard.style.display = '';
+        const prCampaigns = campaigns.filter(c => c.type === 'PR' || c.type === 'PR Light');
+        const el = document.getElementById('pitch-list-summary');
+        if (el) {
+          el.innerHTML = prCampaigns.length
+            ? prCampaigns.map(c =>
+                `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+                  <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;">${escHtml(c.name)}</span>
+                  <a href="/pitch-list/${c.id}" style="font-size:11px;color:var(--accent);font-weight:500;flex-shrink:0;">Open →</a>
+                </div>`).join('')
+            : '<span style="color:var(--text-dim);">No PR campaigns yet</span>';
+        }
+      }
       card.style.display = '';
       wrap.innerHTML = '<p style="font-size:13px;color:var(--text-dim);">Loading…</p>';
 
@@ -2433,7 +2654,410 @@
       renderTasksTab();
     }
 
+    // ── Client Set Up toggles ────────────────────────────────────────────────
+
+    async function toggleSetupObTask(id, checked, el) {
+      await fetch(`/api/onboarding/${clientId}/items/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: checked })
+      });
+      const item = onboardingData?.items.find(i => i.id === id);
+      if (item) item.completed = checked ? 1 : 0;
+      el.closest('label').querySelector('span').style.textDecoration = checked ? 'line-through' : '';
+      el.closest('label').querySelector('span').style.color = checked ? 'var(--text-muted)' : '';
+      renderTasksTab();
+    }
+
+    async function toggleSetupSvcTask(id, checked, el) {
+      await fetch(`/api/clients/${clientId}/checklist/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: checked })
+      });
+      const item = clientChecklist.find(i => i.id === id);
+      if (item) item.completed = checked ? 1 : 0;
+      renderTasksTab();
+    }
+
+    // ── Meetings ──────────────────────────────────────────────────────────────
+
+    function openMeetingModal(existingId) {
+      const existing = existingId !== null ? clientMeetings.find(m => m.id === existingId) : null;
+      const overlay = document.createElement('div');
+      overlay.id = 'meeting-modal-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;width:360px;display:flex;flex-direction:column;gap:14px;">
+          <div style="font-size:14px;font-weight:700;">${existing ? 'Edit' : 'Book'} Internal Brief</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Date</label>
+            <input id="mtg-date" type="date" value="${existing?.scheduled_date || ''}" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Format</label>
+            <div style="display:flex;gap:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="radio" name="mtg-type" value="online" ${(!existing || existing.meeting_type === 'online') ? 'checked' : ''} style="accent-color:var(--accent);"> Online
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="radio" name="mtg-type" value="in-person" ${existing?.meeting_type === 'in-person' ? 'checked' : ''}  style="accent-color:var(--accent);"> In Person
+              </label>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Notes</label>
+            <textarea id="mtg-notes" placeholder="Optional notes…" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;resize:vertical;min-height:60px;">${existing?.notes || ''}</textarea>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+            <button class="btn btn-ghost" style="font-size:12px;" onclick="closeMeetingModal()">Cancel</button>
+            <button class="btn btn-primary" style="font-size:12px;" onclick="saveMeeting(${existingId !== null ? existingId : 'null'})">Save</button>
+          </div>
+        </div>`;
+      overlay.addEventListener('click', e => { if (e.target === overlay) closeMeetingModal(); });
+      document.body.appendChild(overlay);
+    }
+
+    function closeMeetingModal() {
+      document.getElementById('meeting-modal-overlay')?.remove();
+    }
+
+    async function saveMeeting(existingId) {
+      const date = document.getElementById('mtg-date').value;
+      const type = document.querySelector('input[name="mtg-type"]:checked')?.value || 'online';
+      const notes = document.getElementById('mtg-notes').value.trim();
+
+      if (existingId !== null) {
+        await fetch(`/api/clients/${clientId}/meetings/${existingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scheduled_date: date || null, meeting_type: type, notes: notes || null })
+        });
+        const m = clientMeetings.find(x => x.id === existingId);
+        if (m) { m.scheduled_date = date || null; m.meeting_type = type; m.notes = notes || null; }
+      } else {
+        const res = await fetch(`/api/clients/${clientId}/meetings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: 'Internal Brief', scheduled_date: date || null, meeting_type: type, notes: notes || null })
+        });
+        const m = await res.json();
+        clientMeetings.push(m);
+      }
+
+      closeMeetingModal();
+      document.querySelector('.quick-cards-grid').innerHTML = quickCardsHtml();
+    }
+
+    // ── AI Research modal ─────────────────────────────────────────────────────
+
+    async function openCbResearch(campId) {
+      let overlay = document.getElementById('cb-research-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'cb-research-overlay';
+        overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:560px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:15px;font-weight:700;">✦ Campaign Research Brief</div>
+              <button onclick="document.getElementById('cb-research-overlay').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;">×</button>
+            </div>
+            <div id="cb-research-body" style="flex:1;overflow-y:auto;font-size:13px;line-height:1.7;color:var(--text);"></div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-ghost" onclick="document.getElementById('cb-research-overlay').style.display='none'">Close</button>
+            </div>
+          </div>`;
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
+        document.body.appendChild(overlay);
+      }
+      const body = document.getElementById('cb-research-body');
+      body.innerHTML = '<p style="color:var(--text-muted);">Generating research brief…</p>';
+      overlay.style.display = 'flex';
+      try {
+        const res = await fetch(`/api/pitch-lists/campaign/${campId}/research`, { method: 'POST' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        body.innerHTML = data.brief
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/^- (.+)$/gm, '<div style="padding:2px 0 2px 12px;border-left:2px solid var(--border);margin-bottom:3px;">$1</div>')
+          .replace(/\n\n/g, '<br><br>')
+          .replace(/\n/g, '<br>');
+      } catch (err) {
+        body.innerHTML = `<p style="color:var(--danger);">Failed: ${escHtml(err.message)}</p>`;
+      }
+    }
+
+    // ── Brain ──────────────────────────────────────────────────────────────────
+
+    const TYPE_COLORS = {
+      'Meeting Notes':             '#60a5fa',
+      'Client Feedback':           '#f59e0b',
+      'Coverage Win':              '#22c55e',
+      'General Note':              '#94a3b8',
+      'Link / Resource':           '#c084fc',
+      'Newsroom Research':         '#22d3ee',
+      'Client / Project Research': '#22d3ee',
+      'Angles':                    '#fbbf24',
+      'Publication Research':      '#22d3ee',
+      'Strategy Summary':          '#a78bfa',
+      'Campaign Update':           '#34d399',
+    };
+
+    const ALL_TYPES = [
+      ['Meeting Notes'],['Client Feedback'],['Coverage Win'],['General Note'],['Link / Resource'],
+      ['Newsroom Research'],['Client / Project Research'],['Angles'],['Publication Research'],
+      ['Strategy Summary'],['Campaign Update'],
+    ];
+
+    function typeOptions(selected) {
+      return ALL_TYPES.map(([v]) =>
+        `<option value="${escAttr(v)}"${v === selected ? ' selected' : ''}>${escHtml(v)}</option>`
+      ).join('');
+    }
+
+    function fmtBrainDate(iso) {
+      const d = new Date(iso), now = new Date();
+      const h = (now - d) / 3600000;
+      if (h < 1) return 'Just now';
+      if (h < 24) return `${Math.floor(h)}h ago`;
+      if (h < 48) return 'Yesterday';
+      return d.toLocaleDateString('en-AU', { day:'numeric', month:'short', ...(d.getFullYear()!==now.getFullYear()?{year:'numeric'}:{}) });
+    }
+
+    let brainCache = [];
+    let brainSearchTimer;
+
+    function renderBrainEntry(e) {
+      const col = TYPE_COLORS[e.type] || '#94a3b8';
+      return `
+        <div class="brain-entry${e.pinned ? ' pinned' : ''}" id="entry-${e.id}">
+          <div class="brain-entry-meta">
+            <span class="type-chip" style="color:${col};background:${col}22;">${escHtml(e.type)}</span>
+            ${e.campaign_name ? `<span class="camp-chip">${escHtml(e.campaign_name)}</span>` : ''}
+            <span class="brain-ts">${fmtBrainDate(e.created_at)}</span>
+            <div class="brain-entry-actions">
+              <button class="icon-btn${e.pinned ? ' pin-on' : ''}" onclick="brainTogglePin(${e.id},${!!e.pinned})" title="${e.pinned?'Unpin':'Pin'}">📌</button>
+              <button class="icon-btn" onclick="brainStartEdit(${e.id})" title="Edit">✎</button>
+              <button class="icon-btn" onclick="brainDeleteEntry(${e.id})" title="Delete">✕</button>
+            </div>
+          </div>
+          <div class="brain-entry-body">${escHtml(e.body)}</div>
+        </div>`;
+    }
+
+    async function fetchAndRenderEntries() {
+      const type = document.getElementById('filter-type')?.value || '';
+      const camp = document.getElementById('filter-campaign')?.value || '';
+      const q    = document.getElementById('brain-search')?.value || '';
+      const params = new URLSearchParams();
+      if (type) params.set('type', type);
+      if (camp) params.set('campaign_id', camp);
+      if (q)    params.set('q', q);
+      const entries = await fetch(`/api/clients/${clientId}/brain?${params}`).then(r=>r.json()).catch(()=>[]);
+      brainCache = entries;
+      const el  = document.getElementById('brain-feed');
+      const btn = document.getElementById('brain-summarise-btn');
+      if (btn) btn.style.display = entries.length ? 'inline-flex' : 'none';
+      if (!el) return;
+      if (!entries.length) { el.innerHTML = '<p style="color:var(--text-dim);font-size:13px;margin-top:8px;">No entries yet.</p>'; return; }
+      el.innerHTML = renderGroupedFeed(entries, renderBrainEntry);
+    }
+
+    function groupEntries(entries) {
+      const now = new Date();
+      const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+      const weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+      const groups = { pinned: [], today: [], week: [], older: [] };
+      entries.forEach(e => {
+        if (e.pinned) { groups.pinned.push(e); return; }
+        const d = new Date(e.created_at);
+        if (d >= todayStart)      groups.today.push(e);
+        else if (d >= weekStart)  groups.week.push(e);
+        else                      groups.older.push(e);
+      });
+      return groups;
+    }
+
+    function renderGroupedFeed(entries, renderFn) {
+      const { pinned, today, week, older } = groupEntries(entries);
+      let html = '';
+      if (pinned.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header">📌 Pinned</div>
+          ${pinned.map(renderFn).join('')}
+        </div>`;
+      if (today.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header">Today</div>
+          ${today.map(renderFn).join('')}
+        </div>`;
+      if (week.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header clickable" onclick="toggleBrainGroup(this)">
+            This Week <span class="brain-group-count">(${week.length})</span>
+            <span class="brain-group-toggle">▴</span>
+          </div>
+          <div class="brain-group-body">${week.map(renderFn).join('')}</div>
+        </div>`;
+      if (older.length) html += `
+        <div class="brain-group">
+          <div class="brain-group-header clickable" onclick="toggleBrainGroup(this)">
+            Older <span class="brain-group-count">(${older.length})</span>
+            <span class="brain-group-toggle">▾</span>
+          </div>
+          <div class="brain-group-body" style="display:none;">${older.map(renderFn).join('')}</div>
+        </div>`;
+      return html;
+    }
+
+    function toggleBrainGroup(header) {
+      const body = header.nextElementSibling;
+      const open = body.style.display !== 'none';
+      body.style.display = open ? 'none' : '';
+      header.querySelector('.brain-group-toggle').textContent = open ? '▾' : '▴';
+    }
+
+    function toggleAddForm() {
+      const form = document.getElementById('brain-add-form');
+      const visible = form.style.display !== 'none';
+      form.style.display = visible ? 'none' : '';
+      if (!visible) document.getElementById('add-body').focus();
+    }
+
+    async function submitAddForm() {
+      const type        = document.getElementById('add-type').value;
+      const body        = document.getElementById('add-body').value.trim();
+      const campaign_id = document.getElementById('add-campaign').value || null;
+      if (!body) return;
+      await fetch(`/api/clients/${clientId}/brain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, body, campaign_id })
+      });
+      document.getElementById('add-body').value = '';
+      document.getElementById('brain-add-form').style.display = 'none';
+      fetchAndRenderEntries();
+      const btn = document.getElementById('brain-summarise-btn');
+      if (btn && btn.textContent === 'Regenerate') {
+        btn.textContent = 'Update Summary';
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
+      }
+    }
+
+    function brainStartEdit(id) {
+      const e = brainCache.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById(`entry-${id}`).innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <select id="edit-type-${id}" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:5px 8px;">
+            ${typeOptions(e.type)}
+          </select>
+        </div>
+        <textarea id="edit-body-${id}" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:13px;padding:10px;resize:vertical;min-height:80px;font-family:inherit;box-sizing:border-box;">${escHtml(e.body)}</textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="brainCancelEdit(${id})">Cancel</button>
+          <button class="btn btn-primary" onclick="brainSaveEdit(${id})">Save</button>
+        </div>`;
+    }
+
+    async function brainSaveEdit(id) {
+      const body = document.getElementById(`edit-body-${id}`)?.value?.trim();
+      const type = document.getElementById(`edit-type-${id}`)?.value;
+      if (!body) return;
+      await fetch(`/api/brain/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body, type })
+      });
+      fetchAndRenderEntries();
+    }
+
+    function brainCancelEdit(id) {
+      const e = brainCache.find(x => x.id === id);
+      if (!e) return fetchAndRenderEntries();
+      document.getElementById(`entry-${id}`).outerHTML = renderBrainEntry(e);
+    }
+
+    async function brainDeleteEntry(id) {
+      if (!confirm('Delete this entry?')) return;
+      await fetch(`/api/brain/${id}`, { method: 'DELETE' });
+      fetchAndRenderEntries();
+    }
+
+    async function brainTogglePin(id, currentPinned) {
+      await fetch(`/api/brain/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: !currentPinned })
+      });
+      fetchAndRenderEntries();
+    }
+
+    function debouncedSearch() {
+      clearTimeout(brainSearchTimer);
+      brainSearchTimer = setTimeout(fetchAndRenderEntries, 300);
+    }
+
+    function renderBrainOverview({ summary, updates = [], action_items = [] }) {
+      const s = document.getElementById('brain-card-summary');
+      const u = document.getElementById('brain-card-updates');
+      const a = document.getElementById('brain-card-actions');
+      if (s) s.innerHTML = `<div class="brain-overview-label">Summary</div>
+        ${summary
+          ? `<p style="font-size:13px;line-height:1.7;margin:0;">${escHtml(summary)}</p>`
+          : '<p style="color:var(--text-dim);font-size:13px;margin:0;">No summary yet.</p>'}`;
+      if (u) u.innerHTML = `<div class="brain-overview-label">Updates</div>
+        ${updates.length
+          ? `<ul class="brain-overview-list">${updates.map(x => `<li>${escHtml(x)}</li>`).join('')}</ul>`
+          : '<p style="color:var(--text-dim);font-size:13px;margin:0;">No updates yet.</p>'}`;
+      if (a) a.innerHTML = `<div class="brain-overview-label">Action Items</div>
+        ${action_items.length
+          ? `<div class="brain-overview-actions">${action_items.map(x => `
+              <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:8px;font-size:13px;">
+                ${x.who ? `<span style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600;white-space:nowrap;">${escHtml(x.who)}</span>` : ''}
+                ${x.what ? `<span>${escHtml(x.what)}</span>` : ''}
+                ${x.where ? `<span style="color:var(--text-muted);">@ ${escHtml(x.where)}</span>` : ''}
+              </div>`).join('')}</div>`
+          : '<p style="color:var(--text-dim);font-size:13px;margin:0;">No action items yet.</p>'}`;
+    }
+
+    async function loadBrainOverview(regenerate = false) {
+      const btn = document.getElementById('brain-summarise-btn');
+      if (btn) btn.disabled = true;
+      try {
+        const url = `/api/clients/${clientId}/brain/summary${regenerate ? '?regenerate=true' : ''}`;
+        const data = await fetch(url).then(r => r.json());
+        renderBrainOverview(data);
+        if (btn) {
+          btn.style.background = '';
+          btn.style.color = '';
+          btn.textContent = regenerate ? '✓ Updated' : 'Regenerate';
+          btn.disabled = false;
+          if (regenerate) setTimeout(() => { btn.textContent = 'Regenerate'; }, 2000);
+        }
+      } catch {
+        if (btn) { btn.style.background = ''; btn.style.color = ''; btn.disabled = false; }
+      }
+    }
+
+    function loadBrainSummary() { loadBrainOverview(true); }
+
+    async function loadBrainFeed() {
+      loadBrainOverview(false);
+      const filterSel = document.getElementById('filter-campaign');
+      const addSel    = document.getElementById('add-campaign');
+      if (filterSel && addSel) {
+        campaigns.forEach(c => {
+          const opt = `<option value="${c.id}">${escHtml(c.name)}</option>`;
+          filterSel.insertAdjacentHTML('beforeend', opt);
+          addSel.insertAdjacentHTML('beforeend', opt);
+        });
+      }
+      await fetchAndRenderEntries();
+    }
+
     load();
+
   </script>
 </body>
 </html>

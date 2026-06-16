@@ -7,12 +7,31 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
   <style>
-    .board-header {
+    /* Campaign info card */
+    .camp-info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 24px;
+    }
+    .camp-info-top {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
       margin-bottom: 16px;
+    }
+    .camp-info-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .camp-info-chips {
+      display: flex;
+      gap: 8px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .status-chip {
       display: inline-flex;
@@ -26,159 +45,176 @@
     .chip-draft      { background: var(--surface-2); color: var(--text-muted); }
     .chip-paused     { background: #3d2a00; color: var(--warning); }
     .chip-completed  { background: #1a1a2e; color: #8888cc; }
-
-    /* Stage tabs */
-    .stage-tabs-wrap { border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
-    .stage-tabs { display: flex; gap: 2px; min-width: max-content; }
-    .stage-tab {
-      display: flex; align-items: center; gap: 6px;
-      padding: 8px 16px; font-size: 13px; font-weight: 500;
-      color: var(--text-muted); background: none; border: none;
-      border-radius: 8px 8px 0 0; cursor: pointer;
-      transition: color .15s, background .15s; white-space: nowrap;
-      margin-bottom: -1px;
+    .camp-info-meta {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
     }
-    .stage-tab:hover:not(.active) { color: var(--text); background: var(--surface-2); }
-    .stage-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
-    .stage-tab.done { color: var(--success); }
-    .stage-tab .tab-count {
-      font-size: 10px; font-weight: 700; padding: 1px 6px;
-      border-radius: 100px; background: var(--surface-2); color: var(--text-dim);
+    .camp-info-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
-    .stage-tab.active .tab-count { background: rgba(0,0,0,.2); color: #fff; }
-    .stage-tab.done .tab-count { background: rgba(72,187,120,.15); color: var(--success); }
-
-    /* Stage panel */
-    .stage-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-
-    /* Task list — Asana-style rows */
-    .task-list { width: 100%; }
-    .task-cols {
-      display: grid;
-      grid-template-columns: 18px 1fr 120px 95px 85px 22px;
-      gap: 0 8px;
-      padding: 0 4px 5px;
-      border-bottom: 1px solid var(--border);
+    .camp-info-meta-label {
       font-size: 10px;
-      color: var(--text-dim);
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .06em;
+      color: var(--text-dim);
     }
-    .task-row {
-      display: grid;
-      grid-template-columns: 18px 1fr 120px 95px 85px 22px;
-      gap: 0 8px;
-      padding: 0 4px;
-      min-height: 34px;
+    .camp-info-meta-val {
+      font-size: 13px;
+      color: var(--text);
+    }
+    .camp-setup {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .camp-setup-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .camp-setup-val {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    /* Task buttons */
+    .task-stages { display: flex; flex-direction: column; gap: 12px; }
+    .task-stage { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .task-stage-header {
+      display: flex;
       align-items: center;
-      border-bottom: 1px solid var(--border);
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface-2);
+      cursor: pointer;
+      user-select: none;
     }
-    .task-row:last-child { border-bottom: none; }
-    .task-row:hover { background: var(--surface-2); }
-    .task-row.done .task-cell-title span { text-decoration: line-through; color: var(--text-dim); }
-    .task-row input[type=checkbox] {
-      width: 13px; height: 13px; flex-shrink: 0;
-      cursor: pointer; accent-color: var(--accent);
+    .task-stage-header:hover { background: var(--surface); }
+    .task-stage-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text-dim);
     }
-
-    /* Editable cells */
-    .task-cell { position: relative; cursor: text; min-width: 0; }
-    .task-cell span {
-      display: block; font-size: 13px; line-height: 1;
-      padding: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .task-stage-header.all-done .task-stage-label { color: var(--success); }
+    .task-stage-chevron { font-size: 10px; color: var(--text-dim); transition: transform .2s; }
+    .task-stage.collapsed .task-stage-chevron { transform: rotate(-90deg); }
+    .task-stage-body {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
     }
-    .task-cell-assignee span, .task-cell-due span {
-      font-size: 12px; color: var(--text-muted);
+    .task-stage.collapsed .task-stage-body { display: none; }
+    .task-btns-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
-    .task-cell input {
-      display: none; width: 100%; box-sizing: border-box;
-      background: var(--surface); border: 1px solid var(--accent);
-      border-radius: 4px; color: var(--text);
-      font-size: 12px; padding: 3px 6px;
+    .task-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      min-width: 160px;
+      max-width: 260px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .15s, background .15s;
+      position: relative;
     }
-    .task-cell input:focus { outline: none; }
-    .task-cell select {
-      display: none; width: 100%; box-sizing: border-box;
-      background: var(--surface); border: 1px solid var(--accent);
-      border-radius: 4px; color: var(--text);
-      font-size: 11px; padding: 3px 4px; cursor: pointer;
+    .task-btn:hover { border-color: var(--accent); background: var(--surface-2); }
+    .task-btn.done {
+      background: rgba(72,187,120,0.07);
+      border-color: rgba(72,187,120,0.3);
     }
-    .task-cell select:focus { outline: none; }
-    .task-cell.editing span { display: none; }
-    .task-cell.editing input,
-    .task-cell.editing select { display: block; }
-
-    /* Assignee avatar */
-    .av {
-      display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 50%; font-weight: 700; flex-shrink: 0;
-      vertical-align: middle; color: #fff;
-    }
-    .task-cell-assignee { cursor: pointer; overflow: visible !important; }
-    .task-cell-assignee > span { display: flex; align-items: center; gap: 5px; }
-
-    /* Assignee dropdown */
-    .av-dropdown {
-      display: none; position: absolute; top: calc(100% + 4px); left: 0;
-      z-index: 300; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: 0 6px 16px rgba(0,0,0,0.35);
-      padding: 4px; min-width: 150px;
-    }
-    .av-dropdown.open { display: block; }
-    .av-option {
-      display: flex; align-items: center; gap: 8px;
-      padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;
-    }
-    .av-option:hover { background: var(--surface-2); }
-
-    /* Progress chips */
-    .progress-chip {
-      display: inline-block; padding: 2px 7px; border-radius: 100px;
-      font-size: 10px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .04em; white-space: nowrap; cursor: pointer;
-    }
-    .pc-not-assigned { background: var(--surface-2); color: var(--text-dim); }
-    .pc-planned      { background: #0d1f33; color: #6699cc; }
-    .pc-in-progress  { background: #2a1800; color: #cc8800; }
-    .pc-in-review    { background: #1a0a2e; color: #9966cc; }
-    .pc-complete     { background: #0d3323; color: var(--success); }
-
-    /* Delete button */
-    .task-del {
-      background: none; border: none; color: transparent;
-      cursor: pointer; font-size: 14px; line-height: 1; padding: 0;
-      transition: color 0.1s;
-    }
-    .task-row:hover .task-del { color: var(--text-dim); }
-    .task-del:hover { color: var(--danger) !important; }
-
-    /* Add task row */
-    .add-task-row {
-      display: grid;
-      grid-template-columns: 18px 1fr;
-      gap: 0 8px;
-      padding: 0 4px;
-      min-height: 32px;
+    .task-btn-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
       align-items: center;
+      gap: 8px;
     }
-    .add-task-trigger {
-      font-size: 12px; color: var(--text-dim);
-      cursor: pointer; transition: color 0.15s;
+    .task-btn.done .task-btn-title {
+      color: var(--text-muted);
+      text-decoration: line-through;
     }
-    .add-task-trigger:hover { color: var(--accent); }
-    .add-task-inline { display: none; }
-    .add-task-inline.open { display: grid; grid-template-columns: 1fr 100px 85px auto auto; gap: 5px; align-items: center; margin-top: 2px; padding: 4px 4px 6px; }
-    .add-task-inline input {
-      background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 4px; color: var(--text); font-size: 12px;
-      padding: 4px 7px; width: 100%; box-sizing: border-box;
+    .task-btn-check {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
     }
-    .add-task-inline input:focus { outline: none; border-color: var(--accent); }
+    .task-btn.done .task-btn-check {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
+    }
+    /* Red ! badge */
+    .task-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 16px;
+      height: 16px;
+      background: var(--danger, #e53e3e);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .task-btn.done .task-badge { display: none; }
 
-    /* Drawer (campaign edit) */
-    .drawer-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200; }
+    /* Research textarea */
+    .research-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 140px;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    .research-textarea:focus { outline: none; border-color: var(--accent); }
+    .research-textarea::placeholder { color: var(--text-dim); }
+
+    /* Drawer */
+    .drawer-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300; }
     .drawer-overlay.open { display:block; }
-    .drawer { position:fixed;top:0;right:-400px;width:380px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:201;display:flex;flex-direction:column;transition:right 0.25s ease; }
+    .drawer { position:fixed;top:0;right:-400px;width:380px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:301;display:flex;flex-direction:column;transition:right 0.25s ease; }
     .drawer.open { right:0; }
     .drawer-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border); }
     .drawer-header h2 { font-size:15px;font-weight:600; }
@@ -222,6 +258,7 @@
           <select id="f-type">
             <option value="">Select type</option>
             <option value="PR">PR</option>
+            <option value="PR Light">PR Light</option>
             <option value="Social Media">Social Media</option>
             <option value="Google Ads">Google Ads</option>
             <option value="Email">Email</option>
@@ -252,40 +289,19 @@
     const campaignId = location.pathname.split('/')[2];
     let campaign = null;
     let allTasks = [];
-    let teamMembers = [];
 
     const STAGES = {
-      PR:       ['Campaign Prep','Campaign Development','Awaiting Client Approval','Set up Public Address','Pitch','Campaign Complete'],
+      PR:         ['Campaign Prep','Campaign Development','Awaiting Client Approval','Set up Public Address','Pitch','Campaign Complete'],
       'PR Light': ['Campaign Prep','Campaign Development','Awaiting Client Approval','Set up Public Address','Pitch','Campaign Complete'],
-      default:  ['Planning','In Progress','Review','Wrap-up'],
+      default:    ['Planning','In Progress','Review','Wrap-up'],
     };
     function getStages(type) { return STAGES[type] || STAGES.default; }
 
-    const GROUPS = {
-      PR: [
-        { label: 'Preparation',  stages: [0, 1] },
-        { label: 'Approval',     stages: [2] },
-        { label: 'Outreach',     stages: [3, 4] },
-        { label: 'Complete',     stages: [5] },
-      ],
-      'PR Light': [
-        { label: 'Preparation',  stages: [0, 1] },
-        { label: 'Approval',     stages: [2] },
-        { label: 'Outreach',     stages: [3, 4] },
-        { label: 'Complete',     stages: [5] },
-      ],
-    };
-    function getGroups(type) { return GROUPS[type] || null; }
-
-    // ── Load ──────────────────────────────────────────────────────────────────
-
     async function load() {
-      const [campRes, tasksRes, teamRes] = await Promise.all([
+      const [campRes, tasksRes] = await Promise.all([
         fetch(`/api/campaigns/${campaignId}`),
         fetch(`/api/campaigns/${campaignId}/tasks`),
-        fetch('/api/team-members/names')
       ]);
-      teamMembers = teamRes.ok ? await teamRes.json() : [];
       if (!campRes.ok) {
         document.getElementById('page-content').innerHTML = '<p style="color:var(--danger);">Campaign not found.</p>';
         return;
@@ -296,292 +312,194 @@
       render();
     }
 
-    let activeStageTab = 0;
-
     function render() {
-      const stages   = getStages(campaign.type);
-      const chipClass  = { active:'chip-active', draft:'chip-draft', paused:'chip-paused', completed:'chip-completed' }[campaign.status] || 'chip-draft';
+      const stages = getStages(campaign.type);
+      const chipClass = { active:'chip-active', draft:'chip-draft', paused:'chip-paused', completed:'chip-completed' }[campaign.status] || 'chip-draft';
       const statusLabel = campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1);
-      const currentStage = campaign.current_stage || 0;
+      const isPR = campaign.type === 'PR' || campaign.type === 'PR Light';
 
-      // Clamp active tab to valid range
-      if (activeStageTab >= stages.length) activeStageTab = currentStage;
+      let setup = null;
+      try { if (campaign.setup) setup = typeof campaign.setup === 'string' ? JSON.parse(campaign.setup) : campaign.setup; } catch {}
 
-      const tabsHtml = stages.map((s, i) => {
-        const stageTasks = allTasks.filter(t => t.stage_index === i);
-        const doneCount  = stageTasks.filter(t => t.done).length;
-        const allDone    = stageTasks.length > 0 && doneCount === stageTasks.length;
-        const isDone     = i < currentStage || allDone;
-        const isActive   = i === activeStageTab;
-        const countBadge = stageTasks.length ? `<span class="tab-count">${doneCount}/${stageTasks.length}</span>` : '';
-        const tick       = isDone ? '✓ ' : '';
-        return `<button class="stage-tab ${isActive?'active':''} ${isDone&&!isActive?'done':''}" onclick="switchStageTab(${i})">${tick}${s}${countBadge}</button>`;
-      }).join('');
+      const researchVal = setup?.research || '';
+      const setupHtml = (() => {
+        const parts = [];
+        if (setup?.angle) parts.push(`<div><div class="camp-setup-label">Campaign Angle</div><div class="camp-setup-val">${escHtml(setup.angle)}</div></div>`);
+        if (setup?.keyMessages?.length) parts.push(`<div><div class="camp-setup-label">Key Messages</div><div class="camp-setup-val">${setup.keyMessages.map(m => `<div style="padding:2px 0 2px 10px;border-left:2px solid var(--border);margin-bottom:4px;">${escHtml(m)}</div>`).join('')}</div></div>`);
+        if (setup?.spokespeople?.length) parts.push(`<div><div class="camp-setup-label">Spokespeople</div><div class="camp-setup-val">${escHtml(setup.spokespeople.join(', '))}</div></div>`);
+        if (isPR) parts.push(`<div>
+          <div class="camp-setup-label">Research</div>
+          <textarea id="research-field" class="research-textarea"
+            placeholder="Click 'Conduct Campaign Research' to generate article topics, publications and journalists to target — or add your own notes here."
+            onblur="saveResearch(this.value)">${escHtml(researchVal)}</textarea>
+        </div>`);
+        return parts.length ? `<div class="camp-setup">${parts.join('')}</div>` : '';
+      })();
+
+      const metaItems = [];
+      if (campaign.client_name) metaItems.push(`<div class="camp-info-meta-item"><div class="camp-info-meta-label">Client</div><div class="camp-info-meta-val"><a href="/clients/${campaign.client_id}/board" style="color:var(--accent);text-decoration:none;">${escHtml(campaign.client_name)}</a></div></div>`);
+      if (campaign.start_date) metaItems.push(`<div class="camp-info-meta-item"><div class="camp-info-meta-label">Start</div><div class="camp-info-meta-val">${escHtml(campaign.start_date)}</div></div>`);
+      if (campaign.end_date) metaItems.push(`<div class="camp-info-meta-item"><div class="camp-info-meta-label">End</div><div class="camp-info-meta-val">${escHtml(campaign.end_date)}</div></div>`);
+      if (campaign.budget) metaItems.push(`<div class="camp-info-meta-item"><div class="camp-info-meta-label">Budget</div><div class="camp-info-meta-val">$${Number(campaign.budget).toLocaleString()}</div></div>`);
+
+      const stagesHtml = stages.map((stageName, stageIdx) => {
+        const stageTasks = allTasks.filter(t => t.stage_index === stageIdx);
+        if (!stageTasks.length) return '';
+        const allDone = stageTasks.every(t => t.done);
+        const doneCount = stageTasks.filter(t => t.done).length;
+        const btns = stageTasks.map(t => {
+          const isDone = !!t.done;
+          const isResearchTask = isPR && t.title && (t.title.toLowerCase().includes('research articles') || t.title.toLowerCase().includes('conduct campaign research'));
+          const clickHandler = isResearchTask && !isDone ? `onclick="runResearch(${t.id})"` : `onclick="toggleDone(${t.id}, ${isDone ? 0 : 1})"`;
+          return `
+            <div class="task-btn ${isDone ? 'done' : ''}" id="task-btn-${t.id}" ${clickHandler}>
+              <div class="task-btn-title">
+                <div class="task-btn-check">${isDone ? '✓' : ''}</div>
+                ${escHtml(t.title)}
+              </div>
+              ${!isDone ? '<div class="task-badge">!</div>' : ''}
+            </div>`;
+        }).join('');
+        return `
+          <div class="task-stage${allDone ? ' collapsed' : ''}" id="task-stage-${stageIdx}">
+            <div class="task-stage-header${allDone ? ' all-done' : ''}" onclick="toggleStage(${stageIdx})">
+              <div class="task-stage-label">${allDone ? '✓ ' : ''}${escHtml(stageName)}</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:var(--text-dim);">${doneCount}/${stageTasks.length}</span>
+                <span class="task-stage-chevron">▼</span>
+              </div>
+            </div>
+            <div class="task-stage-body">
+              <div class="task-btns-wrap">${btns}</div>
+            </div>
+          </div>`;
+      }).filter(Boolean).join('');
 
       document.getElementById('page-content').innerHTML = `
-        <div class="board-header">
+        <div style="margin-bottom:16px;">
           <a href="/campaigns" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Campaigns</a>
-          ${campaign.client_name ? `<span style="color:var(--text-dim);">›</span><a href="/clients/${campaign.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">${escHtml(campaign.client_name)}</a>` : ''}
-          <h1 style="font-size:20px;font-weight:700;">${escHtml(campaign.name)}</h1>
-          <span class="status-chip ${chipClass}">${statusLabel}</span>
-          ${campaign.type ? `<span style="font-size:12px;color:var(--text-muted);">${escHtml(campaign.type)}</span>` : ''}
-          <div style="flex:1;"></div>
-          <button class="btn btn-ghost" style="font-size:12px;" onclick="openEditDrawer()">Edit</button>
         </div>
-        <div class="stage-tabs-wrap"><div class="stage-tabs">${tabsHtml}</div></div>
-        <div class="stage-panel" id="stage-panel"></div>
-      `;
-      renderStagePanel();
-    }
-
-    function renderStagePanel() {
-      const stages     = getStages(campaign.type);
-      const stageName  = stages[activeStageTab] || '';
-      const stageTasks = allTasks.filter(t => t.stage_index === activeStageTab);
-      const doneCount  = stageTasks.filter(t => t.done).length;
-
-      const colHeader = stageTasks.length ? `
-        <div class="task-cols">
-          <div></div><div>Task</div><div>Progress</div><div>Assignee</div><div>Due</div><div></div>
-        </div>` : '';
-
-      const tasksHtml = stageTasks.map(t => {
-        const prog = t.progress || 'Not Assigned';
-        const progClass = progressClass(prog);
-        return `
-        <div class="task-row ${t.done ? 'done' : ''}" id="task-row-${t.id}">
-          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleDone(${t.id}, this.checked)">
-          <div class="task-cell task-cell-title" onclick="editCell(this, ${t.id}, 'title')">
-            <span>${escHtml(t.title)}</span>
-            <input type="text" value="${escAttr(t.title)}"
-              onblur="saveField(${t.id}, 'title', this.value)"
-              onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelCell(this.parentElement)">
-          </div>
-          <div class="task-cell task-cell-progress" onclick="editCell(this, ${t.id}, 'progress')">
-            <span><span class="progress-chip ${progClass}">${prog}</span></span>
-            <select onchange="saveField(${t.id}, 'progress', this.value)" onblur="cancelCell(this.parentElement)">
-              ${['Not Assigned','Planned','In Progress','In Review','Complete'].map(o => `<option${o===prog?' selected':''}>${o}</option>`).join('')}
-            </select>
-          </div>
-          <div class="task-cell task-cell-assignee" onclick="openAssigneeSelector(event, ${t.id})">
-            <span>${assigneeDisplay(t.assignee)}</span>
-            <div class="av-dropdown" id="av-drop-${t.id}">
-              <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, null)">
-                <span style="font-size:11px;color:var(--text-dim)">— Unassign</span>
+        <div class="camp-info-card">
+          <div class="camp-info-top">
+            <div>
+              <h1 class="camp-info-title">${escHtml(campaign.name)}</h1>
+              <div class="camp-info-chips">
+                <span class="status-chip ${chipClass}">${statusLabel}</span>
+                ${campaign.type ? `<span style="font-size:12px;color:var(--text-muted);background:var(--surface-2);padding:3px 10px;border-radius:100px;">${escHtml(campaign.type)}</span>` : ''}
               </div>
-              ${teamMembers.map(name => `
-                <div class="av-option" onclick="event.stopPropagation();selectAssignee(${t.id}, '${name.replace(/'/g,"\\'")}')">
-                  ${avatarHtml(name)} ${escHtml(name)}
-                </div>`).join('')}
             </div>
+            <button class="btn btn-ghost" style="font-size:12px;white-space:nowrap;" onclick="openEditDrawer()">Edit Campaign</button>
           </div>
-          <div class="task-cell task-cell-due" onclick="editCell(this, ${t.id}, 'due_date')">
-            <span>${t.due_date || '<span style=color:var(--text-dim)>—</span>'}</span>
-            <input type="date" value="${t.due_date || ''}"
-              onchange="saveField(${t.id}, 'due_date', this.value)"
-              onblur="saveField(${t.id}, 'due_date', this.value)"
-              onkeydown="if(event.key==='Escape')cancelCell(this.parentElement)">
-          </div>
-          <button class="task-del" onclick="deleteTask(${t.id})" title="Delete">×</button>
-        </div>`;
-      }).join('');
-
-      const emptyMsg = `<div style="padding:24px 16px;font-size:13px;color:var(--text-dim);">No tasks in this stage yet.</div>`;
-
-      document.getElementById('stage-panel').innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);">
-          <span style="font-size:13px;font-weight:600;">${escHtml(stageName)}</span>
-          <span style="font-size:12px;color:var(--text-muted);">${doneCount}/${stageTasks.length} done</span>
+          ${metaItems.length ? `<div class="camp-info-meta">${metaItems.join('')}</div>` : ''}
+          ${setupHtml}
         </div>
-        <div style="padding:8px 20px 12px;">
-          <div class="task-list">
-            ${colHeader}
-            ${stageTasks.length ? tasksHtml : emptyMsg}
-          </div>
-          <div class="add-task-row">
-            <div></div>
-            <div class="add-task-trigger" id="add-trigger-${activeStageTab}" onclick="showAddForm(${activeStageTab})">+ Add task</div>
-          </div>
-          <div class="add-task-inline" id="add-form-${activeStageTab}">
-            <input type="text" id="add-title-${activeStageTab}" placeholder="Task title…"
-              onkeydown="if(event.key==='Enter')submitTask(${activeStageTab});if(event.key==='Escape')hideAddForm(${activeStageTab})">
-            <input type="text" id="add-assignee-${activeStageTab}" placeholder="Assignee">
-            <input type="date" id="add-due-${activeStageTab}">
-            <button class="btn btn-primary" style="font-size:12px;padding:4px 10px;white-space:nowrap;" onclick="submitTask(${activeStageTab})">Add</button>
-            <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px;" onclick="hideAddForm(${activeStageTab})">✕</button>
-          </div>
-        </div>`;
+        <div class="task-stages" id="task-stages">
+          ${stagesHtml || '<p style="color:var(--text-dim);font-size:13px;">No tasks yet.</p>'}
+        </div>
+      `;
     }
-
-    function switchStageTab(i) {
-      activeStageTab = i;
-      document.querySelectorAll('.stage-tab').forEach((el, idx) => el.classList.toggle('active', idx === i));
-      renderStagePanel();
-    }
-
-    // ── Add task ───────────────────────────────────────────────────────────────
-
-    function showAddForm(stageIndex) {
-      document.getElementById(`add-trigger-${stageIndex}`).style.display = 'none';
-      const form = document.getElementById(`add-form-${stageIndex}`);
-      form.classList.add('open');
-      document.getElementById(`add-title-${stageIndex}`).focus();
-    }
-    function hideAddForm(stageIndex) {
-      document.getElementById(`add-form-${stageIndex}`).classList.remove('open');
-      const trigger = document.getElementById(`add-trigger-${stageIndex}`);
-      if (trigger) trigger.style.display = '';
-    }
-
-    async function submitTask(stageIndex) {
-      const title = document.getElementById(`add-title-${stageIndex}`).value.trim();
-      if (!title) return;
-      const assignee = document.getElementById(`add-assignee-${stageIndex}`).value.trim();
-      const due_date = document.getElementById(`add-due-${stageIndex}`).value;
-      hideAddForm(stageIndex);
-      await fetch(`/api/campaigns/${campaignId}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage_index: stageIndex, title, assignee: assignee || null, due_date: due_date || null })
-      });
-      load();
-    }
-
-    // ── Toggle done ────────────────────────────────────────────────────────────
 
     async function toggleDone(taskId, done) {
+      const btn = document.getElementById(`task-btn-${taskId}`);
+      if (btn) {
+        btn.classList.toggle('done', !!done);
+        const check = btn.querySelector('.task-btn-check');
+        if (check) check.textContent = done ? '✓' : '';
+        const badge = btn.querySelector('.task-badge');
+        if (done) { if (badge) badge.remove(); }
+        else if (!badge) { const b = document.createElement('div'); b.className = 'task-badge'; b.textContent = '!'; btn.appendChild(b); }
+        btn.setAttribute('onclick', `toggleDone(${taskId}, ${done ? 0 : 1})`);
+      }
+      const task = allTasks.find(t => t.id === taskId);
+      if (task) task.done = done ? 1 : 0;
+
+      // Auto-collapse when all done, re-expand if un-ticked
+      const stageIdx = task?.stage_index;
+      if (stageIdx !== undefined) {
+        const stageTasks = allTasks.filter(t => t.stage_index === stageIdx);
+        const allDone = stageTasks.every(t => t.done);
+        const section = document.getElementById(`task-stage-${stageIdx}`);
+        const header = section?.querySelector('.task-stage-header');
+        const label = section?.querySelector('.task-stage-label');
+        const countEl = section?.querySelector('.task-stage-header > div > span:first-child');
+        if (countEl) countEl.textContent = `${stageTasks.filter(t=>t.done).length}/${stageTasks.length}`;
+        if (allDone) {
+          setTimeout(() => {
+            section?.classList.add('collapsed');
+            header?.classList.add('all-done');
+            if (label) label.textContent = '✓ ' + label.textContent.replace(/^✓ /, '');
+          }, 400);
+        } else {
+          section?.classList.remove('collapsed');
+          header?.classList.remove('all-done');
+          if (label) label.textContent = label.textContent.replace(/^✓ /, '');
+        }
+      }
+
       await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ done })
+        body: JSON.stringify({ done: !!done })
       });
-      const task = allTasks.find(t => t.id === taskId);
-      if (task) task.done = done ? 1 : 0;
-      // Refresh tab badges and panel
-      const stages     = getStages(campaign.type);
-      const currentStage = campaign.current_stage || 0;
-      document.querySelectorAll('.stage-tab').forEach((el, i) => {
-        const stageTasks = allTasks.filter(t => t.stage_index === i);
-        const doneCount  = stageTasks.filter(t => t.done).length;
-        const allDone    = stageTasks.length > 0 && doneCount === stageTasks.length;
-        const isDone     = i < currentStage || allDone;
-        el.classList.toggle('done', isDone && i !== activeStageTab);
-        const badge = el.querySelector('.tab-count');
-        if (badge) badge.textContent = `${doneCount}/${stageTasks.length}`;
-        const tick = isDone ? '✓ ' : '';
-        el.childNodes[0].textContent = tick + stages[i];
+    }
+
+    function toggleStage(stageIdx) {
+      const section = document.getElementById(`task-stage-${stageIdx}`);
+      if (section) section.classList.toggle('collapsed');
+    }
+
+    // ── Research ──────────────────────────────────────────────────────────────
+
+    async function runResearch(taskId) {
+      const btn = document.getElementById(`task-btn-${taskId}`);
+      const titleEl = btn?.querySelector('.task-btn-title');
+      if (titleEl) titleEl.innerHTML = `<div class="task-btn-check"></div> Generating…`;
+
+      try {
+        const res = await fetch(`/api/pitch-lists/campaign/${campaignId}/research`, { method: 'POST' });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        // Save to setup.research
+        let setup = null;
+        try { setup = campaign.setup ? JSON.parse(campaign.setup) : {}; } catch { setup = {}; }
+        setup.research = data.brief;
+        campaign.setup = JSON.stringify(setup);
+        await saveSetupField(setup);
+
+        // Populate the textarea
+        const field = document.getElementById('research-field');
+        if (field) field.value = data.brief;
+
+        // Mark task done
+        await toggleDone(taskId, 1);
+      } catch (err) {
+        if (titleEl) titleEl.innerHTML = `<div class="task-btn-check"></div> Conduct Campaign Research`;
+        alert('Research failed: ' + err.message);
+      }
+    }
+
+    async function saveResearch(value) {
+      let setup = null;
+      try { setup = campaign.setup ? JSON.parse(campaign.setup) : {}; } catch { setup = {}; }
+      setup.research = value;
+      campaign.setup = JSON.stringify(setup);
+      await saveSetupField(setup);
+    }
+
+    async function saveSetupField(setup) {
+      await fetch(`/api/campaigns/${campaignId}/setup`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setup })
       });
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function escAttr(s) { return escHtml(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-    function avatarColor(name) {
-      const palette = ['#5b5fcf','#2e7d32','#8e3a7a','#d4870a','#0277bd','#6a4f00','#00695c','#b71c1c'];
-      let h = 0;
-      for (let i = 0; i < (name||'').length; i++) h = (name.charCodeAt(i) + ((h << 5) - h)) | 0;
-      return palette[Math.abs(h) % palette.length];
-    }
-    function avatarHtml(name, size=20) {
-      if (!name) return '';
-      const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-      return `<span class="av" style="width:${size}px;height:${size}px;background:${avatarColor(name)};font-size:${Math.round(size*.42)}px">${initials}</span>`;
-    }
-    function assigneeDisplay(name) {
-      return name
-        ? `${avatarHtml(name)} ${name}`
-        : '<span style="color:var(--text-dim)">—</span>';
-    }
-
-    function openAssigneeSelector(event, taskId) {
-      event.stopPropagation();
-      const drop = document.getElementById(`av-drop-${taskId}`);
-      const isOpen = drop.classList.contains('open');
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
-      if (!isOpen) drop.classList.add('open');
-    }
-    async function selectAssignee(taskId, name) {
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
-      await saveField(taskId, 'assignee', name || '');
-    }
-    document.addEventListener('click', () => {
-      document.querySelectorAll('.av-dropdown.open').forEach(d => d.classList.remove('open'));
-    });
-
-    function progressClass(p) {
-      return { 'Not Assigned': 'pc-not-assigned', 'Planned': 'pc-planned', 'In Progress': 'pc-in-progress', 'In Review': 'pc-in-review', 'Complete': 'pc-complete' }[p] || 'pc-not-assigned';
-    }
-
-    // ── Per-field inline edit ──────────────────────────────────────────────────
-
-    function editCell(cell, taskId, field) {
-      cell.classList.add('editing');
-      const el = cell.querySelector('input, select');
-      if (!el) return;
-      el.focus();
-      if (el.type === 'text') el.select();
-    }
-
-    function cancelCell(cell) {
-      cell.classList.remove('editing');
-    }
-
-    const cellFieldMap = { title: 'title', assignee: 'assignee', due_date: 'due', progress: 'progress' };
-
-    async function saveField(taskId, field, value) {
-      const task = allTasks.find(t => t.id === taskId);
-      if (!task) return;
-      const sanitized = (value && value.trim) ? value.trim() : value;
-      if (field === 'title' && !sanitized) { cancelCell(document.querySelector(`#task-row-${taskId} .task-cell-title`)); return; }
-
-      const row = document.getElementById(`task-row-${taskId}`);
-      if (row) {
-        row.querySelectorAll('.task-cell').forEach(c => c.classList.remove('editing'));
-        const cellName = cellFieldMap[field];
-        const span = row.querySelector(`.task-cell-${cellName} > span`);
-        if (span) {
-          if (field === 'progress') {
-            const p = sanitized || 'Not Assigned';
-            span.innerHTML = `<span class="progress-chip ${progressClass(p)}">${p}</span>`;
-          } else if (field === 'assignee') {
-            span.innerHTML = assigneeDisplay(sanitized);
-          } else {
-            span.innerHTML = sanitized || '<span style=color:var(--text-dim)>—</span>';
-          }
-        }
-      }
-
-      task[field] = sanitized || null;
-      await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: sanitized || null })
-      });
-    }
-
-    async function deleteTask(taskId) {
-      if (!confirm('Delete this task?')) return;
-      await fetch(`/api/campaigns/${campaignId}/tasks/${taskId}`, { method: 'DELETE' });
-      load();
-    }
-
-    // ── Advance / Back ─────────────────────────────────────────────────────────
-
-    async function setStage(index) {
-      const stages = getStages(campaign.type);
-      const clamped = Math.max(0, Math.min(stages.length, index));
-      await fetch(`/api/campaigns/${campaignId}/stage`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: clamped })
-      });
-      campaign.current_stage = clamped;
-      render();
-    }
-
-    // ── Campaign edit drawer ───────────────────────────────────────────────────
+    // ── Edit drawer ────────────────────────────────────────────────────────────
 
     function openEditDrawer() {
       document.getElementById('f-name').value = campaign.name || '';

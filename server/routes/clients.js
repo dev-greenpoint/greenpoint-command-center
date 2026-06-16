@@ -3,6 +3,7 @@ const router = express.Router();
 const { getDb, saveDb } = require('../db/database');
 const { GENERAL_CHECKLIST, SERVICE_CHECKLIST, ONBOARDING_STAGES, TASK_TEMPLATES } = require('../db/checklistTemplates');
 const { runResearch } = require('../db/runResearch');
+const { runDrive } = require('../db/runDrive');
 
 function rowsFromResult(result) {
   if (!result.length) return [];
@@ -109,8 +110,9 @@ router.post('/', async (req, res) => {
   saveDb();
   res.status(201).json({ id: clientId });
 
-  // Run research in background — don't await
+  // Run background tasks — don't await
   runResearch(clientId);
+  runDrive(clientId);
 });
 
 router.put('/:id', async (req, res) => {

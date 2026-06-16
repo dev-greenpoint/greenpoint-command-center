@@ -19,6 +19,9 @@ const teamMembersRouter = require('./routes/team-members');
 const { router: strategiesRouter } = require('./routes/strategies');
 const mediaHubsRouter = require('./routes/media-hubs');
 const onboardingRouter = require('./routes/onboarding');
+const meetingsRouter = require('./routes/meetings');
+const pitchListsRouter = require('./routes/pitch-lists');
+const { clientBrainRouter, entryRouter: brainEntryRouter } = require('./routes/brain');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,8 +78,12 @@ app.use('/api/team-members', teamMembersRouter);
 app.use('/api/strategies', strategiesRouter);
 app.use('/api/media-hubs', mediaHubsRouter);
 app.use('/api/onboarding', onboardingRouter);
+app.use('/api/clients', meetingsRouter);
+app.use('/api/pitch-lists', pitchListsRouter);
+app.use('/api/clients/:id/brain', clientBrainRouter);
+app.use('/api/brain', brainEntryRouter);
 
-const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies'];
+const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies', 'deck-creator'];
 PAGES.forEach(page => {
   app.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, `../client/pages/${page}.html`));
@@ -109,6 +116,10 @@ app.get('/strategy/:id', (req, res) => {
 
 app.get('/s/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/strategy-view.html'));
+});
+
+app.get('/pitch-list/:campaignId', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/pitch-list.html'));
 });
 
 app.get('/media-hub/:clientId', (req, res) => {
