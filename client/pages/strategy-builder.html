@@ -261,9 +261,20 @@
       { id: 'partnerships',  label: 'Partnerships',          group: 'Channels',   hint: 'Brand partners, influencers, collaborations, and co-marketing targets' },
       { id: 'paid',          label: 'Paid Media',            group: 'Channels',   hint: 'Paid channel plan — platforms, budget approach, ad formats, targeting' },
       { id: 'design',        label: 'Design',                group: 'Channels',   hint: 'Design direction, brand assets, visual identity, and creative deliverables' },
+      { id: 'moodboard',     label: 'Moodboard',             group: 'Channels',   hint: 'Visual direction — mood, colour palette, typography, and references' },
       // Execution
       { id: 'timeline',      label: 'Timeline & Phasing',    group: 'Execution',  hint: 'Campaign phases, key milestones, and delivery schedule' },
       { id: 'measurement',   label: 'Measurement & KPIs',    group: 'Execution',  hint: 'Success metrics, targets, benchmarks, and reporting cadence' },
+      { id: 'budget',        label: 'Budget',                group: 'Execution',  hint: 'Budget breakdown by line item, with totals and assumptions' },
+      // Report (deck-specific)
+      { id: 'summary',       label: 'Summary',                group: 'Report',    hint: 'Headline outcome and overall summary of results' },
+      { id: 'coverage',      label: 'Coverage',               group: 'Report',    hint: 'Media coverage secured — outlet, headline, reach, and sentiment' },
+      { id: 'learnings',     label: 'Learnings',              group: 'Report',    hint: 'Key learnings and recommendations for next time' },
+      // Workshop (deck-specific)
+      { id: 'agenda',        label: 'Agenda',                 group: 'Workshop',  hint: 'Running order for the workshop session' },
+      { id: 'discovery',     label: 'Discovery',               group: 'Workshop', hint: 'Brand discovery questions, grouped by theme' },
+      { id: 'immersion',     label: 'Immersion',              group: 'Workshop',  hint: 'Immersion framework — stages and what each uncovers' },
+      { id: 'next_steps',    label: 'Next Steps',             group: 'Workshop',  hint: 'Agreed next steps, owners, and due dates' },
     ];
 
     const DEFAULT_ACTIVE = ['overview','strategy','audiences','messages','timeline'];
@@ -296,6 +307,24 @@
       timeline: `## Phase 1 — Foundation\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two\n\n## Phase 2 — Launch\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two\n\n## Phase 3 — Sustain\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two`,
 
       measurement: `## Key Metrics\n\n**Metric One**: What we're measuring and why.\n\n**Metric Two**: What we're measuring and why.\n\n## Targets\n\n- Target one\n- Target two\n- Target three\n\n## Reporting Cadence\n\n- Monthly PR update — coverage log, metrics, recommendations\n- Quarterly report — full campaign performance review`,
+
+      budget: `## Budget Breakdown\n\n- Line item one: amount — what it covers\n- Line item two: amount — what it covers\n- Line item three: amount — what it covers\n\n## Total\n_Total budget and any assumptions._`,
+
+      moodboard: `## Visual Direction\n_Describe the mood, aesthetic, and references._\n\n## Colour Palette\n\n## Typography\n\n## Reference Images\n_Add reference images below using the image button._`,
+
+      summary: `## Overview\n_Headline outcome first, then supporting detail._\n\n## Key Results\n\n- Result one\n- Result two\n- Result three`,
+
+      coverage: `**Outlet — Headline**: date, reach/circulation, angle or sentiment.\n\n**Outlet — Headline**: date, reach/circulation, angle or sentiment.\n\n**Outlet — Headline**: date, reach/circulation, angle or sentiment.`,
+
+      learnings: `**Learning One**: What happened, why it matters, and the recommendation for next time.\n\n**Learning Two**: What happened, why it matters, and the recommendation for next time.\n\n**Learning Three**: What happened, why it matters, and the recommendation for next time.`,
+
+      agenda: `1. Welcome & Introductions (10 min)\n   Who's in the room and what we're here to do.\n\n2. Agenda Item (X min)\n   What happens and who leads it.\n\n3. Agenda Item (X min)\n   What happens and who leads it.\n\n4. Wrap-up & Next Steps (10 min)`,
+
+      discovery: `## Brand & Positioning\n\n- Question one\n- Question two\n\n## Audience & Market\n\n- Question one\n- Question two\n\n## Goals & Success\n\n- Question one\n- Question two`,
+
+      immersion: `**Stage One — Discover**: What happens and what it uncovers.\n\n**Stage Two — Define**: What happens and what it uncovers.\n\n**Stage Three — Align**: What happens and what it uncovers.`,
+
+      next_steps: `- Action one: owner, due date\n- Action two: owner, due date\n- Action three: owner, due date`,
     };
 
     function getLabelFor(id) {

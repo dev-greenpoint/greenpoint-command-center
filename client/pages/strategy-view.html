@@ -452,8 +452,17 @@
       { id: 'partnerships',  label: 'Partnerships',        renderFn: renderGeneric },
       { id: 'paid',          label: 'Paid Media',          renderFn: renderGeneric },
       { id: 'design',        label: 'Design',              renderFn: renderGeneric },
+      { id: 'moodboard',     label: 'Moodboard',           renderFn: renderGeneric },
       { id: 'timeline',      label: 'Timeline & Phasing',  renderFn: renderTimeline },
       { id: 'measurement',   label: 'Measurement & KPIs',  renderFn: renderGeneric },
+      { id: 'budget',        label: 'Budget',              renderFn: renderGeneric },
+      { id: 'summary',       label: 'Summary',             renderFn: renderGeneric },
+      { id: 'coverage',      label: 'Coverage',            renderFn: renderGeneric },
+      { id: 'learnings',     label: 'Learnings',           renderFn: renderGeneric },
+      { id: 'agenda',        label: 'Agenda',              renderFn: renderGeneric },
+      { id: 'discovery',     label: 'Discovery',           renderFn: renderGeneric },
+      { id: 'immersion',     label: 'Immersion',           renderFn: renderGeneric },
+      { id: 'next_steps',    label: 'Next Steps',          renderFn: renderGeneric },
     ];
 
     // ── Parse text into structured blocks ────────────────────────────────────────
@@ -840,7 +849,7 @@
     function renderTabBar() {
       const bar = document.getElementById('tab-bar');
       bar.innerHTML = sectionDefs.map((s, i) => `
-        <button class="tab-btn ${i===activeSectionIndex?'active':''}" onclick="setTab(${i})">${s.label}</button>
+        <button class="tab-btn ${i===activeSectionIndex?'active':''}" onclick="setTab(${i})">${esc(s.label)}</button>
       `).join('');
     }
 
@@ -878,7 +887,7 @@
       const area = document.getElementById('content-area');
 
       area.innerHTML = `
-        <div class="section-eyebrow">${def.label}</div>
+        <div class="section-eyebrow">${esc(def.label)}</div>
         <h2 class="section-title">${esc(def.sectionTitle || def.label)}</h2>
         <div style="margin-top:32px;">${def.renderFn(content)}</div>
       `;
@@ -897,12 +906,14 @@
       }
 
       strategyData = await res.json();
-      sections = strategyData.sections ? JSON.parse(strategyData.sections) : {};
+      const rawSections = strategyData.sections ? JSON.parse(strategyData.sections) : {};
+      const sectionLabels = rawSections._labels || {};
+      sections = Object.fromEntries(Object.entries(rawSections).filter(([k]) => k !== '_labels'));
       const activeSectionIds = strategyData.active_sections ? JSON.parse(strategyData.active_sections) : [];
 
-      sectionDefs = ALL_SECTION_DEFS.filter(s =>
-        activeSectionIds.includes(s.id) && sections[s.id] && sections[s.id].trim()
-      );
+      sectionDefs = ALL_SECTION_DEFS
+        .filter(s => activeSectionIds.includes(s.id) && sections[s.id] && sections[s.id].trim())
+        .map(s => sectionLabels[s.id] ? { ...s, label: sectionLabels[s.id] } : s);
 
       if (!sectionDefs.length) {
         document.body.innerHTML += `<div class="outer"><div class="center-msg"><h2>No content yet</h2><p>This strategy is still being prepared.</p></div></div>`;

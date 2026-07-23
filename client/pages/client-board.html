@@ -2174,8 +2174,18 @@
       { id: 'partnerships',  label: 'Partnerships' },
       { id: 'email',         label: 'Email & CRM' },
       { id: 'paid',          label: 'Paid Media' },
+      { id: 'design',        label: 'Design' },
+      { id: 'moodboard',     label: 'Moodboard' },
       { id: 'timeline',      label: 'Timeline & Phasing' },
       { id: 'measurement',   label: 'Measurement & KPIs' },
+      { id: 'budget',        label: 'Budget' },
+      { id: 'summary',       label: 'Summary' },
+      { id: 'coverage',      label: 'Coverage' },
+      { id: 'learnings',     label: 'Learnings' },
+      { id: 'agenda',        label: 'Agenda' },
+      { id: 'discovery',     label: 'Discovery' },
+      { id: 'immersion',     label: 'Immersion' },
+      { id: 'next_steps',    label: 'Next Steps' },
     ];
 
     async function openStrategyDrawer(strategyId) {
@@ -2190,9 +2200,11 @@
         return;
       }
       const s = await res.json();
-      let sections = {}, active = [];
+      let sections = {}, active = [], sectionLabels = {};
       try {
-        sections = s.sections ? JSON.parse(s.sections) : {};
+        const rawSections = s.sections ? JSON.parse(s.sections) : {};
+        sectionLabels = rawSections._labels || {};
+        sections = Object.fromEntries(Object.entries(rawSections).filter(([k]) => k !== '_labels'));
         active = s.active_sections ? JSON.parse(s.active_sections) : [];
       } catch (e) {
         console.warn('Failed to parse strategy sections:', e);
@@ -2221,7 +2233,7 @@
       } else {
         document.getElementById('strat-drawer-body').innerHTML = visibleSections.map(def => `
           <div class="strat-section">
-            <div class="strat-section-label">${def.label}</div>
+            <div class="strat-section-label">${escHtml(sectionLabels[def.id] || def.label)}</div>
             <div class="strat-section-body">${marked.parse(sections[def.id])}</div>
           </div>
         `).join('');

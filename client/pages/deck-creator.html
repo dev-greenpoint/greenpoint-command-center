@@ -33,7 +33,7 @@
 
     .deck-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 14px;
     }
 
@@ -82,9 +82,6 @@
       color: var(--text-dim);
     }
 
-    @media (max-width: 860px) {
-      .deck-grid { grid-template-columns: repeat(2, 1fr); }
-    }
     @media (max-width: 560px) {
       .deck-grid { grid-template-columns: 1fr; }
     }
@@ -133,57 +130,19 @@
         </div>
         <div class="page-subtitle">Choose a deck type to get started.</div>
 
-        <!-- Strategies -->
         <div class="section-block">
-          <div class="section-heading">Strategies</div>
           <div class="deck-grid">
 
-            <div class="deck-card" onclick="selectDeck('pr-comms-strategy')">
+            <div class="deck-card" onclick="selectDeck('strategy')">
               <div class="deck-card-icon">◐</div>
-              <div class="deck-card-name">PR & Comms Strategy</div>
-              <div class="deck-card-desc">Full communications strategy covering objectives, audiences, key messages, channels, and tactical plan.</div>
-              <div class="deck-card-sections">Overview → Strategy → Channels → Timeline</div>
-            </div>
-
-            <div class="deck-card" onclick="selectDeck('social-strategy')">
-              <div class="deck-card-icon">◉</div>
-              <div class="deck-card-name">Social Media Strategy</div>
-              <div class="deck-card-desc">Platform strategy, content pillars, tone of voice, posting cadence, and community management approach.</div>
-              <div class="deck-card-sections">Overview → Platforms → Content → Schedule</div>
-            </div>
-
-            <div class="deck-card" onclick="selectDeck('creative-campaign-strategy')">
-              <div class="deck-card-icon">◧</div>
-              <div class="deck-card-name">Creative Campaigns Strategy</div>
-              <div class="deck-card-desc">Campaign concept, creative direction, moodboard, channels, and activation plan.</div>
-              <div class="deck-card-sections">Overview → Creative → Moodboard → Activation</div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Decks -->
-        <div class="section-block">
-          <div class="section-heading">Decks</div>
-          <div class="deck-grid">
-
-            <div class="deck-card" onclick="selectDeck('campaign-proposal')">
-              <div class="deck-card-icon">◆</div>
-              <div class="deck-card-name">Campaign & Launch Proposal</div>
-              <div class="deck-card-desc">Campaign concept, deliverables, timeline, and budget overview for client sign-off.</div>
-              <div class="deck-card-sections">Overview → Concept → Deliverables → Budget</div>
-            </div>
-
-            <div class="deck-card" onclick="selectDeck('campaign-report')">
-              <div class="deck-card-icon">▦</div>
-              <div class="deck-card-name">Campaign Report</div>
-              <div class="deck-card-desc">Results summary, media coverage, KPI performance, and learnings from a completed campaign.</div>
-              <div class="deck-card-sections">Summary → Coverage → KPIs → Learnings</div>
+              <div class="deck-card-name">Strategy</div>
+              <div class="deck-card-desc">Full strategy document — objectives, audiences, messaging, channels, and timeline. Add or remove sections as needed.</div>
+              <div class="deck-card-sections">Overview → Strategy → Audiences → Messages → Timeline</div>
             </div>
 
             <div class="deck-card" onclick="selectDeck('kickoff-workshop')">
               <div class="deck-card-icon">◇</div>
-              <div class="deck-card-name">Kickoff Workshop</div>
+              <div class="deck-card-name">Workshop</div>
               <div class="deck-card-desc">Workshop agenda, brand discovery questions, immersion framework, and agreed next steps.</div>
               <div class="deck-card-sections">Agenda → Discovery → Immersion → Next Steps</div>
             </div>
@@ -215,12 +174,8 @@
     renderShell({ pageId: 'deck-creator', title: 'Deck Creator' });
 
     const DECK_TITLES = {
-      'pr-comms-strategy':        'PR & Comms Strategy',
-      'social-strategy':          'Social Media Strategy',
-      'creative-campaign-strategy': 'Creative Campaigns Strategy',
-      'campaign-proposal':        'Campaign & Launch Proposal',
-      'campaign-report':          'Campaign Report',
-      'kickoff-workshop':         'Kickoff Workshop',
+      'strategy':         'Strategy',
+      'kickoff-workshop': 'Workshop',
     };
 
     function escHtml(str) {
@@ -270,7 +225,7 @@
         const res = await fetch('/api/strategies', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ client_id: Number(clientId), title }),
+          body: JSON.stringify({ client_id: Number(clientId), title, deck_type: pendingType }),
         });
         if (!res.ok) throw new Error(`Failed to create deck: ${res.status}`);
         const data = await res.json();
