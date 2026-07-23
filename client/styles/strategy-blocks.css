@@ -1,0 +1,88 @@
+/* Shared rendering for strategy content blocks — used by strategy-view.html,
+   client-board.html's preview drawer, and strategy-builder.html's live previews.
+   Colors are hardcoded to match strategy-view.html's public-facing dark theme
+   literally (not each host page's own CSS variables), so the internal preview
+   looks like what the client actually sees. */
+
+.gpb-empty { color: rgba(255,255,255,0.30); font-size: 14px; }
+
+/* Richtext */
+.gpb-richtext { font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.70); }
+.gpb-richtext p { margin: 0 0 14px; }
+.gpb-richtext p:last-child { margin-bottom: 0; }
+.gpb-richtext h1, .gpb-richtext h2, .gpb-richtext h3 { font-size: 16px; font-weight: 500; color: #fff; margin: 20px 0 8px; }
+.gpb-richtext h1:first-child, .gpb-richtext h2:first-child, .gpb-richtext h3:first-child { margin-top: 0; }
+.gpb-richtext ul, .gpb-richtext ol { padding-left: 1.2em; margin: 0 0 14px; }
+.gpb-richtext li { margin-bottom: 5px; }
+.gpb-richtext strong { color: #fff; font-weight: 600; }
+.gpb-richtext em { color: rgba(255,255,255,0.55); font-style: italic; }
+.gpb-richtext + .gpb-richtext,
+.gpb-richtext + .gpb-image-inline,
+.gpb-richtext + .gpb-image-grid,
+.gpb-richtext + .gpb-image-hero,
+.gpb-richtext + .gpb-card-grid,
+.gpb-richtext + .gpb-gantt,
+.gpb-image-inline + *, .gpb-image-grid + *, .gpb-image-hero + *,
+.gpb-card-grid + *, .gpb-gantt + * { margin-top: 20px; }
+
+/* Cards */
+.gpb-card-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .gpb-card-grid { grid-template-columns: repeat(2, 1fr); } }
+.gpb-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  padding: 24px;
+}
+.gpb-card-image { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; margin-bottom: 14px; display: block; }
+.gpb-card-title { font-size: 15px; font-weight: 500; color: #fff; margin-bottom: 8px; }
+.gpb-card-body { font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.60); white-space: pre-wrap; }
+
+/* Images */
+.gpb-image-inline img { width: 100%; max-width: 560px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.10); display: block; margin-bottom: 12px; object-fit: cover; }
+.gpb-image-inline img:last-child { margin-bottom: 0; }
+.gpb-image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.gpb-image-grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.10); }
+.gpb-image-hero img { width: 100%; max-height: 420px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.10); display: block; margin-bottom: 16px; }
+.gpb-image-hero img:last-child { margin-bottom: 0; }
+
+/* Sub-tabs */
+.gpb-subtab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 24px; }
+.gpb-subtab-btn {
+  padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.60); background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10); cursor: pointer; font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.gpb-subtab-btn:hover:not(.active) { color: #fff; border-color: rgba(255,255,255,0.2); }
+.gpb-subtab-btn.active { background: #738C7B; color: #fff; border-color: #738C7B; }
+
+/* Group header dividers in a tab bar */
+.gpb-tab-group-label {
+  flex-shrink: 0; display: flex; align-items: center;
+  padding: 0 10px 0 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,0.30);
+}
+.gpb-tab-group-label:first-child { padding-left: 0; }
+
+/* Gantt */
+.gpb-gantt { width: 100%; }
+.gpb-gantt-axis { position: relative; height: 22px; border-bottom: 1px solid rgba(255,255,255,0.10); margin: 0 0 10px 160px; }
+.gpb-gantt-gridline { position: absolute; top: 0; bottom: 0; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 6px; }
+.gpb-gantt-gridline span { font-size: 10px; color: rgba(255,255,255,0.40); white-space: nowrap; }
+.gpb-gantt-today { position: absolute; top: -4px; bottom: 0; border-left: 2px dashed #9CAA98; }
+.gpb-gantt-rows { display: flex; flex-direction: column; gap: 10px; }
+.gpb-gantt-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.gpb-gantt-row-label { width: 160px; flex-shrink: 0; }
+.gpb-gantt-row-title { font-size: 13px; font-weight: 500; color: #fff; }
+.gpb-gantt-row-dates { font-size: 11px; color: rgba(255,255,255,0.40); margin-top: 1px; }
+.gpb-gantt-row-track { position: relative; flex: 1; min-width: 120px; height: 28px; background: rgba(255,255,255,0.03); border-radius: 6px; }
+.gpb-gantt-bar { position: absolute; top: 4px; bottom: 4px; background: #738C7B; border-radius: 4px; min-width: 6px; }
+.gpb-gantt-row-notes { flex-basis: 100%; font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.50); padding-left: 172px; white-space: pre-wrap; }
+@media (max-width: 480px) {
+  .gpb-gantt-row { flex-direction: column; align-items: flex-start; }
+  .gpb-gantt-row-label { width: auto; }
+  .gpb-gantt-row-track { width: 100%; }
+  .gpb-gantt-row-notes { padding-left: 0; }
+  .gpb-gantt-axis { margin-left: 0; }
+}

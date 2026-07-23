@@ -2,10 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
-const { getDb } = require('./db/database');
-const { initSchema } = require('./db/schema');
+const { createClient } = require('@supabase/supabase-js');
+const { query } = require('./db/database');
 const overviewRouter = require('./routes/overview');
 const clientsRouter = require('./routes/clients');
 const researchRouter = require('./routes/research');
@@ -31,18 +30,11 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, '../client')));
 
-// ── File uploads ──────────────────────────────────────────────────────────────
-const uploadsDir = path.join(__dirname, '../client/uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+// ── File uploads (Supabase Storage — no local disk, works on serverless) ──────
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: uploadsDir,
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     cb(null, /^image\/(jpeg|png|gif|webp)$/.test(file.mimetype));
@@ -50,18 +42,28 @@ const upload = multer({
 });
 
 app.post('/api/upload', (req, res) => {
-  upload.single('file')(req, res, (err) => {
+  upload.single('file')(req, res, async (err) => {
     if (err) {
       const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
       return res.status(status).json({ error: err.message });
     }
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    res.json({ url: `/uploads/${req.file.filename}` });
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('strategy-images')
+      .upload(filename, req.file.buffer, { contentType: req.file.mimetype });
+    if (uploadError) return res.status(500).json({ error: uploadError.message });
+
+    const { data } = supabase.storage.from('strategy-images').getPublicUrl(filename);
+    res.json({ url: data.publicUrl });
   });
 });
 
 app.get('/api/health', async (req, res) => {
-  await getDb();
+  await query('SELECT 1');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -134,8 +136,10 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html'));
 });
 
-initSchema().then(() => {
+if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Greenpoint Command Center running at http://localhost:${PORT}`);
   });
-});
+}
+
+module.exports = app;

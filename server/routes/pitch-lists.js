@@ -1,22 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const Anthropic = require('@anthropic-ai/sdk');
-const { getDb, saveDb } = require('../db/database');
+const { query } = require('../db/database');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-function rows(result) {
-  if (!result.length) return [];
-  return result[0].values.map(row =>
-    Object.fromEntries(result[0].columns.map((c, i) => [c, row[i]]))
-  );
-}
 
 // Get all pitch lists for a client (summary — for the client board card)
 router.get('/client/:clientId', async (req, res) => {
   try {
-    const db = await getDb();
-    const lists = rows(db.exec(
+    const lists = await query(
       `SELECT pl.*, c.name as campaign_name, c.type as campaign_type,
               (SELECT COUNT(*) FROM pitch_contacts pc WHERE pc.list_id = pl.id) as contact_count,
               (SELECT COUNT(*) FROM pitch_contacts pc WHERE pc.list_id = pl.id AND pc.status IN ('Pitched','Coverage Received')) as pitched_count
@@ -25,35 +17,32 @@ router.get('/client/:clientId', async (req, res) => {
        WHERE pl.client_id = ?
        ORDER BY pl.created_at DESC`,
       [req.params.clientId]
-    ));
+    );
     res.json(lists);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Get or create pitch list for a campaign
 router.get('/campaign/:campaignId', async (req, res) => {
-  const db = await getDb();
   const { campaignId } = req.params;
 
-  const campaign = rows(db.exec(
+  const [campaign] = await query(
     `SELECT c.*, cl.name as client_name, cl.code as client_code, cl.id as client_id
      FROM campaigns c JOIN clients cl ON c.client_id = cl.id WHERE c.id=?`,
     [campaignId]
-  ))[0];
+  );
   if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
 
-  let list = rows(db.exec('SELECT * FROM pitch_lists WHERE campaign_id=?', [campaignId]))[0];
+  let [list] = await query('SELECT * FROM pitch_lists WHERE campaign_id=?', [campaignId]);
   if (!list) {
-    db.run('INSERT INTO pitch_lists (client_id, campaign_id) VALUES (?, ?)', [campaign.client_id, campaignId]);
-    const newId = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
-    saveDb();
-    list = rows(db.exec('SELECT * FROM pitch_lists WHERE id=?', [newId]))[0];
+    const [{ id: newId }] = await query('INSERT INTO pitch_lists (client_id, campaign_id) VALUES (?, ?) RETURNING id', [campaign.client_id, campaignId]);
+    [list] = await query('SELECT * FROM pitch_lists WHERE id=?', [newId]);
   }
 
-  const contacts = rows(db.exec(
+  const contacts = await query(
     'SELECT * FROM pitch_contacts WHERE list_id=? ORDER BY category ASC, sort_order ASC, id ASC',
     [list.id]
-  ));
+  );
 
   res.json({
     list,
@@ -68,12 +57,11 @@ router.get('/campaign/:campaignId', async (req, res) => {
 
 // AI research brief for a campaign
 router.post('/campaign/:campaignId/research', async (req, res) => {
-  const db = await getDb();
-  const campaign = rows(db.exec(
+  const [campaign] = await query(
     `SELECT c.*, cl.name as client_name, cl.industry, cl.research as client_research
      FROM campaigns c JOIN clients cl ON c.client_id = cl.id WHERE c.id=?`,
     [req.params.campaignId]
-  ))[0];
+  );
   if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
 
   let setup = null;
@@ -120,40 +108,33 @@ Write in plain Australian English. Be specific and practical. No preamble, no si
 
 // Add a contact
 router.post('/:listId/contacts', async (req, res) => {
-  const db = await getDb();
   const { category, publication, journalist_name, journalist_title, email, phone, status, pitched_date, followup_date, notes } = req.body;
-  db.run(
+  const [{ id }] = await query(
     `INSERT INTO pitch_contacts (list_id, category, publication, journalist_name, journalist_title, email, phone, status, pitched_date, followup_date, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [req.params.listId, category || 'General', publication || null, journalist_name || null, journalist_title || null,
      email || null, phone || null, status || '', pitched_date || null, followup_date || null, notes || null]
   );
-  const id = Number(rows(db.exec('SELECT last_insert_rowid() as id'))[0].id);
-  saveDb();
   res.status(201).json({ id });
 });
 
 // Update a contact
 router.patch('/:listId/contacts/:contactId', async (req, res) => {
-  const db = await getDb();
   const editable = ['category', 'publication', 'journalist_name', 'journalist_title', 'email', 'phone', 'status', 'pitched_date', 'followup_date', 'notes'];
   const sets = [], vals = [];
   for (const field of editable) {
     if (field in req.body) { sets.push(`${field}=?`); vals.push(req.body[field] ?? null); }
   }
   if (sets.length) {
-    db.run(`UPDATE pitch_contacts SET ${sets.join(',')} WHERE id=? AND list_id=?`,
+    await query(`UPDATE pitch_contacts SET ${sets.join(',')} WHERE id=? AND list_id=?`,
       [...vals, req.params.contactId, req.params.listId]);
   }
-  saveDb();
   res.json({ ok: true });
 });
 
 // Delete a contact
 router.delete('/:listId/contacts/:contactId', async (req, res) => {
-  const db = await getDb();
-  db.run('DELETE FROM pitch_contacts WHERE id=? AND list_id=?', [req.params.contactId, req.params.listId]);
-  saveDb();
+  await query('DELETE FROM pitch_contacts WHERE id=? AND list_id=?', [req.params.contactId, req.params.listId]);
   res.json({ ok: true });
 });
 

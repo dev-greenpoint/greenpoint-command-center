@@ -1,19 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getDb } = require('../db/database');
-
-function rows(result) {
-  if (!result.length) return [];
-  return result[0].values.map(row =>
-    Object.fromEntries(result[0].columns.map((c, i) => [c, row[i]]))
-  );
-}
+const { query } = require('../db/database');
 
 router.get('/', async (req, res) => {
-  const db = await getDb();
-
-  const clients   = rows(db.exec('SELECT * FROM clients ORDER BY created_at DESC'));
-  const campaigns = rows(db.exec('SELECT * FROM campaigns WHERE status != "completed" ORDER BY created_at DESC'));
+  const clients   = await query('SELECT * FROM clients ORDER BY created_at DESC');
+  const campaigns = await query("SELECT * FROM campaigns WHERE status != 'completed' ORDER BY created_at DESC");
 
   const active     = clients.filter(c => c.status === 'active');
   const onboarding = clients.filter(c => c.status === 'onboarding');

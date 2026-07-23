@@ -6,6 +6,7 @@
   <title>Strategy Builder — Greenpoint</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/strategy-blocks.css">
   <style>
     /* ── Page header ── */
     .strategy-header {
@@ -45,7 +46,7 @@
     /* ── Builder layout ── */
     .sb-layout {
       display: grid;
-      grid-template-columns: 210px 1fr;
+      grid-template-columns: 230px 1fr;
       gap: 0;
       align-items: start;
     }
@@ -67,7 +68,7 @@
     .sb-nav-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       padding: 7px 10px;
       border-radius: var(--radius);
       cursor: pointer;
@@ -93,13 +94,36 @@
       color: var(--text-dim); cursor: pointer; font-size: 11px;
       padding: 0 2px; line-height: 1; flex-shrink: 0;
     }
-    .sb-nav-item:hover .sb-nav-edit { display: block; }
+    .sb-nav-item:hover .sb-nav-edit,
+    .sb-nav-subtab-item:hover .sb-nav-edit { display: block; }
     .sb-nav-rename {
       flex: 1; background: var(--surface);
       border: 1px solid var(--accent); border-radius: 4px;
       color: var(--text); font-size: 12px; padding: 2px 6px;
     }
     .sb-nav-rename:focus { outline: none; }
+    .sb-nav-drag {
+      color: var(--text-dim); font-size: 12px; cursor: grab; flex-shrink: 0;
+      opacity: 0; transition: opacity 0.1s;
+    }
+    .sb-nav-item:hover .sb-nav-drag,
+    .sb-nav-subtab-item:hover .sb-nav-drag { opacity: 1; }
+
+    /* ── Sub-tabs (nav) ── */
+    .sb-nav-subtabs { margin: 0 0 4px 18px; border-left: 1px solid var(--border); padding-left: 8px; }
+    .sb-nav-subtab-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 8px; border-radius: var(--radius);
+      cursor: pointer; margin-bottom: 1px; font-size: 12px;
+    }
+    .sb-nav-subtab-item:hover { background: var(--surface-2); }
+    .sb-nav-subtab-item.active { background: var(--surface-2); color: var(--accent); }
+    .sb-nav-subtab-item.inactive { opacity: 0.45; }
+    .sb-nav-add-subtab {
+      font-size: 11px; color: var(--text-dim); cursor: pointer;
+      padding: 4px 8px; margin: 2px 0 6px 18px;
+    }
+    .sb-nav-add-subtab:hover { color: var(--accent); }
 
     /* ── Section toggle ── */
     .section-toggle {
@@ -117,7 +141,7 @@
     .section-toggle.on::after { left: 14px; background: #fff; }
 
     /* ── Section content ── */
-    .sb-content { padding: 0 0 40px 28px; }
+    .sb-content { padding: 0 0 60px 28px; }
     .sb-content-title-wrap { margin-bottom: 16px; }
     .sb-content-title {
       font-size: 20px; font-weight: 700; color: var(--text);
@@ -139,9 +163,18 @@
     .sb-content-title-input:focus { outline: none; }
     .sb-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
 
+    /* ── Sub-tab strip (content area) ── */
+    .sb-subtab-strip { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .sb-subtab-pill {
+      padding: 5px 14px; border-radius: 100px; font-size: 12px; font-weight: 500;
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; font-family: var(--font);
+    }
+    .sb-subtab-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
     /* ── Textarea / preview ── */
     .section-textarea {
-      width: 100%; min-height: 280px;
+      width: 100%; min-height: 200px;
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: var(--radius); color: var(--text);
       font-size: 13px; line-height: 1.7; padding: 14px 16px;
@@ -154,7 +187,7 @@
     .hidden { display: none !important; }
 
     .section-preview {
-      min-height: 280px; padding: 14px 16px;
+      min-height: 100px; padding: 14px 16px;
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: var(--radius); font-size: 13px;
       line-height: 1.75; color: var(--text);
@@ -172,10 +205,100 @@
     .section-preview strong { font-weight: 700; }
     .section-preview em { font-style: italic; color: var(--text-muted); }
 
+    /* ── Blocks ── */
+    .sb-blocks { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
+    .sb-block {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px 14px; background: var(--surface);
+    }
+    .sb-block-toolbar {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px; font-size: 11px; color: var(--text-dim);
+    }
+    .sb-block-drag { cursor: grab; }
+    .sb-block-type { flex: 1; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+    .sb-block-remove {
+      background: none; border: none; color: var(--text-dim); cursor: pointer;
+      font-size: 13px; padding: 2px 4px;
+    }
+    .sb-block-remove:hover { color: var(--danger); }
+
+    /* ── Add block menu ── */
+    .sb-add-block-wrap { position: relative; margin-bottom: 16px; }
+    .sb-add-block-menu {
+      position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      display: flex; flex-direction: column; min-width: 160px; overflow: hidden;
+    }
+    .sb-add-block-menu button {
+      background: none; border: none; text-align: left; padding: 9px 14px;
+      font-size: 13px; color: var(--text); cursor: pointer; font-family: var(--font);
+    }
+    .sb-add-block-menu button:hover { background: var(--surface-2); color: var(--accent); }
+
+    /* ── Image block editor ── */
+    .sb-image-editor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .sb-image-layout-label { font-size: 11px; color: var(--text-dim); }
+    .sb-image-layout {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+      color: var(--text); font-size: 12px; padding: 4px 8px;
+    }
+    .sb-image-thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+    .sb-image-thumb { position: relative; width: 100px; height: 72px; }
+    .sb-image-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+    .sb-image-thumb button {
+      position: absolute; top: -6px; right: -6px; width: 20px; height: 20px;
+      border-radius: 50%; background: var(--danger); color: #fff; border: none;
+      cursor: pointer; font-size: 11px; line-height: 1;
+    }
+    .sb-empty-note { font-size: 12px; color: var(--text-dim); }
+
+    /* ── Card grid editor ── */
+    .sb-cg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .sb-cg-card {
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 10px;
+      background: var(--surface-2); display: flex; flex-direction: column; gap: 8px;
+    }
+    .sb-cg-card-toolbar { display: flex; justify-content: space-between; align-items: center; }
+    .sb-cg-card-toolbar button {
+      background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px;
+    }
+    .sb-cg-card-toolbar button:hover { color: var(--danger); }
+    .sb-cg-title-input {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text); font-size: 13px; font-weight: 600; padding: 6px 8px; font-family: var(--font);
+    }
+    .sb-cg-body-input {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text); font-size: 12px; padding: 6px 8px; font-family: var(--font);
+      min-height: 70px; resize: vertical;
+    }
+
+    /* ── Gantt block editor ── */
+    .sb-gantt-rows-editor { display: flex; flex-direction: column; gap: 8px; }
+    .sb-gantt-row-editor {
+      display: grid; grid-template-columns: 16px 1fr 140px 140px 24px; gap: 8px; align-items: center;
+    }
+    .sb-gantt-row-editor input[type="text"], .sb-gantt-row-editor input[type="date"] {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text); font-size: 12px; padding: 6px 8px; font-family: var(--font);
+    }
+    .sb-gantt-row-editor button {
+      background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px;
+    }
+    .sb-gantt-row-editor button:hover { color: var(--danger); }
+    .sb-gantt-notes-input {
+      grid-column: 2 / 5; background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text); font-size: 12px; padding: 6px 8px;
+      font-family: var(--font); min-height: 40px; resize: vertical;
+    }
+    .sb-gantt-preview { margin-top: 16px; padding: 16px; background: var(--surface-2); border-radius: var(--radius); }
+
     /* ── Generate button ── */
     .sb-footer {
       display: flex; align-items: center;
-      justify-content: space-between; margin-top: 10px;
+      justify-content: flex-end; margin-top: 10px;
     }
     .btn-generate {
       display: flex; align-items: center; gap: 6px;
@@ -183,6 +306,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); color: var(--text-muted);
       cursor: pointer; transition: border-color 0.15s, color 0.15s;
+      font-family: var(--font);
     }
     .btn-generate:hover { border-color: var(--accent); color: var(--text); }
     .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -237,93 +361,40 @@
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script src="/components/shell.js"></script>
+  <script src="/components/section-defs.js"></script>
+  <script src="/components/strategy-render.js"></script>
   <script>
     const strategyId = location.pathname.split('/')[2];
     let strategy = null;
-    let sections = {};
+    let docType = 'strategy';   // 'strategy' | 'workshop' — controls which sections the nav offers
+    let sections = {};          // id -> normalized { blocks:[...] } | { subtabs:[...] }
     let sectionLabels = {};
     let activeSections = [];
     let currentSectionId = null;
+    let currentSubtabId = null;
     let saveTimer = null;
-
-    const SECTION_DEFS = [
-      // Foundation
-      { id: 'overview',      label: 'Overview & Situation',  group: 'Foundation', hint: 'Situation analysis, background context, and campaign objectives' },
-      { id: 'strategy',      label: 'Strategic Approach',    group: 'Foundation', hint: 'The overarching strategy — pillars, positioning, and rationale' },
-      { id: 'audiences',     label: 'Target Audiences',      group: 'Foundation', hint: 'Who we are reaching — demographics, psychographics, and priorities' },
-      { id: 'messages',      label: 'Key Messages',          group: 'Foundation', hint: 'Core messages each audience should understand, feel, or act on' },
-      // Channels
-      { id: 'tactical_plan', label: 'Tactical Plan',         group: 'Channels',   hint: 'Channel mix and tactical overview — how we bring the strategy to life' },
-      { id: 'pr',            label: 'PR Campaigns',          group: 'Channels',   hint: 'Press angles, story hooks, target media, journalists, and pitch timing' },
-      { id: 'social',        label: 'Social Media',          group: 'Channels',   hint: 'Organic social strategy — platforms, content approach, posting cadence' },
-      { id: 'content',       label: 'Content Pillars',       group: 'Channels',   hint: 'Content categories, themes, shoot plan, and brand voice guidelines' },
-      { id: 'events',        label: 'Events & Activations',  group: 'Channels',   hint: 'Event concepts, launch moments, display suite, public activations' },
-      { id: 'partnerships',  label: 'Partnerships',          group: 'Channels',   hint: 'Brand partners, influencers, collaborations, and co-marketing targets' },
-      { id: 'paid',          label: 'Paid Media',            group: 'Channels',   hint: 'Paid channel plan — platforms, budget approach, ad formats, targeting' },
-      { id: 'design',        label: 'Design',                group: 'Channels',   hint: 'Design direction, brand assets, visual identity, and creative deliverables' },
-      { id: 'moodboard',     label: 'Moodboard',             group: 'Channels',   hint: 'Visual direction — mood, colour palette, typography, and references' },
-      // Execution
-      { id: 'timeline',      label: 'Timeline & Phasing',    group: 'Execution',  hint: 'Campaign phases, key milestones, and delivery schedule' },
-      { id: 'measurement',   label: 'Measurement & KPIs',    group: 'Execution',  hint: 'Success metrics, targets, benchmarks, and reporting cadence' },
-      { id: 'budget',        label: 'Budget',                group: 'Execution',  hint: 'Budget breakdown by line item, with totals and assumptions' },
-      // Report (deck-specific)
-      { id: 'summary',       label: 'Summary',                group: 'Report',    hint: 'Headline outcome and overall summary of results' },
-      { id: 'coverage',      label: 'Coverage',               group: 'Report',    hint: 'Media coverage secured — outlet, headline, reach, and sentiment' },
-      { id: 'learnings',     label: 'Learnings',              group: 'Report',    hint: 'Key learnings and recommendations for next time' },
-      // Workshop (deck-specific)
-      { id: 'agenda',        label: 'Agenda',                 group: 'Workshop',  hint: 'Running order for the workshop session' },
-      { id: 'discovery',     label: 'Discovery',               group: 'Workshop', hint: 'Brand discovery questions, grouped by theme' },
-      { id: 'immersion',     label: 'Immersion',              group: 'Workshop',  hint: 'Immersion framework — stages and what each uncovers' },
-      { id: 'next_steps',    label: 'Next Steps',             group: 'Workshop',  hint: 'Agreed next steps, owners, and due dates' },
-    ];
-
-    const DEFAULT_ACTIVE = ['overview','strategy','audiences','messages','timeline'];
+    let pendingUploadTarget = null;
 
     const TEMPLATES = {
       overview: `## Background\n_Who is the client, what do they do, and why is this campaign happening now?_\n\n## Situation\n_What's the current landscape — market context, competitors, and timing?_\n\n## Objectives\n_What does success look like? Define 2–3 clear outcomes._\n\n- Objective one\n- Objective two\n- Objective three`,
-
       strategy: `## Strategic Approach\n_In one paragraph, describe the overarching strategy — the big idea that holds everything together._\n\n## Strategic Pillars\n\n**Pillar One**: Describe the first pillar and why it matters.\n\n**Pillar Two**: Describe the second pillar and why it matters.\n\n**Pillar Three**: Describe the third pillar and why it matters.`,
-
       audiences: `**Primary Audience**: Describe the primary target — demographics, mindset, what they care about.\n\n**Secondary Audience**: Describe the secondary target — who else are we reaching and why.\n\n**Media Audience**: The journalists, editors, and publications we are trying to influence.`,
-
       messages: `1. First key message\n   The core idea we want every audience member to walk away with.\n\n2. Second key message\n   Supporting message that reinforces the first.\n\n3. Third key message\n   A proof point, differentiator, or emotional hook.`,
-
       tactical_plan: `## Channel Mix\n_Overview of the channels we are activating and how they work together._\n\n- PR Campaigns\n- Social Media\n- Content\n- Events\n\n## Phasing\n\n**Phase 1 — Foundation**: Set up, brief, strategy, assets.\n\n**Phase 2 — Launch**: Campaign activation, pitching, posting.\n\n**Phase 3 — Sustain**: Follow-up, monitoring, reporting.`,
-
       pr: `## Campaign Angle One\n_Describe the story angle, why it's newsworthy, and the hook._\n\n- Target media category / publication type\n- Target media category / publication type\n\n## Campaign Angle Two\n_Describe the second angle._\n\n- Target media category / publication type`,
-
-      social: `## Platforms\n_Which platforms are we active on and why?_\n\n- Platform one — rationale\n- Platform two — rationale\n\n## Content Approach\n_How are we showing up — tone, style, format?_\n\n## Posting Cadence\n\n**Platform One**: X posts per week — content type, timing.\n\n**Platform Two**: X posts per week — content type, timing.\n\n## Content Examples\n_Add example images below using the image button._`,
-
+      social: `## Platforms\n_Which platforms are we active on and why?_\n\n- Platform one — rationale\n- Platform two — rationale\n\n## Content Approach\n_How are we showing up — tone, style, format?_\n\n## Posting Cadence\n\n**Platform One**: X posts per week — content type, timing.\n\n**Platform Two**: X posts per week — content type, timing.`,
       content: `## Content Pillars\n\n### Pillar One — [Name]\n_What is this pillar about and what content does it produce?_\n\n- Content idea\n- Content idea\n\n### Pillar Two — [Name]\n_What is this pillar about?_\n\n- Content idea\n- Content idea\n\n### Pillar Three — [Name]\n_Brand voice / lifestyle / culture content._\n\n- Content idea\n- Content idea`,
-
       events: `## Events & Activations\n_What events or activations are planned and what is the objective of each?_\n\n**Event One**: Description, format, timing, expected outcomes.\n\n**Event Two**: Description, format, timing, expected outcomes.\n\n## Display Suite / Showroom\n_Is there a permanent or semi-permanent activation space to leverage?_`,
-
       partnerships: `## Partnership Targets\n\n**Partner One**: Who they are, why they're a fit, what the collaboration looks like.\n\n**Partner Two**: Who they are, why they're a fit, what the collaboration looks like.\n\n## Influencer Strategy\n_Are we working with influencers? What tier, what categories, what brief?_\n\n- Influencer category / tier\n- Content format / brief direction`,
-
       paid: `## Paid Strategy Overview\n_What role does paid media play in this campaign?_\n\n## Platforms & Budget\n\n**Platform One**: Objective, budget range, targeting approach, ad format.\n\n**Platform Two**: Objective, budget range, targeting approach, ad format.\n\n## Targeting\n\n- Audience segment\n- Retargeting approach\n- Lookalike strategy`,
-
-      design: `## Design Direction\n_Describe the visual direction — mood, aesthetic, references._\n\n## Brand Assets\n_What assets exist and what needs to be created?_\n\n- Asset one\n- Asset two\n\n## Creative Deliverables\n\n**Deliverable One**: Format, specs, usage, timeline.\n\n**Deliverable Two**: Format, specs, usage, timeline.\n\n## Visual References\n_Add reference images below using the image button._`,
-
-      timeline: `## Phase 1 — Foundation\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two\n\n## Phase 2 — Launch\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two\n\n## Phase 3 — Sustain\n_What happens in this phase?_\n\n- Milestone one\n- Milestone two`,
-
+      design: `## Design Direction\n_Describe the visual direction — mood, aesthetic, references._\n\n## Brand Assets\n_What assets exist and what needs to be created?_\n\n- Asset one\n- Asset two\n\n## Creative Deliverables\n\n**Deliverable One**: Format, specs, usage, timeline.\n\n**Deliverable Two**: Format, specs, usage, timeline.`,
+      email: `## Segmentation\n_How is the database segmented?_\n\n## Sequences\n\n**Sequence One**: Trigger, cadence, goal.\n\n**Sequence Two**: Trigger, cadence, goal.`,
+      moodboard: `## Visual Direction\n_Describe the mood, aesthetic, and references._\n\n## Colour Palette\n\n## Typography`,
       measurement: `## Key Metrics\n\n**Metric One**: What we're measuring and why.\n\n**Metric Two**: What we're measuring and why.\n\n## Targets\n\n- Target one\n- Target two\n- Target three\n\n## Reporting Cadence\n\n- Monthly PR update — coverage log, metrics, recommendations\n- Quarterly report — full campaign performance review`,
-
       budget: `## Budget Breakdown\n\n- Line item one: amount — what it covers\n- Line item two: amount — what it covers\n- Line item three: amount — what it covers\n\n## Total\n_Total budget and any assumptions._`,
-
-      moodboard: `## Visual Direction\n_Describe the mood, aesthetic, and references._\n\n## Colour Palette\n\n## Typography\n\n## Reference Images\n_Add reference images below using the image button._`,
-
-      summary: `## Overview\n_Headline outcome first, then supporting detail._\n\n## Key Results\n\n- Result one\n- Result two\n- Result three`,
-
-      coverage: `**Outlet — Headline**: date, reach/circulation, angle or sentiment.\n\n**Outlet — Headline**: date, reach/circulation, angle or sentiment.\n\n**Outlet — Headline**: date, reach/circulation, angle or sentiment.`,
-
-      learnings: `**Learning One**: What happened, why it matters, and the recommendation for next time.\n\n**Learning Two**: What happened, why it matters, and the recommendation for next time.\n\n**Learning Three**: What happened, why it matters, and the recommendation for next time.`,
-
       agenda: `1. Welcome & Introductions (10 min)\n   Who's in the room and what we're here to do.\n\n2. Agenda Item (X min)\n   What happens and who leads it.\n\n3. Agenda Item (X min)\n   What happens and who leads it.\n\n4. Wrap-up & Next Steps (10 min)`,
-
       discovery: `## Brand & Positioning\n\n- Question one\n- Question two\n\n## Audience & Market\n\n- Question one\n- Question two\n\n## Goals & Success\n\n- Question one\n- Question two`,
-
       immersion: `**Stage One — Discover**: What happens and what it uncovers.\n\n**Stage Two — Define**: What happens and what it uncovers.\n\n**Stage Three — Align**: What happens and what it uncovers.`,
-
       next_steps: `- Action one: owner, due date\n- Action two: owner, due date\n- Action three: owner, due date`,
     };
 
@@ -332,6 +403,24 @@
     }
     function getHintFor(id) {
       return SECTION_DEFS.find(d => d.id === id)?.hint || '';
+    }
+    function getSection(id) {
+      if (!sections[id]) sections[id] = { blocks: [] };
+      return sections[id];
+    }
+    function hasContentFor(id) {
+      return sectionHasContent(sections[id] || { blocks: [] });
+    }
+    function blockKey(topId, subId, index) {
+      return `${topId}::${subId || ''}::${index}`;
+    }
+    function getBlockRef(topId, subId, index) {
+      const sec = getSection(topId);
+      const blocks = subId ? (sec.subtabs || []).find(s => s.id === subId)?.blocks : sec.blocks;
+      return blocks ? blocks[index] : null;
+    }
+    function blockTypeLabel(type) {
+      return { richtext: 'Text', image: 'Image', 'card-grid': 'Card Grid', gantt: 'Gantt / Timeline' }[type] || type;
     }
 
     // ── Load ──────────────────────────────────────────────────────────────────
@@ -343,11 +432,17 @@
         return;
       }
       strategy = await res.json();
+      docType = strategy.doc_type === 'workshop' ? 'workshop' : 'strategy';
       const rawSections = strategy.sections ? JSON.parse(strategy.sections) : {};
       sectionLabels = rawSections._labels || {};
-      sections = Object.fromEntries(Object.entries(rawSections).filter(([k]) => k !== '_labels'));
+      sections = {};
+      for (const [id, raw] of Object.entries(rawSections)) {
+        if (id === '_labels') continue;
+        sections[id] = normalizeSection(raw);
+      }
       activeSections = strategy.active_sections ? JSON.parse(strategy.active_sections) : [...DEFAULT_ACTIVE];
-      currentSectionId = activeSections[0] || SECTION_DEFS[0].id;
+      currentSectionId = activeSections[0] || sectionDefsForDocType(docType)[0].id;
+      currentSubtabId = null;
       renderShell({ pageId: 'clients', title: strategy.title });
       render();
     }
@@ -406,65 +501,242 @@
 
     // ── Nav ───────────────────────────────────────────────────────────────────
 
+    // Unlike orderSectionsForDisplay (which filters to active-only, for the
+    // read-only render surfaces), the builder's nav must keep every section
+    // visible so inactive ones can still be toggled on. Within each group,
+    // active sections are ordered per activeSections (for drag-reorder),
+    // followed by inactive ones in their default SECTION_DEFS order.
+    function orderAllSectionsForNav() {
+      const byGroup = {};
+      for (const def of sectionDefsForDocType(docType)) {
+        if (!byGroup[def.group]) byGroup[def.group] = [];
+        byGroup[def.group].push(def);
+      }
+      const result = [];
+      for (const group of GROUP_ORDER) {
+        const defs = byGroup[group];
+        if (!defs) continue;
+        const active = defs.filter(d => activeSections.includes(d.id))
+          .sort((a, b) => activeSections.indexOf(a.id) - activeSections.indexOf(b.id));
+        const inactive = defs.filter(d => !activeSections.includes(d.id));
+        result.push(...active, ...inactive);
+      }
+      return result;
+    }
+
     function renderNav() {
       const el = document.getElementById('sb-nav');
       if (!el) return;
+      const ordered = orderAllSectionsForNav();
       let html = '';
       let lastGroup = null;
-      for (const def of SECTION_DEFS) {
+      for (const def of ordered) {
         if (def.group !== lastGroup) {
           lastGroup = def.group;
           html += `<div class="sb-nav-section-label">${escHtml(def.group)}</div>`;
         }
-        const isActive = activeSections.includes(def.id);
-        const hasContent = !!(sections[def.id]?.trim());
-        const isCurrent = def.id === currentSectionId;
-        const label = getLabelFor(def.id);
-        html += `
-          <div class="sb-nav-item ${isCurrent ? 'active' : ''} ${!isActive ? 'inactive' : ''}"
-               id="nav-item-${def.id}" onclick="selectSection('${def.id}')">
-            <div class="section-toggle ${isActive ? 'on' : ''}"
-                 onclick="event.stopPropagation(); toggleActive('${def.id}')"></div>
-            <span class="sb-nav-label" id="nav-label-${def.id}">${escHtml(label)}</span>
-            ${hasContent ? '<span class="sb-nav-tick">✓</span>' : ''}
-            <button class="sb-nav-edit" onclick="event.stopPropagation(); startNavRename('${def.id}')" title="Rename">✎</button>
-          </div>`;
+        html += renderNavItem(def);
       }
       el.innerHTML = html;
+      attachNavDragHandlers();
     }
 
-    function refreshNavItem(id) {
-      const item = document.getElementById(`nav-item-${id}`);
-      if (!item) return;
+    function renderNavItem(def) {
+      const id = def.id;
       const isActive = activeSections.includes(id);
-      const hasContent = !!(sections[id]?.trim());
-      const isCurrent = id === currentSectionId;
-      item.className = `sb-nav-item ${isCurrent ? 'active' : ''} ${!isActive ? 'inactive' : ''}`;
-      const toggle = item.querySelector('.section-toggle');
-      if (toggle) toggle.className = `section-toggle ${isActive ? 'on' : ''}`;
-      const labelEl = item.querySelector('.sb-nav-label');
-      if (labelEl) labelEl.textContent = getLabelFor(id);
-      const tick = item.querySelector('.sb-nav-tick');
-      if (hasContent && !tick) {
-        item.querySelector('.sb-nav-edit')?.insertAdjacentHTML('beforebegin', '<span class="sb-nav-tick">✓</span>');
-      } else if (!hasContent && tick) {
-        tick.remove();
+      const secVal = sections[id];
+      const isParent = !!(secVal && Array.isArray(secVal.subtabs) && secVal.subtabs.length);
+      const hasContent = hasContentFor(id);
+      const isCurrent = id === currentSectionId && !currentSubtabId;
+      const label = getLabelFor(id);
+
+      let html = `
+        <div class="sb-nav-item ${isCurrent ? 'active' : ''} ${!isActive ? 'inactive' : ''}"
+             id="nav-item-${id}" data-group="${escAttr(def.group)}" data-id="${id}"
+             draggable="true" onclick="selectSection('${id}')">
+          <span class="sb-nav-drag">⠿</span>
+          <div class="section-toggle ${isActive ? 'on' : ''}"
+               onclick="event.stopPropagation(); toggleActive('${id}')"></div>
+          <span class="sb-nav-label" id="nav-label-${id}">${escHtml(label)}</span>
+          ${hasContent ? '<span class="sb-nav-tick">✓</span>' : ''}
+          <button class="sb-nav-edit" onclick="event.stopPropagation(); startNavRename('${id}')" title="Rename">✎</button>
+        </div>`;
+
+      if (isActive && isParent) {
+        html += `<div class="sb-nav-subtabs">`;
+        secVal.subtabs.forEach(st => {
+          const isCur = id === currentSectionId && currentSubtabId === st.id;
+          html += `
+            <div class="sb-nav-subtab-item ${isCur ? 'active' : ''} ${st.active === false ? 'inactive' : ''}"
+                 data-parent="${id}" data-subid="${st.id}" draggable="true"
+                 onclick="event.stopPropagation(); selectSubtab('${id}','${st.id}')">
+              <span class="sb-nav-drag">⠿</span>
+              <div class="section-toggle ${st.active !== false ? 'on' : ''}"
+                   onclick="event.stopPropagation(); toggleSubtabActive('${id}','${st.id}')"></div>
+              <span class="sb-nav-label">${escHtml(st.label)}</span>
+              <button class="sb-nav-edit" onclick="event.stopPropagation(); renameSubtab('${id}','${st.id}')" title="Rename">✎</button>
+              <button class="sb-nav-edit" onclick="event.stopPropagation(); removeSubtab('${id}','${st.id}')" title="Remove">✕</button>
+            </div>`;
+        });
+        html += `<div class="sb-nav-add-subtab" onclick="event.stopPropagation(); addSubtab('${id}')">+ Add sub-tab</div></div>`;
+      } else if (isActive && !isParent) {
+        html += `<div class="sb-nav-add-subtab" onclick="event.stopPropagation(); promoteToSubtabs('${id}')">+ Add sub-tab</div>`;
       }
+
+      return html;
+    }
+
+    function attachNavDragHandlers() {
+      const nav = document.getElementById('sb-nav');
+      if (!nav) return;
+      let draggedId = null;
+      nav.querySelectorAll('.sb-nav-item').forEach(el => {
+        el.addEventListener('dragstart', e => { draggedId = el.dataset.id; e.stopPropagation(); });
+        el.addEventListener('dragover', e => { e.preventDefault(); });
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          if (!draggedId) return;
+          reorderActiveSections(draggedId, el.dataset.id);
+          draggedId = null;
+        });
+      });
+
+      let draggedSubParent = null, draggedSubId = null;
+      nav.querySelectorAll('.sb-nav-subtab-item').forEach(el => {
+        el.addEventListener('dragstart', e => {
+          draggedSubParent = el.dataset.parent; draggedSubId = el.dataset.subid; e.stopPropagation();
+        });
+        el.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+        el.addEventListener('drop', e => {
+          e.preventDefault(); e.stopPropagation();
+          if (!draggedSubId || el.dataset.parent !== draggedSubParent) return;
+          reorderSubtabs(draggedSubParent, draggedSubId, el.dataset.subid);
+          draggedSubId = null;
+        });
+      });
+    }
+
+    function reorderActiveSections(draggedId, targetId) {
+      if (draggedId === targetId) return;
+      const draggedDef = SECTION_DEFS.find(d => d.id === draggedId);
+      const targetDef = SECTION_DEFS.find(d => d.id === targetId);
+      if (!draggedDef || !targetDef || draggedDef.group !== targetDef.group) return;
+      const from = activeSections.indexOf(draggedId);
+      if (from === -1) return;
+      activeSections.splice(from, 1);
+      const to = activeSections.indexOf(targetId);
+      activeSections.splice(to === -1 ? activeSections.length : to, 0, draggedId);
+      renderNav();
+      scheduleSave();
+    }
+
+    function reorderSubtabs(topId, draggedSubId, targetSubId) {
+      const sec = getSection(topId);
+      if (!Array.isArray(sec.subtabs) || draggedSubId === targetSubId) return;
+      const from = sec.subtabs.findIndex(s => s.id === draggedSubId);
+      if (from === -1) return;
+      const [moved] = sec.subtabs.splice(from, 1);
+      const to = sec.subtabs.findIndex(s => s.id === targetSubId);
+      sec.subtabs.splice(to === -1 ? sec.subtabs.length : to, 0, moved);
+      renderNav();
+      scheduleSave();
+    }
+
+    function reorderArrayByIndex(arr, fromIndex, toIndex) {
+      if (fromIndex === toIndex || fromIndex == null || toIndex == null) return;
+      const [moved] = arr.splice(fromIndex, 1);
+      arr.splice(toIndex, 0, moved);
     }
 
     // ── Section select ────────────────────────────────────────────────────────
 
     function selectSection(id) {
-      // Persist textarea content before switching
-      const prevTa = document.getElementById(`ta-${currentSectionId}`);
-      if (prevTa) sections[currentSectionId] = prevTa.value;
-
-      // Update active item in nav
-      document.querySelectorAll('.sb-nav-item').forEach(el => el.classList.remove('active'));
-      document.getElementById(`nav-item-${id}`)?.classList.add('active');
-
       currentSectionId = id;
+      currentSubtabId = null;
+      const sec = sections[id];
+      if (sec && Array.isArray(sec.subtabs) && sec.subtabs.length) {
+        currentSubtabId = (sec.subtabs.find(s => s.active !== false) || sec.subtabs[0]).id;
+      }
+      renderNav();
       renderContent();
+    }
+
+    function selectSubtab(topId, subId) {
+      currentSectionId = topId;
+      currentSubtabId = subId;
+      renderNav();
+      renderContent();
+    }
+
+    // ── Sub-tab management ───────────────────────────────────────────────────
+
+    function promoteToSubtabs(topId) {
+      const sec = getSection(topId);
+      const existingBlocks = Array.isArray(sec.blocks) ? sec.blocks : [];
+      const def = SECTION_DEFS.find(d => d.id === topId);
+      const secondId = 'sub-' + Math.random().toString(36).slice(2, 8);
+      sections[topId] = {
+        subtabs: [
+          { id: 'general', label: def ? def.label : 'General', active: true, blocks: existingBlocks },
+          { id: secondId, label: 'New Tab', active: true, blocks: [] },
+        ],
+      };
+      currentSectionId = topId;
+      currentSubtabId = secondId;
+      renderNav();
+      renderContent();
+      scheduleSave();
+    }
+
+    function addSubtab(topId) {
+      const sec = getSection(topId);
+      if (!Array.isArray(sec.subtabs)) return;
+      const newId = 'sub-' + Math.random().toString(36).slice(2, 8);
+      sec.subtabs.push({ id: newId, label: 'New Tab', active: true, blocks: [] });
+      currentSectionId = topId;
+      currentSubtabId = newId;
+      renderNav();
+      renderContent();
+      scheduleSave();
+    }
+
+    function removeSubtab(topId, subId) {
+      const sec = getSection(topId);
+      if (!Array.isArray(sec.subtabs)) return;
+      if (!confirm('Remove this sub-tab? This cannot be undone.')) return;
+      sec.subtabs = sec.subtabs.filter(s => s.id !== subId);
+      if (!sec.subtabs.length) {
+        sections[topId] = { blocks: [] };
+        if (currentSectionId === topId) currentSubtabId = null;
+      } else if (currentSectionId === topId && currentSubtabId === subId) {
+        currentSubtabId = sec.subtabs[0].id;
+      }
+      renderNav();
+      renderContent();
+      scheduleSave();
+    }
+
+    function renameSubtab(topId, subId) {
+      const sec = getSection(topId);
+      const st = (sec.subtabs || []).find(s => s.id === subId);
+      if (!st) return;
+      const val = prompt('Rename sub-tab', st.label);
+      if (val && val.trim()) {
+        st.label = val.trim();
+        renderNav();
+        renderContent();
+        scheduleSave();
+      }
+    }
+
+    function toggleSubtabActive(topId, subId) {
+      const sec = getSection(topId);
+      const st = (sec.subtabs || []).find(s => s.id === subId);
+      if (!st) return;
+      st.active = st.active === false ? true : false;
+      renderNav();
+      if (currentSectionId === topId && currentSubtabId === subId) renderContent();
+      scheduleSave();
     }
 
     // ── Content area ──────────────────────────────────────────────────────────
@@ -477,58 +749,367 @@
       if (!def) { el.innerHTML = '<div class="sb-empty">Select a section to begin.</div>'; return; }
 
       const isActive = activeSections.includes(id);
-      const content = sections[id] || '';
-      const hasContent = content.trim().length > 0;
-      const label = getLabelFor(id);
-      const hint = getHintFor(id);
-
       if (!isActive) {
         el.innerHTML = `
           <div class="sb-empty">
             <div style="font-size:32px;margin-bottom:8px;">○</div>
-            <div><strong>${escHtml(label)}</strong> is turned off.</div>
-            <div style="margin-top:8px;">
-              <button class="btn btn-ghost" onclick="toggleActive('${id}')">Turn on</button>
-            </div>
+            <div><strong>${escHtml(getLabelFor(id))}</strong> is turned off.</div>
+            <div style="margin-top:8px;"><button class="btn btn-ghost" onclick="toggleActive('${id}')">Turn on</button></div>
           </div>`;
         return;
       }
 
-      el.innerHTML = `
+      const sec = getSection(id);
+      const isParent = Array.isArray(sec.subtabs) && sec.subtabs.length > 0;
+
+      let subtab = null, blocks, leafLabel = getLabelFor(id), leafHint = getHintFor(id);
+      if (isParent) {
+        if (!currentSubtabId || !sec.subtabs.some(s => s.id === currentSubtabId)) {
+          currentSubtabId = (sec.subtabs.find(s => s.active !== false) || sec.subtabs[0]).id;
+        }
+        subtab = sec.subtabs.find(s => s.id === currentSubtabId);
+        blocks = subtab.blocks;
+        leafLabel = subtab.label;
+        leafHint = '';
+      } else {
+        blocks = sec.blocks;
+      }
+      const subArg = subtab ? `'${subtab.id}'` : 'null';
+
+      let html = `
         <div class="sb-content-title-wrap">
-          <div class="sb-content-title" id="content-title-${id}" onclick="startContentRename('${id}')">
-            ${escHtml(label)}
-            <span class="sb-rename-icon">✎</span>
+          <div class="sb-content-title" id="content-title-${id}" ${subtab ? '' : `onclick="startContentRename('${id}')"`}>
+            ${escHtml(leafLabel)}
+            ${subtab ? '' : '<span class="sb-rename-icon">✎</span>'}
           </div>
         </div>
-        <div class="sb-hint">${escHtml(hint)}</div>
-        <div class="section-preview ${hasContent ? '' : 'hidden'}" id="preview-${id}"
-             onclick="editSection('${id}')" title="Click to edit">${hasContent ? DOMPurify.sanitize(marked.parse(content)) : ''}</div>
-        <textarea class="section-textarea ${hasContent ? 'hidden' : ''}" id="ta-${id}"
-          placeholder="${escAttr(hint)}…"
-          oninput="onSectionInput('${id}')"
-          onblur="previewSection('${id}')"
-        >${escHtml(content)}</textarea>
-        <div class="sb-footer">
-          <span style="font-size:11px;color:var(--text-dim);">Click content to edit</span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn-generate" onclick="triggerImageUpload('${id}')" title="Add image">
-              <span style="font-size:13px;">🖼</span>
-              Add Image
-            </button>
-            <button class="btn-generate" id="gen-${id}" onclick="generateSection('${id}')">
-              <span class="spinner"></span>
-              <span class="gen-icon">✦</span>
-              Generate with AI
-            </button>
-          </div>
-        </div>
-        <input type="file" id="img-input-${id}" accept="image/*" style="display:none;"
-          onchange="uploadImage('${id}', this)">
+        ${leafHint ? `<div class="sb-hint">${escHtml(leafHint)}</div>` : ''}
       `;
+
+      if (isParent) {
+        html += `<div class="sb-subtab-strip">${sec.subtabs.map(st => `
+          <button class="sb-subtab-pill ${st.id === currentSubtabId ? 'active' : ''}" onclick="selectSubtab('${id}','${st.id}')">${escHtml(st.label)}</button>
+        `).join('')}</div>`;
+      }
+
+      html += `<div class="sb-blocks" id="sb-blocks">`;
+      blocks.forEach((block, i) => { html += renderBlockEditor(id, subtab ? subtab.id : null, block, i); });
+      html += `</div>`;
+
+      html += `
+        <div class="sb-add-block-wrap">
+          <button class="btn-generate" onclick="toggleAddBlockMenu()">+ Add Block</button>
+          <div class="sb-add-block-menu hidden" id="add-block-menu">
+            <button onclick="addBlock('${id}', ${subArg}, 'richtext')">Text</button>
+            <button onclick="addBlock('${id}', ${subArg}, 'image-inline')">Image</button>
+            <button onclick="addBlock('${id}', ${subArg}, 'image-hero')">Image Section</button>
+            <button onclick="addBlock('${id}', ${subArg}, 'card-grid')">Card Grid</button>
+            <button onclick="addBlock('${id}', ${subArg}, 'gantt')">Gantt / Timeline</button>
+          </div>
+        </div>
+        <div class="sb-footer">
+          <button class="btn-generate" id="gen-${id}" onclick="generateSection('${id}')">
+            <span class="spinner"></span><span class="gen-icon">✦</span>Generate with AI
+          </button>
+        </div>
+        <input type="file" id="sb-image-input" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
+      `;
+
+      el.innerHTML = html;
+      attachBlockDragHandlers();
     }
 
-    // ── Rename ────────────────────────────────────────────────────────────────
+    function currentBlocksArray() {
+      const sec = getSection(currentSectionId);
+      if (Array.isArray(sec.subtabs) && currentSubtabId) {
+        const st = sec.subtabs.find(s => s.id === currentSubtabId);
+        return st ? st.blocks : null;
+      }
+      return sec.blocks;
+    }
+
+    // ── Block editors ─────────────────────────────────────────────────────────
+
+    function renderBlockEditor(topId, subId, block, index) {
+      const key = blockKey(topId, subId, index);
+      let inner = '';
+      if (block.type === 'richtext') inner = renderRichtextEditor(topId, subId, index, block);
+      else if (block.type === 'image') inner = renderImageEditor(topId, subId, index, block);
+      else if (block.type === 'card-grid') inner = renderCardGridEditor(topId, subId, index, block);
+      else if (block.type === 'gantt') inner = renderGanttEditor(topId, subId, index, block);
+      const subArg = subId ? `'${subId}'` : 'null';
+      return `
+        <div class="sb-block" data-key="${key}" data-index="${index}" draggable="true">
+          <div class="sb-block-toolbar">
+            <span class="sb-block-drag">⠿</span>
+            <span class="sb-block-type">${blockTypeLabel(block.type)}</span>
+            <button class="sb-block-remove" onclick="removeBlock('${topId}', ${subArg}, ${index})" title="Remove block">✕</button>
+          </div>
+          ${inner}
+        </div>`;
+    }
+
+    function renderRichtextEditor(topId, subId, index, block) {
+      const content = block.markdown || '';
+      const hasContent = content.trim().length > 0;
+      const suffix = `${topId}-${subId || 'x'}-${index}`;
+      const subArg = subId ? `'${subId}'` : 'null';
+      return `
+        <div class="section-preview ${hasContent ? '' : 'hidden'}" id="rt-prev-${suffix}"
+             onclick="editRichtext('${topId}', ${subArg}, ${index})" title="Click to edit">${hasContent ? DOMPurify.sanitize(marked.parse(content)) : ''}</div>
+        <textarea class="section-textarea ${hasContent ? 'hidden' : ''}" id="rt-ta-${suffix}"
+          placeholder="Write here…"
+          oninput="onBlockTextInput('${topId}', ${subArg}, ${index}, this)"
+          onblur="previewRichtext('${topId}', ${subArg}, ${index})"
+        >${escHtml(content)}</textarea>`;
+    }
+
+    function onBlockTextInput(topId, subId, index, textareaEl) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) block.markdown = textareaEl.value;
+      scheduleSave();
+    }
+
+    function editRichtext(topId, subId, index) {
+      const suffix = `${topId}-${subId || 'x'}-${index}`;
+      document.getElementById(`rt-prev-${suffix}`)?.classList.add('hidden');
+      const ta = document.getElementById(`rt-ta-${suffix}`);
+      if (ta) { ta.classList.remove('hidden'); ta.focus(); }
+    }
+
+    function previewRichtext(topId, subId, index) {
+      const suffix = `${topId}-${subId || 'x'}-${index}`;
+      const ta = document.getElementById(`rt-ta-${suffix}`);
+      if (!ta) return;
+      const content = ta.value.trim();
+      const prev = document.getElementById(`rt-prev-${suffix}`);
+      if (content && prev) {
+        prev.innerHTML = DOMPurify.sanitize(marked.parse(content));
+        prev.classList.remove('hidden');
+        ta.classList.add('hidden');
+      }
+      refreshNavItemTick(topId);
+    }
+
+    function refreshNavItemTick(topId) {
+      renderNav();
+    }
+
+    function renderImageEditor(topId, subId, index, block) {
+      const images = Array.isArray(block.images) ? block.images : [];
+      const subArg = subId ? `'${subId}'` : 'null';
+      const thumbs = images.map((img, i) => `
+        <div class="sb-image-thumb">
+          <img src="${escAttr(img.src)}" alt="">
+          <button onclick="removeBlockImage('${topId}', ${subArg}, ${index}, ${i})" title="Remove">✕</button>
+        </div>`).join('');
+      return `
+        <div class="sb-image-editor">
+          <div class="sb-image-editor-row">
+            <span class="sb-image-layout-label">Layout</span>
+            <select class="sb-image-layout" onchange="setImageLayout('${topId}', ${subArg}, ${index}, this.value)">
+              <option value="inline" ${block.layout === 'inline' ? 'selected' : ''}>Inline</option>
+              <option value="grid" ${block.layout === 'grid' ? 'selected' : ''}>Grid</option>
+              <option value="hero" ${block.layout === 'hero' ? 'selected' : ''}>Hero</option>
+            </select>
+            <button class="btn-generate" onclick="triggerBlockImageUpload('${topId}', ${subArg}, ${index})">🖼 Add Image</button>
+          </div>
+          ${thumbs ? `<div class="sb-image-thumbs">${thumbs}</div>` : '<div class="sb-empty-note">No images yet — click Add Image above.</div>'}
+        </div>`;
+    }
+
+    function setImageLayout(topId, subId, index, layout) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) block.layout = layout;
+      scheduleSave();
+    }
+
+    function removeBlockImage(topId, subId, index, imgIndex) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && Array.isArray(block.images)) {
+        block.images.splice(imgIndex, 1);
+        renderContent();
+        scheduleSave();
+      }
+    }
+
+    function renderCardGridEditor(topId, subId, index, block) {
+      const cards = Array.isArray(block.cards) ? block.cards : [];
+      const subArg = subId ? `'${subId}'` : 'null';
+      const key = blockKey(topId, subId, index);
+      const cardsHtml = cards.map((c, ci) => `
+        <div class="sb-cg-card" data-ci="${ci}" draggable="true">
+          <div class="sb-cg-card-toolbar">
+            <span class="sb-block-drag">⠿</span>
+            <button onclick="removeCard('${topId}', ${subArg}, ${index}, ${ci})" title="Remove card">✕</button>
+          </div>
+          ${c.image && c.image.src
+            ? `<div class="sb-image-thumb"><img src="${escAttr(c.image.src)}" alt=""><button onclick="removeCardImage('${topId}', ${subArg}, ${index}, ${ci})">✕</button></div>`
+            : `<button class="btn-generate" style="font-size:11px;padding:4px 10px;align-self:flex-start;" onclick="triggerCardImageUpload('${topId}', ${subArg}, ${index}, ${ci})">🖼 Add Image</button>`}
+          <input class="sb-cg-title-input" type="text" placeholder="Card title" value="${escAttr(c.title || '')}"
+            oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'title', this.value)">
+          <textarea class="sb-cg-body-input" placeholder="Card text"
+            oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'body', this.value)">${escHtml(c.body || '')}</textarea>
+        </div>`).join('');
+      return `
+        <div class="sb-card-grid-editor">
+          <div class="sb-cg-grid" data-block-key="${key}">${cardsHtml}</div>
+          <button class="btn btn-ghost" style="font-size:12px;margin-top:10px;" onclick="addCard('${topId}', ${subArg}, ${index})">+ Add Card</button>
+        </div>`;
+    }
+
+    function setCardField(topId, subId, index, ci, field, value) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.cards && block.cards[ci]) { block.cards[ci][field] = value; scheduleSave(); }
+    }
+    function addCard(topId, subId, index) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) { block.cards = block.cards || []; block.cards.push({ title: '', body: '' }); renderContent(); scheduleSave(); }
+    }
+    function removeCard(topId, subId, index, ci) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.cards) { block.cards.splice(ci, 1); renderContent(); scheduleSave(); }
+    }
+    function removeCardImage(topId, subId, index, ci) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.cards && block.cards[ci]) { delete block.cards[ci].image; renderContent(); scheduleSave(); }
+    }
+
+    function renderGanttEditor(topId, subId, index, block) {
+      const phases = Array.isArray(block.phases) ? block.phases : [];
+      const subArg = subId ? `'${subId}'` : 'null';
+      const rows = phases.map((p, pi) => `
+        <div class="sb-gantt-row-editor" data-pi="${pi}" draggable="true">
+          <span class="sb-block-drag">⠿</span>
+          <input type="text" placeholder="Phase title" value="${escAttr(p.title || '')}"
+            oninput="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'title', this.value)">
+          <input type="date" value="${escAttr(p.start || '')}" onchange="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'start', this.value)">
+          <input type="date" value="${escAttr(p.end || '')}" onchange="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'end', this.value)">
+          <button onclick="removePhase('${topId}', ${subArg}, ${index}, ${pi})" title="Remove phase">✕</button>
+          <textarea class="sb-gantt-notes-input" placeholder="Notes (optional)"
+            oninput="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'notes', this.value)">${escHtml(p.notes || '')}</textarea>
+        </div>`).join('');
+      return `
+        <div class="sb-gantt-editor">
+          <div class="sb-gantt-rows-editor">${rows}</div>
+          <button class="btn btn-ghost" style="font-size:12px;margin:10px 0;" onclick="addPhase('${topId}', ${subArg}, ${index})">+ Add Phase</button>
+          <div class="sb-gantt-preview">${renderGanttBlock(block)}</div>
+        </div>`;
+    }
+
+    function setPhaseField(topId, subId, index, pi, field, value) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.phases && block.phases[pi]) {
+        block.phases[pi][field] = value;
+        scheduleSave();
+        refreshGanttPreview(topId, subId, index);
+      }
+    }
+    function addPhase(topId, subId, index) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) { block.phases = block.phases || []; block.phases.push({ title: 'New Phase', start: '', end: '', notes: '' }); renderContent(); scheduleSave(); }
+    }
+    function removePhase(topId, subId, index, pi) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.phases) { block.phases.splice(pi, 1); renderContent(); scheduleSave(); }
+    }
+    function refreshGanttPreview(topId, subId, index) {
+      const block = getBlockRef(topId, subId, index);
+      if (!block) return;
+      const key = blockKey(topId, subId, index);
+      const container = document.querySelector(`.sb-block[data-key="${key}"] .sb-gantt-preview`);
+      if (container) container.innerHTML = renderGanttBlock(block);
+    }
+
+    // ── Add / remove blocks ──────────────────────────────────────────────────
+
+    function toggleAddBlockMenu() {
+      document.getElementById('add-block-menu')?.classList.toggle('hidden');
+    }
+
+    function addBlock(topId, subId, kind) {
+      const blocks = subId ? (getSection(topId).subtabs || []).find(s => s.id === subId)?.blocks : getSection(topId).blocks;
+      if (!blocks) return;
+      let block;
+      if (kind === 'richtext') block = { type: 'richtext', markdown: '' };
+      else if (kind === 'image-inline') block = { type: 'image', layout: 'inline', images: [] };
+      else if (kind === 'image-hero') block = { type: 'image', layout: 'hero', images: [] };
+      else if (kind === 'card-grid') block = { type: 'card-grid', cards: [{ title: '', body: '' }, { title: '', body: '' }] };
+      else if (kind === 'gantt') block = { type: 'gantt', phases: [{ title: 'Phase 1', start: '', end: '', notes: '' }] };
+      else return;
+      blocks.push(block);
+      document.getElementById('add-block-menu')?.classList.add('hidden');
+      renderContent();
+      scheduleSave();
+    }
+
+    function removeBlock(topId, subId, index) {
+      const blocks = subId ? (getSection(topId).subtabs || []).find(s => s.id === subId)?.blocks : getSection(topId).blocks;
+      if (!blocks) return;
+      if (!confirm('Remove this block?')) return;
+      blocks.splice(index, 1);
+      renderContent();
+      scheduleSave();
+    }
+
+    // ── Drag-reorder: blocks / cards / phases ────────────────────────────────
+
+    function attachBlockDragHandlers() {
+      const container = document.getElementById('sb-blocks');
+      if (container) {
+        let draggedIndex = null;
+        container.querySelectorAll(':scope > .sb-block').forEach(el => {
+          el.addEventListener('dragstart', e => { draggedIndex = Number(el.dataset.index); e.stopPropagation(); });
+          el.addEventListener('dragover', e => { e.preventDefault(); });
+          el.addEventListener('drop', e => {
+            e.preventDefault();
+            if (draggedIndex === null) return;
+            const targetIndex = Number(el.dataset.index);
+            const blocks = currentBlocksArray();
+            if (blocks) { reorderArrayByIndex(blocks, draggedIndex, targetIndex); renderContent(); scheduleSave(); }
+            draggedIndex = null;
+          });
+        });
+      }
+
+      document.querySelectorAll('.sb-cg-grid').forEach(grid => {
+        let draggedCi = null;
+        const [topId, subId, idxStr] = grid.dataset.blockKey.split('::');
+        const index = Number(idxStr);
+        grid.querySelectorAll(':scope > .sb-cg-card').forEach(el => {
+          el.addEventListener('dragstart', e => { draggedCi = Number(el.dataset.ci); e.stopPropagation(); });
+          el.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+          el.addEventListener('drop', e => {
+            e.preventDefault(); e.stopPropagation();
+            if (draggedCi === null) return;
+            const block = getBlockRef(topId, subId || null, index);
+            if (block && block.cards) { reorderArrayByIndex(block.cards, draggedCi, Number(el.dataset.ci)); renderContent(); scheduleSave(); }
+            draggedCi = null;
+          });
+        });
+      });
+
+      document.querySelectorAll('.sb-gantt-rows-editor').forEach(wrap => {
+        const blockEl = wrap.closest('.sb-block');
+        if (!blockEl) return;
+        const [topId, subId, idxStr] = blockEl.dataset.key.split('::');
+        const index = Number(idxStr);
+        let draggedPi = null;
+        wrap.querySelectorAll(':scope > .sb-gantt-row-editor').forEach(el => {
+          el.addEventListener('dragstart', e => { draggedPi = Number(el.dataset.pi); e.stopPropagation(); });
+          el.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+          el.addEventListener('drop', e => {
+            e.preventDefault(); e.stopPropagation();
+            if (draggedPi === null) return;
+            const block = getBlockRef(topId, subId || null, index);
+            if (block && block.phases) { reorderArrayByIndex(block.phases, draggedPi, Number(el.dataset.pi)); renderContent(); scheduleSave(); }
+            draggedPi = null;
+          });
+        });
+      });
+    }
+
+    // ── Rename (top-level section only; sub-tabs use renameSubtab) ──────────
 
     function startNavRename(id) {
       const labelEl = document.getElementById(`nav-label-${id}`);
@@ -542,17 +1123,10 @@
       input.select();
       const commit = () => {
         const val = input.value.trim();
-        if (val && val !== (SECTION_DEFS.find(d => d.id === id)?.label)) {
-          sectionLabels[id] = val;
-        } else {
-          delete sectionLabels[id];
-        }
-        const span = document.createElement('span');
-        span.className = 'sb-nav-label';
-        span.id = `nav-label-${id}`;
-        span.textContent = getLabelFor(id);
-        input.replaceWith(span);
-        if (id === currentSectionId) {
+        if (val && val !== (SECTION_DEFS.find(d => d.id === id)?.label)) sectionLabels[id] = val;
+        else delete sectionLabels[id];
+        renderNav();
+        if (id === currentSectionId && !currentSubtabId) {
           const titleEl = document.getElementById(`content-title-${id}`);
           if (titleEl) titleEl.firstChild.textContent = getLabelFor(id);
         }
@@ -566,7 +1140,6 @@
       const titleEl = document.getElementById(`content-title-${id}`);
       if (!titleEl) return;
       const current = getLabelFor(id);
-      const wrap = titleEl.parentElement;
       const input = document.createElement('input');
       input.className = 'sb-content-title-input';
       input.value = current;
@@ -575,18 +1148,15 @@
       input.select();
       const commit = () => {
         const val = input.value.trim();
-        if (val && val !== (SECTION_DEFS.find(d => d.id === id)?.label)) {
-          sectionLabels[id] = val;
-        } else {
-          delete sectionLabels[id];
-        }
+        if (val && val !== (SECTION_DEFS.find(d => d.id === id)?.label)) sectionLabels[id] = val;
+        else delete sectionLabels[id];
         const div = document.createElement('div');
         div.className = 'sb-content-title';
         div.id = `content-title-${id}`;
         div.setAttribute('onclick', `startContentRename('${id}')`);
         div.innerHTML = `${escHtml(getLabelFor(id))} <span class="sb-rename-icon">✎</span>`;
         input.replaceWith(div);
-        refreshNavItem(id);
+        renderNav();
         scheduleSave();
       };
       input.addEventListener('blur', commit);
@@ -600,39 +1170,13 @@
         activeSections = activeSections.filter(s => s !== id);
       } else {
         activeSections.push(id);
-        if (!sections[id] && TEMPLATES[id]) sections[id] = TEMPLATES[id];
+        if (!hasContentFor(id) && TEMPLATES[id]) {
+          sections[id] = { blocks: [{ type: 'richtext', markdown: TEMPLATES[id] }] };
+        }
       }
-      refreshNavItem(id);
+      if (currentSectionId === id) currentSubtabId = null;
+      renderNav();
       if (currentSectionId === id) renderContent();
-      scheduleSave();
-    }
-
-    // ── Preview / edit ────────────────────────────────────────────────────────
-
-    function editSection(id) {
-      document.getElementById(`preview-${id}`)?.classList.add('hidden');
-      const ta = document.getElementById(`ta-${id}`);
-      if (ta) { ta.classList.remove('hidden'); ta.focus(); }
-    }
-
-    function previewSection(id) {
-      const ta = document.getElementById(`ta-${id}`);
-      if (!ta) return;
-      const content = ta.value.trim();
-      if (!content) return;
-      const preview = document.getElementById(`preview-${id}`);
-      if (preview) {
-        preview.innerHTML = DOMPurify.sanitize(marked.parse(content));
-        preview.classList.remove('hidden');
-        ta.classList.add('hidden');
-      }
-      refreshNavItem(id);
-    }
-
-    // ── Section input ─────────────────────────────────────────────────────────
-
-    function onSectionInput(id) {
-      sections[id] = document.getElementById(`ta-${id}`)?.value || '';
       scheduleSave();
     }
 
@@ -675,19 +1219,22 @@
     async function generateSection(id) {
       const btn = document.getElementById(`gen-${id}`);
       if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-      const ta = document.getElementById(`ta-${id}`);
-      if (ta) sections[id] = ta.value;
+
+      const sec = getSection(id);
+      const isParent = Array.isArray(sec.subtabs) && sec.subtabs.length > 0;
+      const subtabId = isParent ? currentSubtabId : null;
 
       try {
         const res = await fetch(`/api/strategies/${strategyId}/generate`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ section_id: id, sections })
+          body: JSON.stringify({ section_id: id, subtab_id: subtabId, sections })
         });
         const data = await res.json();
         if (data.content) {
-          sections[id] = data.content;
-          if (ta) ta.value = data.content;
-          previewSection(id);
+          const blocks = isParent ? sec.subtabs.find(s => s.id === subtabId).blocks : sec.blocks;
+          blocks.length = 0;
+          blocks.push({ type: 'richtext', markdown: data.content });
+          renderContent();
           scheduleSave();
         } else {
           showToast('AI generation failed — please try again', true);
@@ -758,15 +1305,22 @@
 
     // ── Image upload ──────────────────────────────────────────────────────────
 
-    function triggerImageUpload(id) {
-      const input = document.getElementById(`img-input-${id}`);
-      if (input) input.click();
+    function triggerBlockImageUpload(topId, subId, index) {
+      pendingUploadTarget = { topId, subId, index };
+      document.getElementById('sb-image-input').click();
     }
 
-    async function uploadImage(id, input) {
-      if (!input.files.length) return;
+    function triggerCardImageUpload(topId, subId, index, cardIndex) {
+      pendingUploadTarget = { topId, subId, index, cardIndex };
+      document.getElementById('sb-image-input').click();
+    }
+
+    async function handleImageUpload(input) {
+      if (!input.files.length || !pendingUploadTarget) return;
       const file = input.files[0];
       input.value = '';
+      const target = pendingUploadTarget;
+      pendingUploadTarget = null;
 
       const formData = new FormData();
       formData.append('file', file);
@@ -776,18 +1330,18 @@
       if (!res.ok) { showToast('Upload failed', true); return; }
       const { url } = await res.json();
 
-      const ta = document.getElementById(`ta-${id}`);
-      if (!ta) { editSection(id); }
-      const target = document.getElementById(`ta-${id}`);
-      if (target) {
-        const insert = `\n![image](${url})\n`;
-        const pos = target.selectionStart ?? target.value.length;
-        target.value = target.value.slice(0, pos) + insert + target.value.slice(pos);
-        sections[id] = target.value;
-        if (target.classList.contains('hidden')) previewSection(id);
-        scheduleSave();
-        showToast('Image added');
+      const block = getBlockRef(target.topId, target.subId, target.index);
+      if (!block) return;
+      if (target.cardIndex != null) {
+        block.cards = block.cards || [];
+        if (block.cards[target.cardIndex]) block.cards[target.cardIndex].image = { src: url, alt: '' };
+      } else {
+        block.images = block.images || [];
+        block.images.push({ src: url, alt: '' });
       }
+      renderContent();
+      scheduleSave();
+      showToast('Image added');
     }
 
     // ── Utils ─────────────────────────────────────────────────────────────────

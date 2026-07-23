@@ -6,6 +6,7 @@
   <title>Client Board — Greenpoint</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/strategy-blocks.css">
   <style>
     .board-header {
       display: flex;
@@ -384,14 +385,8 @@
     .strat-section { border-bottom:1px solid var(--border);padding:16px 0; }
     .strat-section:last-child { border-bottom:none; }
     .strat-section-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:10px; }
-    .strat-section-body { font-size:13px;line-height:1.75;color:var(--text); }
-    .strat-section-body h1,.strat-section-body h2,.strat-section-body h3 { font-size:13px;font-weight:700;margin:12px 0 4px; }
-    .strat-section-body h1:first-child,.strat-section-body h2:first-child,.strat-section-body h3:first-child { margin-top:0; }
-    .strat-section-body p { margin:0 0 8px; }
-    .strat-section-body p:last-child { margin-bottom:0; }
-    .strat-section-body ul,.strat-section-body ol { margin:0 0 8px;padding-left:18px; }
-    .strat-section-body li { margin-bottom:3px; }
-    .strat-section-body strong { font-weight:700; }
+    .strat-group-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);padding:14px 0 4px; }
+    .strat-group-label:first-child { padding-top: 0; }
     .drawer-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border); }
     .drawer-header h2 { font-size:15px;font-weight:600; }
     .drawer-close { background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1; }
@@ -512,7 +507,10 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script src="/components/shell.js"></script>
+  <script src="/components/section-defs.js"></script>
+  <script src="/components/strategy-render.js"></script>
   <script>
     const clientId = location.pathname.split('/')[2];
 
@@ -2161,32 +2159,8 @@
 
     // ── Strategy drawer ────────────────────────────────────────────────────────
 
-    const SECTION_DEFS = [
-      { id: 'overview',      label: 'Overview & Situation' },
-      { id: 'strategy',      label: 'Strategic Approach' },
-      { id: 'audiences',     label: 'Target Audiences' },
-      { id: 'messages',      label: 'Key Messages' },
-      { id: 'tactical_plan', label: 'Tactical Plan' },
-      { id: 'pr',            label: 'PR Campaigns' },
-      { id: 'social',        label: 'Social Media' },
-      { id: 'content',       label: 'Content Pillars' },
-      { id: 'events',        label: 'Events & Activations' },
-      { id: 'partnerships',  label: 'Partnerships' },
-      { id: 'email',         label: 'Email & CRM' },
-      { id: 'paid',          label: 'Paid Media' },
-      { id: 'design',        label: 'Design' },
-      { id: 'moodboard',     label: 'Moodboard' },
-      { id: 'timeline',      label: 'Timeline & Phasing' },
-      { id: 'measurement',   label: 'Measurement & KPIs' },
-      { id: 'budget',        label: 'Budget' },
-      { id: 'summary',       label: 'Summary' },
-      { id: 'coverage',      label: 'Coverage' },
-      { id: 'learnings',     label: 'Learnings' },
-      { id: 'agenda',        label: 'Agenda' },
-      { id: 'discovery',     label: 'Discovery' },
-      { id: 'immersion',     label: 'Immersion' },
-      { id: 'next_steps',    label: 'Next Steps' },
-    ];
+    let drawerNormalized = {};
+    let drawerActiveSubtabs = {};
 
     async function openStrategyDrawer(strategyId) {
       document.getElementById('strat-overlay').classList.add('open');
@@ -2226,23 +2200,38 @@
         ${date ? `<span style="margin-left:8px;">${date}</span>` : ''}
       `;
 
-      const visibleSections = SECTION_DEFS.filter(def => active.includes(def.id) && sections[def.id]?.trim());
+      drawerNormalized = {};
+      drawerActiveSubtabs = {};
+      for (const def of SECTION_DEFS) drawerNormalized[def.id] = normalizeSection(sections[def.id]);
 
-      if (!visibleSections.length) {
+      const visibleDefs = orderSectionsForDisplay(active).filter(def => sectionHasContent(drawerNormalized[def.id]));
+
+      if (!visibleDefs.length) {
         document.getElementById('strat-drawer-body').innerHTML = '<p style="font-size:13px;color:var(--text-muted);">No content yet — open the strategy builder to start drafting.</p>';
       } else {
-        document.getElementById('strat-drawer-body').innerHTML = visibleSections.map(def => `
-          <div class="strat-section">
-            <div class="strat-section-label">${escHtml(sectionLabels[def.id] || def.label)}</div>
-            <div class="strat-section-body">${marked.parse(sections[def.id])}</div>
-          </div>
-        `).join('');
+        let lastGroup = null;
+        document.getElementById('strat-drawer-body').innerHTML = visibleDefs.map(def => {
+          const groupHtml = def.group !== lastGroup ? (lastGroup = def.group, `<div class="strat-group-label">${escHtml(def.group)}</div>`) : '';
+          return `
+            ${groupHtml}
+            <div class="strat-section" data-section-id="${def.id}">
+              <div class="strat-section-label">${escHtml(sectionLabels[def.id] || def.label)}</div>
+              <div class="strat-section-content">${renderSection(drawerNormalized[def.id], { topId: def.id, activeSubtabId: drawerActiveSubtabs[def.id], onSubtabClick: 'onDrawerSubtabClick' })}</div>
+            </div>
+          `;
+        }).join('');
       }
 
       document.getElementById('strat-drawer-footer').innerHTML = `
         <a href="/strategy/${s.id}" class="btn btn-primary" style="font-size:12px;">Open Builder</a>
         ${s.share_token && s.status !== 'draft' ? `<a href="/s/${s.share_token}" target="_blank" class="btn btn-ghost" style="font-size:12px;">Client View</a>` : ''}
       `;
+    }
+
+    function onDrawerSubtabClick(topId, subId) {
+      drawerActiveSubtabs[topId] = subId;
+      const el = document.querySelector(`.strat-section[data-section-id="${topId}"] .strat-section-content`);
+      if (el) el.innerHTML = renderSection(drawerNormalized[topId], { topId, activeSubtabId: drawerActiveSubtabs[topId], onSubtabClick: 'onDrawerSubtabClick' });
     }
 
     function closeStrategyDrawer() {

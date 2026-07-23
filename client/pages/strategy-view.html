@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/strategy-blocks.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -95,6 +96,7 @@
     }
     .tab-bar {
       display: flex;
+      align-items: center;
       gap: 2px;
       overflow-x: auto;
       border-bottom: 1px solid var(--border);
@@ -108,7 +110,7 @@
       border-radius: 8px 8px 0 0;
       font-size: 13px;
       font-weight: 500;
-      color: var(--text-muted);
+      color: var(--text-60);
       background: none;
       border: none;
       cursor: pointer;
@@ -117,7 +119,7 @@
       white-space: nowrap;
       margin-bottom: -1px;
     }
-    .tab-btn:hover:not(.active) { background: var(--surface-2); color: var(--text); }
+    .tab-btn:hover:not(.active) { background: var(--surface); color: var(--text); }
     .tab-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
 
     /* ── Section content area ── */
@@ -141,106 +143,6 @@
       line-height: 1.15;
       margin-bottom: 16px;
     }
-    .section-body-text {
-      font-size: 15px;
-      line-height: 1.8;
-      color: var(--text-70);
-      max-width: 680px;
-      margin-bottom: 40px;
-    }
-
-    /* ── Cards ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-    }
-    .card-grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 768px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
-
-    /* Numbered objective card */
-    .obj-num {
-      font-size: 2.2rem;
-      font-weight: 300;
-      color: var(--accent);
-      margin-bottom: 12px;
-    }
-    .obj-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
-    .obj-body { font-size: 13px; line-height: 1.7; color: var(--text-60); }
-
-    /* Message card */
-    .msg-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
-    .msg-body { font-size: 13px; line-height: 1.7; color: var(--text-60); }
-
-    /* Pillar card */
-    .pillar-wrap {
-      display: grid;
-      gap: 24px;
-    }
-    .pillar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-    .pillar-tag { font-size: 14px; font-weight: 500; color: var(--text); }
-    .pillar-sub { font-size: 12px; color: var(--accent-light); margin-top: 2px; margin-bottom: 12px; }
-    .pillar-body { font-size: 13px; line-height: 1.7; color: var(--text-60); }
-    .pillar-meta { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
-    .pillar-meta-row { display: flex; flex-direction: column; gap: 3px; }
-    .meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
-    .meta-val { font-size: 12px; color: var(--text-60); }
-
-    /* Bullet chip list */
-    .chip-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    .chip {
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 5px 14px;
-      font-size: 12px;
-      color: var(--text-60);
-    }
-
-    /* Check bullet list */
-    .check-list { display: flex; flex-direction: column; gap: 12px; }
-    .check-item { display: flex; gap: 10px; font-size: 13px; line-height: 1.6; color: var(--text-70); }
-    .check-icon { color: var(--accent-light); flex-shrink: 0; margin-top: 2px; }
-
-    /* PR campaign card */
-    .pr-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
-    .pr-card-grid { display: grid; gap: 24px; }
-    @media (min-width: 1024px) { .pr-card-grid { grid-template-columns: 2fr 1fr; } }
-    .pr-title { font-size: 20px; font-weight: 300; color: var(--text); margin-bottom: 4px; }
-    .pr-timing { font-size: 12px; color: var(--accent-light); margin-bottom: 16px; }
-    .pr-detail { font-size: 13px; line-height: 1.7; color: var(--text-60); }
-    .pr-targets { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-    .pr-target { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 12px; font-size: 12px; color: var(--text-60); }
-
-    /* Next steps cards */
-    .steps-grid { display: grid; gap: 16px; }
-    @media (min-width: 1024px) { .steps-grid { grid-template-columns: repeat(2, 1fr); } }
-    .step-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-    .step-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-    .step-icon {
-      width: 36px; height: 36px; border-radius: 8px;
-      background: var(--accent); display: flex; align-items: center;
-      justify-content: center; font-size: 16px; flex-shrink: 0;
-    }
-    .step-label { font-size: 14px; font-weight: 500; }
-    .step-sublabel { font-size: 12px; color: var(--text-40); }
-
-    /* Plain text content */
-    .rich-text { font-size: 14px; line-height: 1.8; color: var(--text-70); }
-    .rich-text p { margin-bottom: 14px; }
-    .rich-text h3 { font-size: 16px; font-weight: 500; color: var(--text); margin: 20px 0 8px; }
-    .rich-text ul { padding-left: 1.2em; margin-bottom: 14px; }
-    .rich-text li { margin-bottom: 5px; }
-    .rich-text strong { color: var(--text); font-weight: 600; }
 
     /* ── Bottom nav ── */
     .bottom-nav {
@@ -292,62 +194,6 @@
     }
     .footer-text { font-size: 12px; color: var(--text-25); }
 
-    /* ── PDF download button ── */
-    .pdf-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 7px 16px; border-radius: 6px; font-size: 13px;
-      font-weight: 500; color: rgba(255,255,255,0.6);
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-      cursor: pointer; font-family: var(--font); transition: background 0.15s, color 0.15s;
-    }
-    .pdf-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-
-    /* ── Print / PDF ── */
-    #print-view { display: none; }
-
-    @media print {
-      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      body { background: #fff !important; color: #111 !important; font-size: 13px; }
-      .topbar, .tab-wrap, .bottom-nav, .pdf-btn, #loading { display: none !important; }
-      #app-shell { display: block !important; }
-      .hero { padding: 24px 0 20px; }
-      .hero-eyebrow { color: #738C7B !important; }
-      .hero-title { font-size: 2.2rem !important; color: #111 !important; }
-      .hero-desc { color: #555 !important; }
-      .content-area { display: none !important; }
-      #print-view {
-        display: block !important;
-        padding: 0 0 40px;
-      }
-      .print-section { page-break-before: always; padding-top: 32px; }
-      .print-section:first-child { page-break-before: avoid; }
-      .print-eyebrow {
-        font-size: 10px; font-weight: 600; text-transform: uppercase;
-        letter-spacing: .1em; color: #738C7B !important; margin-bottom: 8px;
-      }
-      .print-section-title {
-        font-size: 1.4rem; font-weight: 300; color: #111 !important;
-        margin-bottom: 20px; padding-bottom: 8px;
-        border-bottom: 1px solid #e5e5e5;
-      }
-      .card {
-        background: #f9f9f9 !important; border: 1px solid #e5e5e5 !important;
-        border-radius: 6px; padding: 16px; margin-bottom: 12px; break-inside: avoid;
-      }
-      .card-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
-      .obj-num { color: #738C7B !important; }
-      .obj-title, .msg-title, .pillar-tag { color: #111 !important; }
-      .obj-body, .msg-body, .pillar-body, .rich-text { color: #444 !important; }
-      .check-icon { color: #738C7B !important; }
-      .chip { border: 1px solid #e5e5e5 !important; color: #444 !important; }
-      .pr-card { background: #f9f9f9 !important; border: 1px solid #e5e5e5 !important; }
-      .pr-title { color: #111 !important; }
-      .pr-detail, .pr-target { color: #444 !important; }
-      .footer { border-top: 1px solid #e5e5e5; }
-      .footer-text { color: #aaa !important; }
-      img { max-width: 100%; }
-    }
-
     /* ── Error / loading ── */
     .center-msg {
       min-height: 60vh;
@@ -377,7 +223,6 @@
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="topbar-badge" id="topbar-badge"></div>
-        <button class="pdf-btn" onclick="downloadPdf()">↓ Download PDF</button>
       </div>
     </div>
   </div>
@@ -399,7 +244,6 @@
 
     <div class="outer">
       <div class="content-area" id="content-area"></div>
-      <div id="print-view"></div>
 
       <div class="footer">
         <p class="footer-text" id="footer-text"></p>
@@ -432,425 +276,36 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+  <script src="/components/section-defs.js"></script>
+  <script src="/components/strategy-render.js"></script>
   <script>
     const token = location.pathname.replace('/s/', '').replace(/\/$/, '');
     let activeSectionIndex = 0;
+    let activeSubtabId = null;
     let sectionDefs = [];
     let sections = {};
     let strategyData = null;
 
-    const ALL_SECTION_DEFS = [
-      { id: 'overview',      label: 'Overview',            renderFn: renderOverview },
-      { id: 'strategy',      label: 'Strategic Approach',  renderFn: renderGeneric },
-      { id: 'audiences',     label: 'Target Audiences',    renderFn: renderAudiences },
-      { id: 'messages',      label: 'Key Messages',        renderFn: renderMessages },
-      { id: 'tactical_plan', label: 'Tactical Plan',       renderFn: renderChannels },
-      { id: 'pr',            label: 'PR Campaigns',        renderFn: renderPR },
-      { id: 'social',        label: 'Social Media',        renderFn: renderContentStrategy },
-      { id: 'content',       label: 'Content Pillars',     renderFn: renderContentStrategy },
-      { id: 'events',        label: 'Events & Activations',renderFn: renderGeneric },
-      { id: 'partnerships',  label: 'Partnerships',        renderFn: renderGeneric },
-      { id: 'paid',          label: 'Paid Media',          renderFn: renderGeneric },
-      { id: 'design',        label: 'Design',              renderFn: renderGeneric },
-      { id: 'moodboard',     label: 'Moodboard',           renderFn: renderGeneric },
-      { id: 'timeline',      label: 'Timeline & Phasing',  renderFn: renderTimeline },
-      { id: 'measurement',   label: 'Measurement & KPIs',  renderFn: renderGeneric },
-      { id: 'budget',        label: 'Budget',              renderFn: renderGeneric },
-      { id: 'summary',       label: 'Summary',             renderFn: renderGeneric },
-      { id: 'coverage',      label: 'Coverage',            renderFn: renderGeneric },
-      { id: 'learnings',     label: 'Learnings',           renderFn: renderGeneric },
-      { id: 'agenda',        label: 'Agenda',              renderFn: renderGeneric },
-      { id: 'discovery',     label: 'Discovery',           renderFn: renderGeneric },
-      { id: 'immersion',     label: 'Immersion',           renderFn: renderGeneric },
-      { id: 'next_steps',    label: 'Next Steps',          renderFn: renderGeneric },
-    ];
-
-    // ── Parse text into structured blocks ────────────────────────────────────────
-
-    function parseText(text) {
-      if (!text) return [];
-      const lines = text.split('\n');
-      const blocks = [];
-      let i = 0;
-
-      while (i < lines.length) {
-        const line = lines[i].trim();
-        if (!line) { i++; continue; }
-
-        // Image: ![alt](url)
-        const imgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
-        if (imgMatch) {
-          blocks.push({ type: 'image', alt: imgMatch[1], src: imgMatch[2] });
-          i++;
-          continue;
-        }
-
-        // ## Heading → card title
-        if (line.startsWith('## ')) {
-          blocks.push({ type: 'heading', text: line.replace(/^## /, '') });
-          i++;
-          continue;
-        }
-
-        // ### Sub-heading
-        if (line.startsWith('### ')) {
-          blocks.push({ type: 'subheading', text: line.replace(/^### /, '') });
-          i++;
-          continue;
-        }
-
-        // Numbered items: "1. Title\n   body" or "01. Title"
-        const numMatch = line.match(/^(\d+)[.)]\s+(.+)/);
-        if (numMatch) {
-          const num = numMatch[1].padStart(2, '0');
-          const title = numMatch[2];
-          const bodyLines = [];
-          i++;
-          while (i < lines.length && lines[i].match(/^\s{2,}/) ) {
-            bodyLines.push(lines[i].trim());
-            i++;
-          }
-          blocks.push({ type: 'numbered', num, title, body: bodyLines.join(' ') });
-          continue;
-        }
-
-        // Bold title format: "**Title**: body" or "**Title**\nbody"
-        const boldMatch = line.match(/^\*\*(.+?)\*\*[:\s]*(.*)/);
-        if (boldMatch) {
-          const title = boldMatch[1];
-          let body = boldMatch[2].trim();
-          i++;
-          while (i < lines.length && lines[i].trim() && !lines[i].match(/^[-*•]|^\d+[.)]|\*\*/) ) {
-            body += ' ' + lines[i].trim();
-            i++;
-          }
-          blocks.push({ type: 'titled', title, body: body.trim() });
-          continue;
-        }
-
-        // Bullet list — collect consecutive bullets
-        if (line.match(/^[-*•]\s/)) {
-          const items = [];
-          while (i < lines.length && lines[i].trim().match(/^[-*•]\s/)) {
-            items.push(lines[i].trim().replace(/^[-*•]\s/, ''));
-            i++;
-          }
-          blocks.push({ type: 'bullets', items });
-          continue;
-        }
-
-        // Plain paragraph — collect consecutive non-special lines
-        const paraLines = [line];
-        i++;
-        while (i < lines.length && lines[i].trim() && !lines[i].match(/^[-*•\d#]/) && !lines[i].match(/^\*\*/)) {
-          paraLines.push(lines[i].trim());
-          i++;
-        }
-        blocks.push({ type: 'paragraph', text: paraLines.join(' ') });
-      }
-
-      return blocks;
-    }
-
-    // ── Renderers ─────────────────────────────────────────────────────────────────
-
     function esc(str) {
       return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-    function escAttr(str) {
-      return (str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
-
-    function renderOverview(content) {
-      const blocks = parseText(content);
-      const paras = blocks.filter(b => b.type === 'paragraph' || b.type === 'heading');
-      const bullets = blocks.filter(b => b.type === 'bullets');
-
-      let html = `<div style="display:grid;gap:16px;grid-template-columns:1fr;" class="overview-grid">`;
-
-      const textBlocks = blocks.filter(b => b.type === 'paragraph');
-      if (textBlocks.length) {
-        // Split into up to 2 cards
-        const mid = Math.ceil(textBlocks.length / 2);
-        const left = textBlocks.slice(0, mid);
-        const right = textBlocks.slice(mid);
-
-        html += `<div style="display:grid;gap:16px;">`;
-        html += `<div class="card"><div class="rich-text">${left.map(b => `<p>${esc(b.text)}</p>`).join('')}</div></div>`;
-        if (right.length) {
-          html += `<div class="card"><div class="rich-text">${right.map(b => `<p>${esc(b.text)}</p>`).join('')}</div></div>`;
-        }
-        html += `</div>`;
-      }
-
-      if (bullets.length) {
-        bullets.forEach(b => {
-          html += `<div class="card"><div class="check-list">${b.items.map(item => `
-            <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>
-          `).join('')}</div></div>`;
-        });
-      }
-
-      html += `</div>`;
-      return html;
-    }
-
-    function renderAudiences(content) {
-      const blocks = parseText(content);
-      const bullets = blocks.filter(b => b.type === 'bullets');
-      const titled = blocks.filter(b => b.type === 'titled');
-      const headings = blocks.filter(b => b.type === 'heading');
-
-      if (titled.length) {
-        return `<div class="card-grid">${titled.map(b => `
-          <div class="card">
-            <div class="msg-title">${esc(b.title)}</div>
-            ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
-          </div>`).join('')}</div>`;
-      }
-
-      if (bullets.length) {
-        let html = `<div class="card-grid">`;
-        bullets.forEach((b, i) => {
-          const heading = headings[i];
-          html += `<div class="card">`;
-          if (heading) html += `<div class="section-eyebrow" style="margin-bottom:16px;">${esc(heading.text)}</div>`;
-          html += b.items.map(item => `
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text-70);">${esc(item)}</div>
-          `).join('');
-          html += `</div>`;
-        });
-        html += `</div>`;
-        return html;
-      }
-
-      return renderGeneric(content);
-    }
-
-    function renderMessages(content) {
-      const blocks = parseText(content);
-      const items = blocks.filter(b => b.type === 'titled' || b.type === 'numbered' || b.type === 'heading');
-
-      if (items.length) {
-        return `<div class="card-grid">${items.map((b, i) => {
-          if (b.type === 'numbered') return `
-            <div class="card">
-              <div class="obj-num">${b.num}</div>
-              <div class="obj-title">${esc(b.title)}</div>
-              ${b.body ? `<div class="obj-body">${esc(b.body)}</div>` : ''}
-            </div>`;
-          return `
-            <div class="card">
-              <div class="msg-title">${esc(b.title || b.text)}</div>
-              ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
-            </div>`;
-        }).join('')}</div>`;
-      }
-
-      return renderGeneric(content);
-    }
-
-    function renderChannels(content) {
-      const blocks = parseText(content);
-      const bullets = blocks.filter(b => b.type === 'bullets');
-      const titled = blocks.filter(b => b.type === 'titled');
-      const paras = blocks.filter(b => b.type === 'paragraph');
-
-      if (titled.length) {
-        return `<div class="card-grid">${titled.map(b => `
-          <div class="card">
-            <div class="msg-title">${esc(b.title)}</div>
-            ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
-          </div>`).join('')}</div>`;
-      }
-
-      if (bullets.length) {
-        let html = '';
-        if (paras.length) html += `<div class="card" style="margin-bottom:16px;"><div class="rich-text">${paras.map(b=>`<p>${esc(b.text)}</p>`).join('')}</div></div>`;
-        html += `<div class="chip-grid">${bullets.flatMap(b => b.items).map(item =>
-          `<div class="chip">${esc(item)}</div>`).join('')}</div>`;
-        return html;
-      }
-
-      return renderGeneric(content);
-    }
-
-    function renderContentStrategy(content) {
-      const blocks = parseText(content);
-      const headings = blocks.filter(b => b.type === 'heading' || b.type === 'subheading');
-
-      if (headings.length === 0) return renderGeneric(content);
-
-      // Group blocks by heading
-      const pillars = [];
-      let current = null;
-      for (const b of blocks) {
-        if (b.type === 'heading' || b.type === 'subheading') {
-          if (current) pillars.push(current);
-          current = { tag: b.text, body: '', bullets: [] };
-        } else if (current) {
-          if (b.type === 'paragraph') current.body += (current.body ? ' ' : '') + b.text;
-          if (b.type === 'bullets') current.bullets = [...current.bullets, ...b.items];
-        }
-      }
-      if (current) pillars.push(current);
-
-      return `<div class="pillar-wrap">${pillars.map(p => `
-        <div class="pillar-card">
-          <div class="pillar-tag">${esc(p.tag)}</div>
-          ${p.body ? `<div class="pillar-body" style="margin-top:10px;">${esc(p.body)}</div>` : ''}
-          ${p.bullets.length ? `
-            <div class="pillar-meta">
-              <div class="check-list">${p.bullets.map(item => `
-                <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>
-              `).join('')}</div>
-            </div>` : ''}
-        </div>`).join('')}</div>`;
-    }
-
-    function renderPR(content) {
-      const blocks = parseText(content);
-      const headings = blocks.filter(b => b.type === 'heading');
-
-      if (headings.length === 0) return renderGeneric(content);
-
-      // Group into PR campaigns by heading
-      const campaigns = [];
-      let current = null;
-      for (const b of blocks) {
-        if (b.type === 'heading') {
-          if (current) campaigns.push(current);
-          current = { title: b.text, detail: '', bullets: [], targets: [] };
-        } else if (current) {
-          if (b.type === 'paragraph') current.detail += (current.detail ? ' ' : '') + b.text;
-          if (b.type === 'bullets') {
-            if (!current.detail) current.targets.push(...b.items);
-            else current.bullets.push(...b.items);
-          }
-        }
-      }
-      if (current) campaigns.push(current);
-
-      return `<div>${campaigns.map(c => `
-        <div class="pr-card">
-          <div class="pr-card-grid">
-            <div>
-              <div class="pr-title">${esc(c.title)}</div>
-              ${c.detail ? `<div class="pr-detail" style="margin-top:12px;">${esc(c.detail)}</div>` : ''}
-              ${c.bullets.length ? `
-                <div style="margin-top:16px;">
-                  <div class="section-eyebrow" style="margin-bottom:10px;">Key Messages</div>
-                  <div class="check-list">${c.bullets.map(item => `
-                    <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>
-                  `).join('')}</div>
-                </div>` : ''}
-            </div>
-            ${c.targets.length ? `
-              <div>
-                <div class="section-eyebrow" style="margin-bottom:10px;">Target Media</div>
-                <div class="pr-targets">${c.targets.map(t => `<div class="pr-target">${esc(t)}</div>`).join('')}</div>
-              </div>` : ''}
-          </div>
-        </div>`).join('')}
-        <div style="border:1px dashed rgba(255,255,255,0.12);border-radius:8px;padding:20px;text-align:center;margin-top:8px;">
-          <p style="font-size:12px;color:rgba(255,255,255,0.25);">Additional PR angles will be added as campaigns develop.</p>
-        </div>
-      </div>`;
-    }
-
-    function renderTimeline(content) {
-      const blocks = parseText(content);
-      const numbered = blocks.filter(b => b.type === 'numbered');
-      const headings = blocks.filter(b => b.type === 'heading');
-
-      if (numbered.length) {
-        return `<div class="card-grid">${numbered.map(b => `
-          <div class="card">
-            <div class="obj-num">${b.num}</div>
-            <div class="obj-title">${esc(b.title)}</div>
-            ${b.body ? `<div class="obj-body">${esc(b.body)}</div>` : ''}
-          </div>`).join('')}</div>`;
-      }
-
-      if (headings.length) {
-        // Group blocks by heading for phase cards
-        const phases = [];
-        let cur = null;
-        for (const b of blocks) {
-          if (b.type === 'heading') {
-            if (cur) phases.push(cur);
-            cur = { title: b.text, items: [], body: '' };
-          } else if (cur) {
-            if (b.type === 'bullets') cur.items.push(...b.items);
-            if (b.type === 'paragraph') cur.body += (cur.body ? ' ' : '') + b.text;
-          }
-        }
-        if (cur) phases.push(cur);
-
-        return `<div class="card-grid">${phases.map((p, i) => `
-          <div class="card">
-            <div class="obj-num">${String(i+1).padStart(2,'0')}</div>
-            <div class="obj-title">${esc(p.title)}</div>
-            ${p.body ? `<div class="obj-body" style="margin-bottom:12px;">${esc(p.body)}</div>` : ''}
-            ${p.items.length ? `<div class="check-list">${p.items.map(item => `
-              <div class="check-item"><span class="check-icon">✓</span><span>${esc(item)}</span></div>`).join('')}</div>` : ''}
-          </div>`).join('')}</div>`;
-      }
-
-      return renderGeneric(content);
-    }
-
-    function renderGeneric(content) {
-      const blocks = parseText(content);
-      let html = '';
-      const numbered = blocks.filter(b => b.type === 'numbered');
-      const titled = blocks.filter(b => b.type === 'titled');
-
-      if (numbered.length) {
-        html += `<div class="card-grid" style="margin-bottom:24px;">${numbered.map(b => `
-          <div class="card">
-            <div class="obj-num">${b.num}</div>
-            <div class="obj-title">${esc(b.title)}</div>
-            ${b.body ? `<div class="obj-body">${esc(b.body)}</div>` : ''}
-          </div>`).join('')}</div>`;
-      }
-
-      if (titled.length) {
-        html += `<div class="card-grid" style="margin-bottom:24px;">${titled.map(b => `
-          <div class="card">
-            <div class="msg-title">${esc(b.title)}</div>
-            ${b.body ? `<div class="msg-body">${esc(b.body)}</div>` : ''}
-          </div>`).join('')}</div>`;
-      }
-
-      const images = blocks.filter(b => b.type === 'image');
-      const remaining = blocks.filter(b => b.type !== 'numbered' && b.type !== 'titled' && b.type !== 'image');
-      if (remaining.length) {
-        let richHtml = '';
-        remaining.forEach(b => {
-          if (b.type === 'paragraph') richHtml += `<p>${esc(b.text)}</p>`;
-          else if (b.type === 'heading') richHtml += `<h3>${esc(b.text)}</h3>`;
-          else if (b.type === 'subheading') richHtml += `<h3 style="font-size:14px;">${esc(b.text)}</h3>`;
-          else if (b.type === 'bullets') richHtml += `<ul>${b.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`;
-        });
-        if (richHtml) html += `<div class="card"><div class="rich-text">${richHtml}</div></div>`;
-      }
-      if (images.length) {
-        html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px;">
-          ${images.map(b => `<img src="${escAttr(b.src)}" alt="${escAttr(b.alt)}" style="width:100%;border-radius:8px;border:1px solid var(--border);object-fit:cover;">`).join('')}
-        </div>`;
-      }
-
-      return html || `<p style="color:rgba(255,255,255,0.3);font-size:14px;">No content yet.</p>`;
     }
 
     // ── Tab navigation ────────────────────────────────────────────────────────────
 
     function renderTabBar() {
       const bar = document.getElementById('tab-bar');
-      bar.innerHTML = sectionDefs.map((s, i) => `
-        <button class="tab-btn ${i===activeSectionIndex?'active':''}" onclick="setTab(${i})">${esc(s.label)}</button>
-      `).join('');
+      let html = '';
+      let lastGroup = null;
+      sectionDefs.forEach((s, i) => {
+        if (s.group !== lastGroup) {
+          lastGroup = s.group;
+          html += `<div class="gpb-tab-group-label">${esc(s.group)}</div>`;
+        }
+        html += `<button class="tab-btn ${i===activeSectionIndex?'active':''}" onclick="setTab(${i})">${esc(s.label)}</button>`;
+      });
+      bar.innerHTML = html;
     }
 
     function updateBottomNav() {
@@ -870,8 +325,9 @@
 
     function setTab(i) {
       activeSectionIndex = i;
+      activeSubtabId = null;
       renderTabBar();
-      renderSection();
+      renderCurrentSection();
       updateBottomNav();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -881,15 +337,27 @@
       if (next >= 0 && next < sectionDefs.length) setTab(next);
     }
 
-    function renderSection() {
-      const def = sectionDefs[activeSectionIndex];
-      const content = sections[def.id] || '';
-      const area = document.getElementById('content-area');
+    function onViewSubtabClick(topId, subId) {
+      activeSubtabId = subId;
+      renderCurrentSection();
+    }
 
+    function renderCurrentSection() {
+      const def = sectionDefs[activeSectionIndex];
+      const normalized = normalizeSection(sections[def.id]);
+      if (Array.isArray(normalized.subtabs) && normalized.subtabs.length) {
+        const active = normalized.subtabs.filter(st => st.active !== false);
+        if (!activeSubtabId || !active.some(st => st.id === activeSubtabId)) {
+          activeSubtabId = active[0] ? active[0].id : null;
+        }
+      } else {
+        activeSubtabId = null;
+      }
+      const area = document.getElementById('content-area');
       area.innerHTML = `
         <div class="section-eyebrow">${esc(def.label)}</div>
-        <h2 class="section-title">${esc(def.sectionTitle || def.label)}</h2>
-        <div style="margin-top:32px;">${def.renderFn(content)}</div>
+        <h2 class="section-title">${esc(def.label)}</h2>
+        <div style="margin-top:32px;">${renderSection(normalized, { topId: def.id, activeSubtabId, onSubtabClick: 'onViewSubtabClick' })}</div>
       `;
     }
 
@@ -908,11 +376,15 @@
       strategyData = await res.json();
       const rawSections = strategyData.sections ? JSON.parse(strategyData.sections) : {};
       const sectionLabels = rawSections._labels || {};
-      sections = Object.fromEntries(Object.entries(rawSections).filter(([k]) => k !== '_labels'));
+      const rawEntries = Object.fromEntries(Object.entries(rawSections).filter(([k]) => k !== '_labels'));
+      sections = {};
+      for (const s of SECTION_DEFS) {
+        sections[s.id] = normalizeSection(rawEntries[s.id]);
+      }
       const activeSectionIds = strategyData.active_sections ? JSON.parse(strategyData.active_sections) : [];
 
-      sectionDefs = ALL_SECTION_DEFS
-        .filter(s => activeSectionIds.includes(s.id) && sections[s.id] && sections[s.id].trim())
+      sectionDefs = orderSectionsForDisplay(activeSectionIds)
+        .filter(s => sectionHasContent(sections[s.id]))
         .map(s => sectionLabels[s.id] ? { ...s, label: sectionLabels[s.id] } : s);
 
       if (!sectionDefs.length) {
@@ -942,27 +414,8 @@
       document.getElementById('bottom-nav').style.display = 'block';
 
       renderTabBar();
-      renderSection();
+      renderCurrentSection();
       updateBottomNav();
-    }
-
-    function buildPrintView() {
-      const el = document.getElementById('print-view');
-      if (!el) return;
-      el.innerHTML = sectionDefs.map((def, i) => {
-        const content = sections[def.id] || '';
-        return `
-          <div class="print-section">
-            <div class="print-eyebrow">${esc(def.label)}</div>
-            <div class="print-section-title">${esc(def.label)}</div>
-            <div>${def.renderFn(content)}</div>
-          </div>`;
-      }).join('');
-    }
-
-    function downloadPdf() {
-      buildPrintView();
-      window.print();
     }
 
     load();

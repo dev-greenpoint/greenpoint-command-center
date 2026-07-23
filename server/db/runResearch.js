@@ -1,5 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
-const { getDb, saveDb } = require('./database');
+const { query } = require('./database');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -21,12 +21,8 @@ async function fetchWebsiteText(url) {
 
 async function runResearch(clientId) {
   try {
-    const db = await getDb();
-    const result = db.exec('SELECT * FROM clients WHERE id=?', [clientId]);
-    if (!result.length || !result[0].values.length) return;
-
-    const client = Object.fromEntries(result[0].columns.map((c, i) => [c, result[0].values[0][i]]));
-    if (!client.name) return;
+    const [client] = await query('SELECT * FROM clients WHERE id=?', [clientId]);
+    if (!client || !client.name) return;
 
     let websiteContext = '';
     if (client.website) {
@@ -57,11 +53,10 @@ Also, on a new line at the end, write: INDUSTRY: [one short category, e.g. Retai
     const research = summary === 'No information found.' ? null : summary;
 
     if (industry) {
-      db.run('UPDATE clients SET research=?, industry=? WHERE id=?', [research, industry, clientId]);
+      await query('UPDATE clients SET research=?, industry=? WHERE id=?', [research, industry, clientId]);
     } else {
-      db.run('UPDATE clients SET research=? WHERE id=?', [research, clientId]);
+      await query('UPDATE clients SET research=? WHERE id=?', [research, clientId]);
     }
-    saveDb();
   } catch (err) {
     console.error(`Research failed for client ${clientId}:`, err.message);
   }

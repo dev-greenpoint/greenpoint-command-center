@@ -1,14 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
-const { getDb, saveDb } = require('./database');
-
-function rows(result) {
-  if (!result.length) return [];
-  return result[0].values.map(row =>
-    Object.fromEntries(result[0].columns.map((c, i) => [c, row[i]]))
-  );
-}
+const { query } = require('./database');
 
 async function getAuthClient() {
   // Support key file path or base64-encoded JSON content
@@ -50,8 +43,7 @@ async function createFolder(drive, name, parentId) {
 
 async function runDrive(clientId) {
   try {
-    const db = await getDb();
-    const client = rows(db.exec('SELECT name FROM clients WHERE id=?', [clientId]))[0];
+    const [client] = await query('SELECT name FROM clients WHERE id=?', [clientId]);
     if (!client) return;
 
     const authClient = await getAuthClient();
@@ -66,12 +58,11 @@ async function runDrive(clientId) {
 
     const folderUrl = `https://drive.google.com/drive/folders/${rootId}`;
 
-    db.run('UPDATE clients SET drive_folder_url=? WHERE id=?', [folderUrl, clientId]);
-    db.run(
+    await query('UPDATE clients SET drive_folder_url=? WHERE id=?', [folderUrl, clientId]);
+    await query(
       `UPDATE onboarding_checklist SET completed=1, completed_at=? WHERE client_id=? AND auto_type='drive'`,
       [new Date().toISOString(), clientId]
     );
-    saveDb();
     console.log(`[Drive] Folder created for client ${clientId}: ${folderUrl}`);
   } catch (err) {
     console.error(`[Drive] Failed for client ${clientId}:`, err.message);
