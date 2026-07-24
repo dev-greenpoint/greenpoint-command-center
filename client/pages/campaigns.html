@@ -209,6 +209,16 @@
     async function load() {
       renderShell({ pageId: 'campaigns', title: 'PR Campaigns' });
 
+      if (!IS_LOCALHOST) {
+        document.getElementById('page-content').innerHTML = `
+          <div style="max-width:420px;margin:80px auto;text-align:center;">
+            <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Available on localhost only</div>
+            <div style="font-size:13px;color:var(--text-muted);">This section isn't open in production yet.</div>
+          </div>`;
+        return;
+      }
+
       const res = await fetch('/api/campaigns');
       const data = res.ok ? await res.json() : [];
       allCampaigns = data.filter(c => c.type === 'PR' || c.type === 'PR Light');

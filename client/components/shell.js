@@ -1,11 +1,13 @@
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Overview',          icon: '◈',  href: '/' },
   { id: 'deck-creator',  label: 'Deck Creator',      icon: '◧',  href: '/deck-creator' },
-  { id: 'campaigns',     label: 'Campaign Manager',  icon: '◆',  href: '/campaigns' },
-  { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social' },
+  { id: 'campaigns',     label: 'Campaign Manager',  icon: '◆',  href: '/campaigns', localOnly: true },
+  { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social', localOnly: true },
   { id: 'approvals',     label: 'Approvals',         icon: '◇',  href: '/approvals' },
-  { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports' },
+  { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports', localOnly: true },
 ];
+
+const IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 function renderShell({ pageId, title }) {
   const sidebar = document.getElementById('sidebar');
@@ -21,12 +23,24 @@ function renderShell({ pageId, title }) {
       <div class="nav-section-label">Clients</div>
       <div id="sidebar-clients"><span style="font-size:11px;color:var(--text-dim);padding:4px 16px;">Loading…</span></div>
       <div class="nav-section-label" style="margin-top:8px;">Workspace</div>
-      ${NAV_ITEMS.map(item => `
-        <a class="nav-item ${item.id === pageId ? 'active' : ''}" href="${item.href}">
-          <span class="nav-icon">${item.icon}</span>
-          <span class="nav-label">${item.label}</span>
-        </a>
-      `).join('')}
+      ${NAV_ITEMS.map(item => {
+        const locked = item.localOnly && !IS_LOCALHOST;
+        if (locked) {
+          return `
+            <span class="nav-item nav-item-locked" title="Available on localhost only">
+              <span class="nav-icon">${item.icon}</span>
+              <span class="nav-label">${item.label}</span>
+              <span class="nav-lock">🔒</span>
+            </span>
+          `;
+        }
+        return `
+          <a class="nav-item ${item.id === pageId ? 'active' : ''}" href="${item.href}">
+            <span class="nav-icon">${item.icon}</span>
+            <span class="nav-label">${item.label}</span>
+          </a>
+        `;
+      }).join('')}
 
     </nav>
     <div class="sidebar-footer">

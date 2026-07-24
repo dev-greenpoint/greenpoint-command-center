@@ -76,7 +76,7 @@
     <aside class="sidebar" id="sidebar"></aside>
     <div class="main-area">
       <header class="header" id="header"></header>
-      <main class="page-content">
+      <main class="page-content" id="page-content">
 
         <div style="margin-bottom:20px;">
           <div id="social-count" style="font-size:13px;color:var(--text-muted);">Loading…</div>
@@ -95,6 +95,16 @@
     renderShell({ pageId: 'social', title: 'Social' });
 
     async function load() {
+      if (!IS_LOCALHOST) {
+        document.getElementById('page-content').innerHTML = `
+          <div style="max-width:420px;margin:80px auto;text-align:center;">
+            <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Available on localhost only</div>
+            <div style="font-size:13px;color:var(--text-muted);">This section isn't open in production yet.</div>
+          </div>`;
+        return;
+      }
+
       const [campRes] = await Promise.all([
         fetch('/api/campaigns'),
       ]);

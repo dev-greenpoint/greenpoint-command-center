@@ -145,6 +145,10 @@ html, body {
 .nav-item-client { opacity: 0.8; }
 .nav-item-client .nav-icon { opacity: 0.5; }
 
+.nav-item-locked { opacity: 0.4; cursor: not-allowed; }
+.nav-item-locked:hover { background: none; color: var(--text-muted); }
+.nav-item-locked .nav-lock { margin-left: auto; font-size: 11px; }
+
 .sidebar-footer {
   padding: 10px 0;
   border-top: 1px solid var(--border);

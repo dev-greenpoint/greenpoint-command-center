@@ -33,7 +33,8 @@
 
     .deck-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
+      max-width: 320px;
       gap: 14px;
     }
 
@@ -140,12 +141,7 @@
               <div class="deck-card-sections">Overview → Strategy → Audiences → Messages → Timeline</div>
             </div>
 
-            <div class="deck-card" onclick="selectDeck('kickoff-workshop')">
-              <div class="deck-card-icon">◇</div>
-              <div class="deck-card-name">Workshop</div>
-              <div class="deck-card-desc">Workshop agenda, brand discovery questions, immersion framework, and agreed next steps.</div>
-              <div class="deck-card-sections">Agenda → Discovery → Immersion → Next Steps</div>
-            </div>
+            <!-- Workshop deck type kept in background (not shown on picker) — only Strategy is available for now -->
 
           </div>
         </div>
