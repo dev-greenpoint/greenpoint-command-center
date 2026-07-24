@@ -297,12 +297,7 @@
     function renderTabBar() {
       const bar = document.getElementById('tab-bar');
       let html = '';
-      let lastGroup = null;
       sectionDefs.forEach((s, i) => {
-        if (s.group !== lastGroup) {
-          lastGroup = s.group;
-          html += `<div class="gpb-tab-group-label">${esc(s.group)}</div>`;
-        }
         html += `<button class="tab-btn ${i===activeSectionIndex?'active':''}" onclick="setTab(${i})">${esc(s.label)}</button>`;
       });
       bar.innerHTML = html;

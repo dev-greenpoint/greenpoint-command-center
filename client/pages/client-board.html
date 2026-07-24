@@ -385,8 +385,6 @@
     .strat-section { border-bottom:1px solid var(--border);padding:16px 0; }
     .strat-section:last-child { border-bottom:none; }
     .strat-section-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:10px; }
-    .strat-group-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);padding:14px 0 4px; }
-    .strat-group-label:first-child { padding-top: 0; }
     .drawer-header { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border); }
     .drawer-header h2 { font-size:15px;font-weight:600; }
     .drawer-close { background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1; }
@@ -2209,17 +2207,12 @@
       if (!visibleDefs.length) {
         document.getElementById('strat-drawer-body').innerHTML = '<p style="font-size:13px;color:var(--text-muted);">No content yet — open the strategy builder to start drafting.</p>';
       } else {
-        let lastGroup = null;
-        document.getElementById('strat-drawer-body').innerHTML = visibleDefs.map(def => {
-          const groupHtml = def.group !== lastGroup ? (lastGroup = def.group, `<div class="strat-group-label">${escHtml(def.group)}</div>`) : '';
-          return `
-            ${groupHtml}
+        document.getElementById('strat-drawer-body').innerHTML = visibleDefs.map(def => `
             <div class="strat-section" data-section-id="${def.id}">
               <div class="strat-section-label">${escHtml(sectionLabels[def.id] || def.label)}</div>
               <div class="strat-section-content">${renderSection(drawerNormalized[def.id], { topId: def.id, activeSubtabId: drawerActiveSubtabs[def.id], onSubtabClick: 'onDrawerSubtabClick' })}</div>
             </div>
-          `;
-        }).join('');
+          `).join('');
       }
 
       document.getElementById('strat-drawer-footer').innerHTML = `

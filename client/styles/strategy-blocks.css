@@ -57,14 +57,6 @@
 .gpb-subtab-btn:hover:not(.active) { color: #fff; border-color: rgba(255,255,255,0.2); }
 .gpb-subtab-btn.active { background: #738C7B; color: #fff; border-color: #738C7B; }
 
-/* Group header dividers in a tab bar */
-.gpb-tab-group-label {
-  flex-shrink: 0; display: flex; align-items: center;
-  padding: 0 10px 0 4px; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,0.30);
-}
-.gpb-tab-group-label:first-child { padding-left: 0; }
-
 /* Gantt */
 .gpb-gantt { width: 100%; }
 .gpb-gantt-axis { position: relative; height: 22px; border-bottom: 1px solid rgba(255,255,255,0.10); margin: 0 0 10px 160px; }
