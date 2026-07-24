@@ -13,23 +13,23 @@ router.get('/', async (req, res) => {
 router.get('/:name', async (req, res) => {
   const name = req.params.name;
 
-  // Clients this person is on
-  const clients = await query(`
-    SELECT DISTINCT c.id, c.name, c.status, c.services, ct.role
-    FROM clients c
-    JOIN client_team ct ON ct.client_id = c.id
-    WHERE ct.name = ?
-    ORDER BY c.name ASC
-  `, [name]);
-
-  // Tasks assigned to them
-  const tasks = await query(`
-    SELECT t.*, c.name as client_name
-    FROM tasks t
-    JOIN clients c ON c.id = t.client_id
-    WHERE t.assignee = ?
-    ORDER BY t.status ASC
-  `, [name]);
+  // Clients this person is on, and tasks assigned to them — independent, run together
+  const [clients, tasks] = await Promise.all([
+    query(`
+      SELECT DISTINCT c.id, c.name, c.status, c.services, ct.role
+      FROM clients c
+      JOIN client_team ct ON ct.client_id = c.id
+      WHERE ct.name = ?
+      ORDER BY c.name ASC
+    `, [name]),
+    query(`
+      SELECT t.*, c.name as client_name
+      FROM tasks t
+      JOIN clients c ON c.id = t.client_id
+      WHERE t.assignee = ?
+      ORDER BY t.status ASC
+    `, [name]),
+  ]);
 
   // Campaigns for their clients
   const clientIds = clients.map(c => c.id);

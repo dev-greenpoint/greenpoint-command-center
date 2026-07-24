@@ -5,15 +5,17 @@ const { GENERAL_CHECKLIST, SERVICE_CHECKLIST } = require('../db/checklistTemplat
 
 // Get full client profile (client + checklist + tasks)
 router.get('/:id/profile', async (req, res) => {
-  const clients = await query('SELECT * FROM clients WHERE id=?', [req.params.id]);
+  const [clients, checklist, tasks, team, contacts] = await Promise.all([
+    query('SELECT * FROM clients WHERE id=?', [req.params.id]),
+    query('SELECT * FROM onboarding_checklist WHERE client_id=? ORDER BY id', [req.params.id]),
+    query('SELECT * FROM tasks WHERE client_id=? ORDER BY id', [req.params.id]),
+    query('SELECT * FROM client_team WHERE client_id=? ORDER BY id', [req.params.id]),
+    query('SELECT * FROM client_contacts WHERE client_id=? ORDER BY id', [req.params.id]),
+  ]);
   if (!clients.length) {
     return res.status(404).json({ error: 'Not found' });
   }
   const client = clients[0];
-  const checklist = await query('SELECT * FROM onboarding_checklist WHERE client_id=? ORDER BY id', [req.params.id]);
-  const tasks = await query('SELECT * FROM tasks WHERE client_id=? ORDER BY id', [req.params.id]);
-  const team = await query('SELECT * FROM client_team WHERE client_id=? ORDER BY id', [req.params.id]);
-  const contacts = await query('SELECT * FROM client_contacts WHERE client_id=? ORDER BY id', [req.params.id]);
   res.json({ client, checklist, tasks, team, contacts });
 });
 

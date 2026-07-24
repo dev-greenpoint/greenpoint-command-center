@@ -4,11 +4,13 @@ const { query } = require('../db/database');
 
 // Get all onboarding items for a client (7-stage only)
 router.get('/:clientId', async (req, res) => {
-  const items = await query(
-    `SELECT * FROM onboarding_checklist WHERE client_id=? AND category='onboarding' ORDER BY stage_index ASC, COALESCE(parent_id, id) ASC, id ASC`,
-    [req.params.clientId]
-  );
-  const [client] = await query('SELECT slack_channel, drive_folder_url FROM clients WHERE id=?', [req.params.clientId]);
+  const [items, [client]] = await Promise.all([
+    query(
+      `SELECT * FROM onboarding_checklist WHERE client_id=? AND category='onboarding' ORDER BY stage_index ASC, COALESCE(parent_id, id) ASC, id ASC`,
+      [req.params.clientId]
+    ),
+    query('SELECT slack_channel, drive_folder_url FROM clients WHERE id=?', [req.params.clientId]),
+  ]);
   res.json({ items, slack_channel: client?.slack_channel || null, drive_folder_url: client?.drive_folder_url || null });
 });
 

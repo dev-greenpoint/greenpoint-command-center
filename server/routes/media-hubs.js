@@ -8,19 +8,19 @@ router.get('/client/:clientId', async (req, res) => {
   const { clientId } = req.params;
   const year = parseInt(req.query.year) || new Date().getFullYear();
 
-  let [hub] = await query('SELECT * FROM media_hubs WHERE client_id=? AND year=?', [clientId, year]);
+  let [[hub], [client], [firstCamp]] = await Promise.all([
+    query('SELECT * FROM media_hubs WHERE client_id=? AND year=?', [clientId, year]),
+    query('SELECT name, code FROM clients WHERE id=?', [clientId]),
+    query(
+      `SELECT MIN(start_date) as first_date FROM campaigns WHERE client_id=? AND type IN ('PR','PR Light') AND start_date IS NOT NULL`,
+      [clientId]
+    ),
+  ]);
 
   if (!hub) {
     const [{ id: newId }] = await query('INSERT INTO media_hubs (client_id, year) VALUES (?, ?) RETURNING id', [clientId, year]);
     [hub] = await query('SELECT * FROM media_hubs WHERE id=?', [newId]);
   }
-
-  // Attach client name and earliest PR campaign start date
-  const [client] = await query('SELECT name, code FROM clients WHERE id=?', [clientId]);
-  const [firstCamp] = await query(
-    `SELECT MIN(start_date) as first_date FROM campaigns WHERE client_id=? AND type IN ('PR','PR Light') AND start_date IS NOT NULL`,
-    [clientId]
-  );
 
   res.json({ ...hub, client_name: client?.name, client_code: client?.code, first_campaign_date: firstCamp?.first_date || null });
 });
@@ -36,9 +36,14 @@ router.get('/:id', async (req, res) => {
   const result = { hub };
 
   if (month) {
-    result.coverage = await query('SELECT * FROM media_coverage WHERE hub_id=? AND month=? ORDER BY date ASC, created_at ASC', [id, month]);
-    result.top_coverage = await query('SELECT * FROM media_top_coverage WHERE hub_id=? AND month=? ORDER BY created_at ASC', [id, month]);
-    result.report = (await query('SELECT * FROM media_reports WHERE hub_id=? AND month=?', [id, month]))[0] || null;
+    const [coverage, topCoverage, reports] = await Promise.all([
+      query('SELECT * FROM media_coverage WHERE hub_id=? AND month=? ORDER BY date ASC, created_at ASC', [id, month]),
+      query('SELECT * FROM media_top_coverage WHERE hub_id=? AND month=? ORDER BY created_at ASC', [id, month]),
+      query('SELECT * FROM media_reports WHERE hub_id=? AND month=?', [id, month]),
+    ]);
+    result.coverage = coverage;
+    result.top_coverage = topCoverage;
+    result.report = reports[0] || null;
   }
 
   res.json(result);
@@ -48,25 +53,24 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/overview', async (req, res) => {
   const { id } = req.params;
 
-  const [totals] = await query(
-    `SELECT COUNT(*) as total_hits, COALESCE(SUM(asr),0) as total_asr FROM media_coverage WHERE hub_id=? AND hit=1`,
-    [id]
-  );
-
-  const byType = await query(
-    `SELECT media_type, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY media_type ORDER BY count DESC`,
-    [id]
-  );
-
-  const byMonth = await query(
-    `SELECT month, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY month ORDER BY month ASC`,
-    [id]
-  );
-
-  const byCampaign = await query(
-    `SELECT campaign_name, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 AND campaign_name IS NOT NULL GROUP BY campaign_name ORDER BY count DESC`,
-    [id]
-  );
+  const [[totals], byType, byMonth, byCampaign] = await Promise.all([
+    query(
+      `SELECT COUNT(*) as total_hits, COALESCE(SUM(asr),0) as total_asr FROM media_coverage WHERE hub_id=? AND hit=1`,
+      [id]
+    ),
+    query(
+      `SELECT media_type, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY media_type ORDER BY count DESC`,
+      [id]
+    ),
+    query(
+      `SELECT month, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY month ORDER BY month ASC`,
+      [id]
+    ),
+    query(
+      `SELECT campaign_name, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 AND campaign_name IS NOT NULL GROUP BY campaign_name ORDER BY count DESC`,
+      [id]
+    ),
+  ]);
 
   res.json({ totals, by_type: byType, by_month: byMonth, by_campaign: byCampaign });
 });
@@ -80,9 +84,14 @@ router.get('/share/:token', async (req, res) => {
   const result = { hub };
 
   if (month) {
-    result.coverage = await query('SELECT * FROM media_coverage WHERE hub_id=? AND month=? ORDER BY date ASC, created_at ASC', [hub.id, month]);
-    result.top_coverage = await query('SELECT * FROM media_top_coverage WHERE hub_id=? AND month=? ORDER BY created_at ASC', [hub.id, month]);
-    result.report = (await query('SELECT * FROM media_reports WHERE hub_id=? AND month=?', [hub.id, month]))[0] || null;
+    const [coverage, topCoverage, reports] = await Promise.all([
+      query('SELECT * FROM media_coverage WHERE hub_id=? AND month=? ORDER BY date ASC, created_at ASC', [hub.id, month]),
+      query('SELECT * FROM media_top_coverage WHERE hub_id=? AND month=? ORDER BY created_at ASC', [hub.id, month]),
+      query('SELECT * FROM media_reports WHERE hub_id=? AND month=?', [hub.id, month]),
+    ]);
+    result.coverage = coverage;
+    result.top_coverage = topCoverage;
+    result.report = reports[0] || null;
   }
 
   res.json(result);
@@ -94,22 +103,24 @@ router.get('/share/:token/overview', async (req, res) => {
   if (!hub) return res.status(404).json({ error: 'Not found' });
   const id = hub.id;
 
-  const [totals] = await query(
-    `SELECT COUNT(*) as total_hits, COALESCE(SUM(asr),0) as total_asr FROM media_coverage WHERE hub_id=? AND hit=1`,
-    [id]
-  );
-  const byType = await query(
-    `SELECT media_type, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY media_type ORDER BY count DESC`,
-    [id]
-  );
-  const byMonth = await query(
-    `SELECT month, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY month ORDER BY month ASC`,
-    [id]
-  );
-  const byCampaign = await query(
-    `SELECT campaign_name, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 AND campaign_name IS NOT NULL GROUP BY campaign_name ORDER BY count DESC`,
-    [id]
-  );
+  const [[totals], byType, byMonth, byCampaign] = await Promise.all([
+    query(
+      `SELECT COUNT(*) as total_hits, COALESCE(SUM(asr),0) as total_asr FROM media_coverage WHERE hub_id=? AND hit=1`,
+      [id]
+    ),
+    query(
+      `SELECT media_type, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY media_type ORDER BY count DESC`,
+      [id]
+    ),
+    query(
+      `SELECT month, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 GROUP BY month ORDER BY month ASC`,
+      [id]
+    ),
+    query(
+      `SELECT campaign_name, COUNT(*) as count, COALESCE(SUM(asr),0) as asr FROM media_coverage WHERE hub_id=? AND hit=1 AND campaign_name IS NOT NULL GROUP BY campaign_name ORDER BY count DESC`,
+      [id]
+    ),
+  ]);
   res.json({ totals, by_type: byType, by_month: byMonth, by_campaign: byCampaign });
 });
 

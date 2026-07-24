@@ -3,8 +3,10 @@ const router = express.Router();
 const { query } = require('../db/database');
 
 router.get('/', async (req, res) => {
-  const clients   = await query('SELECT * FROM clients ORDER BY created_at DESC');
-  const campaigns = await query("SELECT * FROM campaigns WHERE status != 'completed' ORDER BY created_at DESC");
+  const [clients, campaigns] = await Promise.all([
+    query('SELECT * FROM clients ORDER BY created_at DESC'),
+    query("SELECT * FROM campaigns WHERE status != 'completed' ORDER BY created_at DESC"),
+  ]);
 
   const active     = clients.filter(c => c.status === 'active');
   const onboarding = clients.filter(c => c.status === 'onboarding');

@@ -9,7 +9,18 @@ types.setTypeParser(20, val => parseInt(val, 10));
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+  // Supabase's pooler is a long geographic hop from here — reconnecting after
+  // an idle-close costs a full extra TLS+auth round trip (~1-2s). Keep
+  // connections open between requests instead of pg's 10s default so normal
+  // clicking-around doesn't pay that cost on every page switch.
+  idleTimeoutMillis: 5 * 60 * 1000,
+  keepAlive: true,
 });
+
+// A pooled connection can still be dropped server-side (e.g. by the pooler)
+// while idle; without this handler that surfaces as an unhandled 'error'
+// event and crashes the process.
+pool.on('error', (err) => console.error('Unexpected PG pool error', err));
 
 function toPositional(sql) {
   let i = 0;
