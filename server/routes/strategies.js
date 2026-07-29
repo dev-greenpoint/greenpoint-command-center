@@ -39,7 +39,7 @@ const SECTION_DEFS = [
 router.get('/', async (req, res) => {
   res.json(await query(`
     SELECT s.id, s.client_id, s.title, s.status, s.updated_at, s.created_at,
-           s.submitted_by, s.reviewer, s.submitted_at,
+           s.submitted_by, s.reviewer, s.submitted_at, s.created_by,
            cl.name as client_name
     FROM strategies s
     JOIN clients cl ON s.client_id = cl.id
@@ -100,7 +100,7 @@ const DECK_TYPE_SECTIONS = {
 
 // Create strategy
 router.post('/', async (req, res) => {
-  const { client_id, title, deck_type } = req.body;
+  const { client_id, title, deck_type, created_by } = req.body;
   if (!client_id) return res.status(400).json({ error: 'client_id required' });
 
   const deckDef = deck_type && DECK_TYPE_SECTIONS[deck_type];
@@ -126,8 +126,8 @@ router.post('/', async (req, res) => {
 
   const docType = deck_type === 'kickoff-workshop' ? 'workshop' : 'strategy';
   const [{ id }] = await query(
-    'INSERT INTO strategies (client_id, title, sections, active_sections, doc_type) VALUES (?, ?, ?, ?, ?) RETURNING id',
-    [client_id, title || 'Untitled Strategy', JSON.stringify(sectionsSeed), JSON.stringify(activeSections), docType]
+    'INSERT INTO strategies (client_id, title, sections, active_sections, doc_type, created_by) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
+    [client_id, title || 'Untitled Strategy', JSON.stringify(sectionsSeed), JSON.stringify(activeSections), docType, created_by || null]
   );
   res.json({ id });
 });
@@ -200,7 +200,7 @@ router.delete('/:id', async (req, res) => {
 function blocksToPlainText(blocks) {
   if (!Array.isArray(blocks)) return '';
   return blocks.map(b => {
-    if (!b) return '';
+    if (!b || b.draftIdea) return '';
     if (b.type === 'richtext') return b.markdown || '';
     if (b.type === 'card-grid') return (b.cards || []).map(c => `- ${c.title || ''}: ${c.body || ''}`).join('\n');
     if (b.type === 'gantt') return (b.phases || []).map(p => `Phase: ${p.title || ''} (${p.start || '?'} – ${p.end || '?'})${p.notes ? ': ' + p.notes : ''}`).join('\n');
@@ -219,7 +219,8 @@ function sectionToPlainText(value) {
 
 // AI generate section content
 router.post('/:id/generate', async (req, res) => {
-  const { section_id, subtab_id } = req.body;
+  const { section_id, subtab_id, mode } = req.body;
+  const ideasMode = mode === 'ideas';
   if (!section_id) return res.status(400).json({ error: 'section_id required' });
 
   const list = await query(`
@@ -274,14 +275,22 @@ router.post('/:id/generate', async (req, res) => {
     next_steps:    'List agreed next steps as: - Action: owner and due date.',
   }[section_id] || 'Use clear headings (##) and bullet points (- item) where appropriate.';
 
-  const prompt = `You are a senior strategist at Greenpoint Media, an Australian PR and media agency. Write the "${targetLabel}" section for a client strategy document.
-
-Context:
+  const contextBlock = `Context:
 - Client: ${row.client_name || 'Unknown'}${row.client_industry ? ` — ${row.client_industry}` : ''}
 ${row.client_research ? `- About the client: ${row.client_research}` : ''}
 ${row.services ? `- Services engaged: ${row.services}` : ''}
 - Strategy title: ${row.title}
-${otherSections ? `\nAlready drafted sections:\n${otherSections}` : ''}
+${otherSections ? `\nAlready drafted sections:\n${otherSections}` : ''}`;
+
+  const prompt = ideasMode
+    ? `You are a senior strategist at Greenpoint Media, an Australian PR and media agency, brainstorming for the "${targetLabel}" section of a client strategy document.
+
+${contextBlock}
+
+Give 5–8 short, distinct idea prompts for this section — seeds to react to and expand on, not finished content. One line each, no elaboration. Format as a markdown bullet list ("- idea"). Write in Australian English.`
+    : `You are a senior strategist at Greenpoint Media, an Australian PR and media agency. Write the "${targetLabel}" section for a client strategy document.
+
+${contextBlock}
 
 Format instructions: ${formatGuide}
 
@@ -290,13 +299,66 @@ Write only the content for the "${targetLabel}" section. Do not include the sect
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1200,
+      max_tokens: ideasMode ? 400 : 1200,
       messages: [{ role: 'user', content: prompt }],
     });
     res.json({ content: message.content[0].text });
   } catch (err) {
     console.error('Strategy AI error:', err.message);
     res.status(500).json({ error: 'AI generation failed' });
+  }
+});
+
+// AI review — whole-document pass for gaps, contradictions, and weak spots
+router.post('/:id/review', async (req, res) => {
+  const list = await query(`
+    SELECT s.*, cl.name as client_name, cl.research as client_research, cl.industry as client_industry
+    FROM strategies s
+    JOIN clients cl ON s.client_id = cl.id
+    WHERE s.id = ?`, [req.params.id]);
+  if (!list.length) return res.status(404).json({ error: 'Not found' });
+  const row = list[0];
+
+  const sections = row.sections ? JSON.parse(row.sections) : {};
+  const activeSections = row.active_sections ? JSON.parse(row.active_sections) : [];
+
+  const docBody = SECTION_DEFS
+    .filter(s => activeSections.includes(s.id))
+    .map(s => {
+      const text = sectionToPlainText(sections[s.id]).trim();
+      return text ? `## ${s.label}\n${text}` : null;
+    })
+    .filter(Boolean)
+    .join('\n\n');
+
+  if (!docBody) return res.json({ review: 'Nothing to review yet — add some content to a section first.' });
+
+  const prompt = `You are a senior strategist at Greenpoint Media, an Australian PR and media agency, reviewing a client strategy document before it goes out for approval.
+
+Client: ${row.client_name || 'Unknown'}${row.client_industry ? ` — ${row.client_industry}` : ''}
+${row.client_research ? `About the client: ${row.client_research}` : ''}
+
+Full document, section by section:
+
+${docBody}
+
+Review it as a whole and flag:
+1. Any gaps or missing information a client would expect to see
+2. Any contradictions or inconsistencies between sections
+3. Any messaging that's vague or could be sharpened
+
+Reference the section name for each point. Skip sections that are already solid — don't force feedback where none is needed. Be concise and specific. Write in Australian English, as a short bulleted list grouped under the relevant section headings.`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    res.json({ review: message.content[0].text });
+  } catch (err) {
+    console.error('Strategy review AI error:', err.message);
+    res.status(500).json({ error: 'AI review failed' });
   }
 });
 

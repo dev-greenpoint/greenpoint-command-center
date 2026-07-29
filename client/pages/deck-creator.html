@@ -117,6 +117,27 @@
       margin-bottom: 20px;
     }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    .deck-filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .deck-filters select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    .deck-status-chip {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -146,6 +167,37 @@
           </div>
         </div>
 
+        <div class="section-block">
+          <div class="section-heading">All Decks</div>
+
+          <div class="deck-filters">
+            <select id="filterClient" onchange="renderDeckList()">
+              <option value="">All clients</option>
+            </select>
+            <select id="filterCreator" onchange="renderDeckList()">
+              <option value="">All creators</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Client</th>
+                  <th>Created by</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="deck-list-tbody">
+                <tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:32px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </main>
     </div>
   </div>
@@ -158,6 +210,7 @@
       <select class="modal-select" id="modalClientSelect">
         <option value="">Select a client…</option>
       </select>
+      <input type="text" class="modal-select" id="modalCreatedBy" placeholder="Created by (your name)">
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
         <button class="btn btn-primary" onclick="createDeck()">Create</button>
@@ -200,6 +253,7 @@
       const sel = document.getElementById('modalClientSelect');
       sel.innerHTML = '<option value="">Select a client…</option>' +
         clients.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+      document.getElementById('modalCreatedBy').value = '';
 
       document.getElementById('clientModal').classList.add('open');
     }
@@ -215,13 +269,14 @@
         alert('Please select a client');
         return;
       }
+      const createdBy = document.getElementById('modalCreatedBy').value.trim();
 
       const title = DECK_TITLES[pendingType] || 'Untitled';
       try {
         const res = await fetch('/api/strategies', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ client_id: Number(clientId), title, deck_type: pendingType }),
+          body: JSON.stringify({ client_id: Number(clientId), title, deck_type: pendingType, created_by: createdBy || null }),
         });
         if (!res.ok) throw new Error(`Failed to create deck: ${res.status}`);
         const data = await res.json();
@@ -237,6 +292,87 @@
     document.getElementById('clientModal').addEventListener('click', function(e) {
       if (e.target === this) closeModal();
     });
+
+    // ── All Decks list ──────────────────────────────────────────────────────
+
+    const STATUS_CHIP_STYLE = {
+      draft:              'background:var(--surface-2);color:var(--text-muted)',
+      awaiting_approval:  'background:#3d2a00;color:#f5a623',
+      approved:           'background:#0d3323;color:#3ecf6e',
+    };
+    const STATUS_LABEL = {
+      draft: 'Draft',
+      awaiting_approval: 'Awaiting Approval',
+      approved: 'Approved',
+      updates_requested: 'Updates Requested',
+    };
+
+    let allDecks = [];
+
+    async function loadDecks() {
+      try {
+        const res = await fetch('/api/strategies');
+        allDecks = res.ok ? await res.json() : [];
+      } catch (err) {
+        allDecks = [];
+      }
+
+      const clientSel = document.getElementById('filterClient');
+      const uniqueClients = [...new Map(allDecks.map(d => [d.client_id, d.client_name])).entries()];
+      clientSel.innerHTML = '<option value="">All clients</option>' +
+        uniqueClients.map(([id, name]) => `<option value="${id}">${escHtml(name)}</option>`).join('');
+
+      const creatorSel = document.getElementById('filterCreator');
+      const uniqueCreators = [...new Set(allDecks.map(d => d.created_by).filter(Boolean))].sort();
+      creatorSel.innerHTML = '<option value="">All creators</option>' +
+        uniqueCreators.map(name => `<option value="${escHtml(name)}">${escHtml(name)}</option>`).join('');
+
+      renderDeckList();
+    }
+
+    function renderDeckList() {
+      const clientFilter = document.getElementById('filterClient').value;
+      const creatorFilter = document.getElementById('filterCreator').value;
+
+      const filtered = allDecks.filter(d =>
+        (!clientFilter || String(d.client_id) === clientFilter) &&
+        (!creatorFilter || d.created_by === creatorFilter)
+      );
+
+      const tbody = document.getElementById('deck-list-tbody');
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:32px;">No decks yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(d => {
+        const chipStyle = STATUS_CHIP_STYLE[d.status] || STATUS_CHIP_STYLE.draft;
+        const chipLabel = STATUS_LABEL[d.status] || d.status;
+        const updated = d.updated_at ? new Date(d.updated_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '—';
+        return `
+          <tr>
+            <td><strong>${escHtml(d.title)}</strong></td>
+            <td>${escHtml(d.client_name)}</td>
+            <td>${escHtml(d.created_by) || '—'}</td>
+            <td><span class="deck-status-chip" style="${chipStyle}">${chipLabel}</span></td>
+            <td style="color:var(--text-muted);">${updated}</td>
+            <td style="text-align:right;">
+              <a href="/strategy/${d.id}" class="btn btn-ghost" style="padding:4px 10px;font-size:12px;">Open</a>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="deleteDeck(${d.id})">×</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function deleteDeck(id) {
+      if (!confirm('Delete this deck? This cannot be undone.')) return;
+      await fetch(`/api/strategies/${id}`, { method: 'DELETE' });
+      allDecks = allDecks.filter(d => d.id !== id);
+      renderDeckList();
+    }
+
+    loadDecks();
   </script>
 </body>
 </html>

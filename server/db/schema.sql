@@ -153,7 +153,8 @@ CREATE TABLE strategies (
   submitted_by TEXT,
   reviewer TEXT,
   submitted_at TEXT,
-  doc_type TEXT DEFAULT 'strategy'
+  doc_type TEXT DEFAULT 'strategy',
+  created_by TEXT
 );
 
 CREATE TABLE social_posts (

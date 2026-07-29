@@ -25,6 +25,16 @@ const { clientBrainRouter, entryRouter: brainEntryRouter } = require('./routes/b
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Route handlers here don't wrap their `await query(...)` calls in try/catch,
+// so a transient DB hiccup (e.g. Supabase's pooler dropping a connection
+// mid-query) becomes an unhandled rejection — which crashes the whole
+// process by default in modern Node. This keeps the server alive; the
+// specific request that hit the dropped connection will hang/time out
+// client-side rather than crashing every other in-flight request too.
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection (request likely failed, server staying up):', err);
+});
+
 app.use(cors());
 app.use(express.json());
 

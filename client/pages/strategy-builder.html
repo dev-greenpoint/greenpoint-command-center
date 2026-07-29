@@ -222,6 +222,8 @@
       font-size: 13px; padding: 2px 4px;
     }
     .sb-block-remove:hover { color: var(--danger); }
+    .sb-block-idea { border-style: dashed; border-color: var(--warning); background: rgba(245, 166, 35, 0.06); }
+    .sb-block-idea-badge { color: var(--warning); font-weight: 600; text-transform: none; letter-spacing: 0; }
 
     /* ── Add block menu ── */
     .sb-add-block-wrap { position: relative; margin-bottom: 16px; }
@@ -253,6 +255,55 @@
       cursor: pointer; font-size: 11px; line-height: 1;
     }
     .sb-empty-note { font-size: 12px; color: var(--text-dim); }
+
+    .sb-icon-display {
+      position: relative; width: 44px; height: 44px; align-self: flex-start;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    }
+    .sb-icon-display button {
+      position: absolute; top: -6px; right: -6px; width: 20px; height: 20px;
+      border-radius: 50%; background: var(--danger); color: #fff; border: none;
+      cursor: pointer; font-size: 11px; line-height: 1;
+    }
+    .sb-icon-picker { position: relative; align-self: flex-start; }
+    .sb-icon-picker-panel {
+      position: absolute; top: calc(100% + 4px); left: 0; z-index: 50;
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.3); width: 216px;
+    }
+    .sb-icon-picker-panel button {
+      display: flex; align-items: center; justify-content: center;
+      padding: 6px 0; border-radius: 6px; border: none; color: var(--text-muted);
+      background: none; cursor: pointer; font-family: var(--font);
+    }
+    .sb-icon-picker-panel button:hover { background: var(--surface-2); color: var(--accent); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 1.5); padding: 28px;
+      width: 440px; max-width: 96vw;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .review-modal { width: 640px; }
+    .review-modal-body {
+      max-height: 60vh; overflow-y: auto; font-size: 13px; line-height: 1.7;
+      color: var(--text-muted);
+    }
+    .review-modal-body h1, .review-modal-body h2, .review-modal-body h3 {
+      font-size: 14px; font-weight: 600; color: var(--text); margin: 14px 0 6px;
+    }
+    .review-modal-body h1:first-child, .review-modal-body h2:first-child, .review-modal-body h3:first-child { margin-top: 0; }
+    .review-modal-body ul { padding-left: 1.2em; margin: 0 0 10px; }
+    .review-modal-body li { margin-bottom: 4px; }
+    .review-modal-body strong { color: var(--text); }
 
     /* ── Card grid editor ── */
     .sb-cg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -297,7 +348,7 @@
 
     /* ── Generate button ── */
     .sb-footer {
-      display: flex; align-items: center;
+      display: flex; align-items: center; gap: 8px;
       justify-content: flex-end; margin-top: 10px;
     }
     .btn-generate {
@@ -358,10 +409,21 @@
     <span id="toast-msg"></span>
   </div>
 
+  <div class="modal-overlay" id="review-modal-overlay">
+    <div class="modal review-modal">
+      <div class="modal-title">Strategy Review</div>
+      <div class="review-modal-body" id="review-modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeReviewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script src="/components/shell.js"></script>
   <script src="/components/section-defs.js"></script>
+  <script src="/components/card-icons.js"></script>
   <script src="/components/strategy-render.js"></script>
   <script>
     const strategyId = location.pathname.split('/')[2];
@@ -374,6 +436,8 @@
     let currentSubtabId = null;
     let saveTimer = null;
     let pendingUploadTarget = null;
+    let openIconPickerKey = null;
+    const CARD_ICON_OPTIONS = Object.keys(CARD_ICON_SET);
 
     const TEMPLATES = {
       overview: `## Background\n_Who is the client, what do they do, and why is this campaign happening now?_\n\n## Situation\n_What's the current landscape — market context, competitors, and timing?_\n\n## Objectives\n_What does success look like? Define 2–3 clear outcomes._\n\n- Objective one\n- Objective two\n- Objective three`,
@@ -469,6 +533,11 @@
           <button class="btn btn-ghost" style="font-size:12px;" onclick="recall()">Recall to Draft</button>`,
       };
       const publishBtn = statusActions[strategy.status] || statusActions.draft;
+      const hasReviewableContent = activeSections.some(id => sectionHasContent(sections[id]));
+      const reviewBtn = hasReviewableContent ? `
+            <button class="btn-generate" id="review-btn" style="font-size:12px;" onclick="reviewStrategy()">
+              <span class="spinner"></span><span class="gen-icon">✦</span>Review Strategy
+            </button>` : '';
 
       document.getElementById('page-content').innerHTML = `
         <div class="strategy-header">
@@ -484,6 +553,7 @@
           <div class="strategy-actions">
             <span class="save-indicator" id="save-status"></span>
             <span class="status-pill ${chipClass}">${chipLabel}</span>
+            ${reviewBtn}
             ${publishBtn}
             <button class="btn btn-danger" style="font-size:12px;" onclick="deleteStrategy()">Delete</button>
           </div>
@@ -808,6 +878,9 @@
           </div>
         </div>
         <div class="sb-footer">
+          <button class="btn-generate" id="ideas-${id}" onclick="generateIdeas('${id}')">
+            <span class="spinner"></span><span class="gen-icon">💡</span>Ideas
+          </button>
           <button class="btn-generate" id="gen-${id}" onclick="generateSection('${id}')">
             <span class="spinner"></span><span class="gen-icon">✦</span>Generate with AI
           </button>
@@ -838,15 +911,27 @@
       else if (block.type === 'card-grid') inner = renderCardGridEditor(topId, subId, index, block);
       else if (block.type === 'gantt') inner = renderGanttEditor(topId, subId, index, block);
       const subArg = subId ? `'${subId}'` : 'null';
+      const ideaBadge = block.draftIdea
+        ? `<span class="sb-block-idea-badge">💡 Idea — not shown to client</span>
+           <button class="sb-block-remove" style="color:var(--warning);" onclick="keepBlockAsContent('${topId}', ${subArg}, ${index})" title="Keep as real content">Keep</button>`
+        : '';
       return `
-        <div class="sb-block" data-key="${key}" data-index="${index}" draggable="true">
+        <div class="sb-block ${block.draftIdea ? 'sb-block-idea' : ''}" data-key="${key}" data-index="${index}" draggable="true">
           <div class="sb-block-toolbar">
             <span class="sb-block-drag">⠿</span>
             <span class="sb-block-type">${blockTypeLabel(block.type)}</span>
+            ${ideaBadge}
             <button class="sb-block-remove" onclick="removeBlock('${topId}', ${subArg}, ${index})" title="Remove block">✕</button>
           </div>
           ${inner}
         </div>`;
+    }
+
+    function keepBlockAsContent(topId, subId, index) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) delete block.draftIdea;
+      renderContent();
+      scheduleSave();
     }
 
     function renderRichtextEditor(topId, subId, index, block) {
@@ -937,20 +1022,27 @@
       const cards = Array.isArray(block.cards) ? block.cards : [];
       const subArg = subId ? `'${subId}'` : 'null';
       const key = blockKey(topId, subId, index);
-      const cardsHtml = cards.map((c, ci) => `
+      const cardsHtml = cards.map((c, ci) => {
+        const pickerKey = `${key}:${ci}`;
+        const iconSection = c.icon
+          ? `<div class="sb-icon-display">${renderCardIcon(c.icon, 22)}<button onclick="removeCardIcon('${topId}', ${subArg}, ${index}, ${ci})">✕</button></div>`
+          : `<div class="sb-icon-picker">
+              <button class="btn-generate" style="font-size:11px;padding:4px 10px;" onclick="toggleIconPicker('${pickerKey}')">◆ Select Icon</button>
+              ${openIconPickerKey === pickerKey ? `<div class="sb-icon-picker-panel">${CARD_ICON_OPTIONS.map(ic => `<button title="${ic}" onclick="setCardIcon('${topId}', ${subArg}, ${index}, ${ci}, '${ic}')">${renderCardIcon(ic, 18)}</button>`).join('')}</div>` : ''}
+            </div>`;
+        return `
         <div class="sb-cg-card" data-ci="${ci}" draggable="true">
           <div class="sb-cg-card-toolbar">
             <span class="sb-block-drag">⠿</span>
             <button onclick="removeCard('${topId}', ${subArg}, ${index}, ${ci})" title="Remove card">✕</button>
           </div>
-          ${c.image && c.image.src
-            ? `<div class="sb-image-thumb"><img src="${escAttr(c.image.src)}" alt=""><button onclick="removeCardImage('${topId}', ${subArg}, ${index}, ${ci})">✕</button></div>`
-            : `<button class="btn-generate" style="font-size:11px;padding:4px 10px;align-self:flex-start;" onclick="triggerCardImageUpload('${topId}', ${subArg}, ${index}, ${ci})">🖼 Add Image</button>`}
+          ${iconSection}
           <input class="sb-cg-title-input" type="text" placeholder="Card title" value="${escAttr(c.title || '')}"
             oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'title', this.value)">
           <textarea class="sb-cg-body-input" placeholder="Card text"
             oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'body', this.value)">${escHtml(c.body || '')}</textarea>
-        </div>`).join('');
+        </div>`;
+      }).join('');
       return `
         <div class="sb-card-grid-editor">
           <div class="sb-cg-grid" data-block-key="${key}">${cardsHtml}</div>
@@ -970,9 +1062,20 @@
       const block = getBlockRef(topId, subId, index);
       if (block && block.cards) { block.cards.splice(ci, 1); renderContent(); scheduleSave(); }
     }
-    function removeCardImage(topId, subId, index, ci) {
+    function toggleIconPicker(pickerKey) {
+      openIconPickerKey = openIconPickerKey === pickerKey ? null : pickerKey;
+      renderContent();
+    }
+    function setCardIcon(topId, subId, index, ci, icon) {
       const block = getBlockRef(topId, subId, index);
-      if (block && block.cards && block.cards[ci]) { delete block.cards[ci].image; renderContent(); scheduleSave(); }
+      if (block && block.cards && block.cards[ci]) block.cards[ci].icon = icon;
+      openIconPickerKey = null;
+      renderContent();
+      scheduleSave();
+    }
+    function removeCardIcon(topId, subId, index, ci) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.cards && block.cards[ci]) { delete block.cards[ci].icon; renderContent(); scheduleSave(); }
     }
 
     function renderGanttEditor(topId, subId, index, block) {
@@ -1246,6 +1349,35 @@
       if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     }
 
+    async function generateIdeas(id) {
+      const btn = document.getElementById(`ideas-${id}`);
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+
+      const sec = getSection(id);
+      const isParent = Array.isArray(sec.subtabs) && sec.subtabs.length > 0;
+      const subtabId = isParent ? currentSubtabId : null;
+
+      try {
+        const res = await fetch(`/api/strategies/${strategyId}/generate`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ section_id: id, subtab_id: subtabId, sections, mode: 'ideas' })
+        });
+        const data = await res.json();
+        if (data.content) {
+          const blocks = isParent ? sec.subtabs.find(s => s.id === subtabId).blocks : sec.blocks;
+          blocks.push({ type: 'richtext', markdown: data.content, draftIdea: true });
+          renderContent();
+          scheduleSave();
+        } else {
+          showToast('Idea generation failed — please try again', true);
+        }
+      } catch {
+        showToast('Idea generation failed — please try again', true);
+      }
+
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
     // ── Approval flow ─────────────────────────────────────────────────────────
 
     async function submitForApproval() {
@@ -1292,6 +1424,32 @@
       window.location = `/clients/${strategy.client_id}/board`;
     }
 
+    // ── Whole-document AI review ────────────────────────────────────────────────
+
+    async function reviewStrategy() {
+      const btn = document.getElementById('review-btn');
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+
+      try {
+        const res = await fetch(`/api/strategies/${strategyId}/review`, { method: 'POST' });
+        const data = await res.json();
+        if (data.review) {
+          document.getElementById('review-modal-body').innerHTML = DOMPurify.sanitize(marked.parse(data.review));
+          document.getElementById('review-modal-overlay').classList.add('open');
+        } else {
+          showToast('Review failed — please try again', true);
+        }
+      } catch {
+        showToast('Review failed — please try again', true);
+      }
+
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
+    function closeReviewModal() {
+      document.getElementById('review-modal-overlay').classList.remove('open');
+    }
+
     // ── Toast ─────────────────────────────────────────────────────────────────
 
     function showToast(msg, isError = false) {
@@ -1307,11 +1465,6 @@
 
     function triggerBlockImageUpload(topId, subId, index) {
       pendingUploadTarget = { topId, subId, index };
-      document.getElementById('sb-image-input').click();
-    }
-
-    function triggerCardImageUpload(topId, subId, index, cardIndex) {
-      pendingUploadTarget = { topId, subId, index, cardIndex };
       document.getElementById('sb-image-input').click();
     }
 
@@ -1332,13 +1485,8 @@
 
       const block = getBlockRef(target.topId, target.subId, target.index);
       if (!block) return;
-      if (target.cardIndex != null) {
-        block.cards = block.cards || [];
-        if (block.cards[target.cardIndex]) block.cards[target.cardIndex].image = { src: url, alt: '' };
-      } else {
-        block.images = block.images || [];
-        block.images.push({ src: url, alt: '' });
-      }
+      block.images = block.images || [];
+      block.images.push({ src: url, alt: '' });
       renderContent();
       scheduleSave();
       showToast('Image added');
@@ -1352,6 +1500,10 @@
     function escAttr(str) {
       return (str || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
+
+    document.getElementById('review-modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeReviewModal();
+    });
 
     load();
   </script>

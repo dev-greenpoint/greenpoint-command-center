@@ -29,7 +29,7 @@ function normalizeSubtab(st) {
 function blocksHaveContent(blocks) {
   if (!Array.isArray(blocks)) return false;
   return blocks.some(b => {
-    if (!b) return false;
+    if (!b || b.draftIdea) return false;
     if (b.type === 'richtext') return !!(b.markdown && b.markdown.trim());
     if (b.type === 'image') return Array.isArray(b.images) && b.images.length > 0;
     if (b.type === 'card-grid') return Array.isArray(b.cards) && b.cards.some(c => (c.title && c.title.trim()) || (c.body && c.body.trim()));
@@ -77,11 +77,11 @@ function renderImageBlock(block) {
 
 function renderCardGridBlock(block) {
   const cards = (Array.isArray(block.cards) ? block.cards : [])
-    .filter(c => (c.title && c.title.trim()) || (c.body && c.body.trim()) || (c.image && c.image.src));
+    .filter(c => (c.title && c.title.trim()) || (c.body && c.body.trim()) || c.icon);
   if (!cards.length) return '';
   return `<div class="gpb-card-grid">${cards.map(c => `
     <div class="gpb-card">
-      ${c.image && c.image.src ? `<img class="gpb-card-image" src="${gpbEscAttr(c.image.src)}" alt="${gpbEscAttr(c.image.alt || '')}">` : ''}
+      ${c.icon ? `<div class="gpb-card-icon">${renderCardIcon(c.icon, 32)}</div>` : ''}
       ${c.title ? `<div class="gpb-card-title">${gpbEsc(c.title)}</div>` : ''}
       ${c.body ? `<div class="gpb-card-body">${gpbEsc(c.body)}</div>` : ''}
     </div>`).join('')}</div>`;
@@ -158,7 +158,7 @@ function renderBlocks(blocks) {
     return '<p class="gpb-empty">No content yet.</p>';
   }
   const html = blocks.map(block => {
-    if (!block) return '';
+    if (!block || block.draftIdea) return '';
     switch (block.type) {
       case 'richtext':  return renderRichtextBlock(block);
       case 'image':     return renderImageBlock(block);
