@@ -239,22 +239,41 @@
     }
     .sb-add-block-menu button:hover { background: var(--surface-2); color: var(--accent); }
 
-    /* ── Image block editor ── */
-    .sb-image-editor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .sb-image-layout-label { font-size: 11px; color: var(--text-dim); }
-    .sb-image-layout {
+    /* ── Generic editor row (layout selects etc, reused by image + card-grid) ── */
+    .sb-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .sb-row-label { font-size: 11px; color: var(--text-dim); }
+    .sb-row-select {
       background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
       color: var(--text); font-size: 12px; padding: 4px 8px;
     }
-    .sb-image-thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
-    .sb-image-thumb { position: relative; width: 100px; height: 72px; }
-    .sb-image-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
-    .sb-image-thumb button {
-      position: absolute; top: -6px; right: -6px; width: 20px; height: 20px;
-      border-radius: 50%; background: var(--danger); color: #fff; border: none;
-      cursor: pointer; font-size: 11px; line-height: 1;
+    .sb-row-hint { font-size: 11px; color: var(--text-dim); margin: -6px 0 12px; }
+
+    /* ── Image block editor ── */
+    .sb-image-list { display: flex; flex-direction: column; gap: 8px; }
+    .sb-image-item { display: flex; align-items: center; gap: 10px; }
+    .sb-image-item img {
+      width: 72px; height: 54px; object-fit: cover; border-radius: 6px;
+      border: 1px solid var(--border); flex-shrink: 0;
     }
+    .sb-image-item-controls { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+    .sb-image-item-controls select {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+      color: var(--text); font-size: 12px; padding: 4px 8px;
+    }
+    .sb-image-item button {
+      background: none; border: none; color: var(--text-dim); cursor: pointer;
+      font-size: 13px; padding: 2px 4px; flex-shrink: 0;
+    }
+    .sb-image-item button:hover { color: var(--danger); }
     .sb-empty-note { font-size: 12px; color: var(--text-dim); }
+
+    /* ── Template offer (empty-state) ── */
+    .sb-template-offer {
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      padding: 20px; margin-bottom: 14px; text-align: center;
+    }
+    .sb-template-offer-title { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 4px; }
+    .sb-template-offer-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
 
     .sb-icon-display {
       position: relative; width: 44px; height: 44px; align-self: flex-start;
@@ -439,27 +458,119 @@
     let openIconPickerKey = null;
     const CARD_ICON_OPTIONS = Object.keys(CARD_ICON_SET);
 
-    const TEMPLATES = {
-      overview: `## Background\n_Who is the client, what do they do, and why is this campaign happening now?_\n\n## Situation\n_What's the current landscape — market context, competitors, and timing?_\n\n## Objectives\n_What does success look like? Define 2–3 clear outcomes._\n\n- Objective one\n- Objective two\n- Objective three`,
-      strategy: `## Strategic Approach\n_In one paragraph, describe the overarching strategy — the big idea that holds everything together._\n\n## Strategic Pillars\n\n**Pillar One**: Describe the first pillar and why it matters.\n\n**Pillar Two**: Describe the second pillar and why it matters.\n\n**Pillar Three**: Describe the third pillar and why it matters.`,
-      audiences: `**Primary Audience**: Describe the primary target — demographics, mindset, what they care about.\n\n**Secondary Audience**: Describe the secondary target — who else are we reaching and why.\n\n**Media Audience**: The journalists, editors, and publications we are trying to influence.`,
-      messages: `1. First key message\n   The core idea we want every audience member to walk away with.\n\n2. Second key message\n   Supporting message that reinforces the first.\n\n3. Third key message\n   A proof point, differentiator, or emotional hook.`,
-      tactical_plan: `## Channel Mix\n_Overview of the channels we are activating and how they work together._\n\n- PR Campaigns\n- Social Media\n- Content\n- Events\n\n## Phasing\n\n**Phase 1 — Foundation**: Set up, brief, strategy, assets.\n\n**Phase 2 — Launch**: Campaign activation, pitching, posting.\n\n**Phase 3 — Sustain**: Follow-up, monitoring, reporting.`,
-      pr: `## Campaign Angle One\n_Describe the story angle, why it's newsworthy, and the hook._\n\n- Target media category / publication type\n- Target media category / publication type\n\n## Campaign Angle Two\n_Describe the second angle._\n\n- Target media category / publication type`,
-      social: `## Platforms\n_Which platforms are we active on and why?_\n\n- Platform one — rationale\n- Platform two — rationale\n\n## Content Approach\n_How are we showing up — tone, style, format?_\n\n## Posting Cadence\n\n**Platform One**: X posts per week — content type, timing.\n\n**Platform Two**: X posts per week — content type, timing.`,
-      content: `## Content Pillars\n\n### Pillar One — [Name]\n_What is this pillar about and what content does it produce?_\n\n- Content idea\n- Content idea\n\n### Pillar Two — [Name]\n_What is this pillar about?_\n\n- Content idea\n- Content idea\n\n### Pillar Three — [Name]\n_Brand voice / lifestyle / culture content._\n\n- Content idea\n- Content idea`,
-      events: `## Events & Activations\n_What events or activations are planned and what is the objective of each?_\n\n**Event One**: Description, format, timing, expected outcomes.\n\n**Event Two**: Description, format, timing, expected outcomes.\n\n## Display Suite / Showroom\n_Is there a permanent or semi-permanent activation space to leverage?_`,
-      partnerships: `## Partnership Targets\n\n**Partner One**: Who they are, why they're a fit, what the collaboration looks like.\n\n**Partner Two**: Who they are, why they're a fit, what the collaboration looks like.\n\n## Influencer Strategy\n_Are we working with influencers? What tier, what categories, what brief?_\n\n- Influencer category / tier\n- Content format / brief direction`,
-      paid: `## Paid Strategy Overview\n_What role does paid media play in this campaign?_\n\n## Platforms & Budget\n\n**Platform One**: Objective, budget range, targeting approach, ad format.\n\n**Platform Two**: Objective, budget range, targeting approach, ad format.\n\n## Targeting\n\n- Audience segment\n- Retargeting approach\n- Lookalike strategy`,
-      design: `## Design Direction\n_Describe the visual direction — mood, aesthetic, references._\n\n## Brand Assets\n_What assets exist and what needs to be created?_\n\n- Asset one\n- Asset two\n\n## Creative Deliverables\n\n**Deliverable One**: Format, specs, usage, timeline.\n\n**Deliverable Two**: Format, specs, usage, timeline.`,
-      email: `## Segmentation\n_How is the database segmented?_\n\n## Sequences\n\n**Sequence One**: Trigger, cadence, goal.\n\n**Sequence Two**: Trigger, cadence, goal.`,
-      moodboard: `## Visual Direction\n_Describe the mood, aesthetic, and references._\n\n## Colour Palette\n\n## Typography`,
-      measurement: `## Key Metrics\n\n**Metric One**: What we're measuring and why.\n\n**Metric Two**: What we're measuring and why.\n\n## Targets\n\n- Target one\n- Target two\n- Target three\n\n## Reporting Cadence\n\n- Monthly PR update — coverage log, metrics, recommendations\n- Quarterly report — full campaign performance review`,
-      budget: `## Budget Breakdown\n\n- Line item one: amount — what it covers\n- Line item two: amount — what it covers\n- Line item three: amount — what it covers\n\n## Total\n_Total budget and any assumptions._`,
-      agenda: `1. Welcome & Introductions (10 min)\n   Who's in the room and what we're here to do.\n\n2. Agenda Item (X min)\n   What happens and who leads it.\n\n3. Agenda Item (X min)\n   What happens and who leads it.\n\n4. Wrap-up & Next Steps (10 min)`,
-      discovery: `## Brand & Positioning\n\n- Question one\n- Question two\n\n## Audience & Market\n\n- Question one\n- Question two\n\n## Goals & Success\n\n- Question one\n- Question two`,
-      immersion: `**Stage One — Discover**: What happens and what it uncovers.\n\n**Stage Two — Define**: What happens and what it uncovers.\n\n**Stage Three — Align**: What happens and what it uncovers.`,
-      next_steps: `- Action one: owner, due date\n- Action two: owner, due date\n- Action three: owner, due date`,
+    // ── Prebuilt section templates ──────────────────────────────────────────
+    // Each entry is a factory returning a fresh array of blocks (not a shared
+    // literal — the returned blocks get mutated in place by the editor, so a
+    // shared object would leak edits across every future "Use Template" click
+    // and across sections). Most sections template as a single richtext
+    // scaffold; a handful map naturally onto a real block type instead
+    // (card-grid for anything pillar/audience/partner-shaped, gantt for
+    // Timeline, an empty image block for Moodboard).
+    function isoDate(d) { return d.toISOString().slice(0, 10); }
+    function addDays(base, days) { const d = new Date(base); d.setDate(d.getDate() + days); return d; }
+
+    const SECTION_TEMPLATES = {
+      overview: () => [{ type: 'richtext', markdown: `## Background\n_Who is the client, what do they do, and why is this campaign happening now?_\n\n## Situation\n_What's the current landscape — market context, competitors, and timing?_\n\n## Objectives\n_What does success look like? Define 2–3 clear outcomes._\n\n- Objective one\n- Objective two\n- Objective three` }],
+
+      strategy: () => [
+        { type: 'richtext', markdown: `## Strategic Approach\n_In one paragraph, describe the overarching strategy — the big idea that holds everything together._` },
+        { type: 'card-grid', columns: '3', cards: [
+          { title: 'Pillar One', body: 'Describe the first pillar and why it matters.' },
+          { title: 'Pillar Two', body: 'Describe the second pillar and why it matters.' },
+          { title: 'Pillar Three', body: 'Describe the third pillar and why it matters.' },
+        ]},
+      ],
+
+      audiences: () => [{ type: 'card-grid', columns: '3', cards: [
+        { title: 'Primary Audience', body: 'Demographics, mindset, and what they care about.' },
+        { title: 'Secondary Audience', body: 'Who else are we reaching, and why.' },
+        { title: 'Media Audience', body: 'The journalists, editors, and publications we are trying to influence.' },
+      ]}],
+
+      messages: () => [{ type: 'richtext', markdown: `1. First key message\n   The core idea we want every audience member to walk away with.\n\n2. Second key message\n   Supporting message that reinforces the first.\n\n3. Third key message\n   A proof point, differentiator, or emotional hook.` }],
+
+      tactical_plan: () => [
+        { type: 'richtext', markdown: `## Channel Mix\n_Overview of the channels we are activating and how they work together._` },
+        { type: 'card-grid', columns: '4', cards: [
+          { title: 'PR Campaigns', body: 'Role in the plan and key focus.' },
+          { title: 'Social Media', body: 'Role in the plan and key focus.' },
+          { title: 'Content', body: 'Role in the plan and key focus.' },
+          { title: 'Events', body: 'Role in the plan and key focus.' },
+        ]},
+        { type: 'richtext', markdown: `## Phasing\n\n**Phase 1 — Foundation**: Set up, brief, strategy, assets.\n\n**Phase 2 — Launch**: Campaign activation, pitching, posting.\n\n**Phase 3 — Sustain**: Follow-up, monitoring, reporting.` },
+      ],
+
+      pr: () => [{ type: 'richtext', markdown: `## Campaign Angle One\n_Describe the story angle, why it's newsworthy, and the hook._\n\n- Target media category / publication type\n- Target media category / publication type\n\n## Campaign Angle Two\n_Describe the second angle._\n\n- Target media category / publication type` }],
+
+      social: () => [{ type: 'richtext', markdown: `## Platforms\n_Which platforms are we active on and why?_\n\n- Platform one — rationale\n- Platform two — rationale\n\n## Content Approach\n_How are we showing up — tone, style, format?_\n\n## Posting Cadence\n\n**Platform One**: X posts per week — content type, timing.\n\n**Platform Two**: X posts per week — content type, timing.` }],
+
+      content: () => [
+        { type: 'richtext', markdown: `## Content Pillars\n_The recurring themes that hold the content plan together._` },
+        { type: 'card-grid', columns: '3', cards: [
+          { title: 'Pillar One', body: 'What this pillar is about and what content it produces.' },
+          { title: 'Pillar Two', body: 'What this pillar is about and what content it produces.' },
+          { title: 'Pillar Three', body: 'Brand voice / lifestyle / culture content.' },
+        ]},
+      ],
+
+      events: () => [
+        { type: 'card-grid', columns: '2', cards: [
+          { title: 'Event One', body: 'Description, format, timing, expected outcomes.' },
+          { title: 'Event Two', body: 'Description, format, timing, expected outcomes.' },
+        ]},
+        { type: 'richtext', markdown: `## Display Suite / Showroom\n_Is there a permanent or semi-permanent activation space to leverage?_` },
+      ],
+
+      partnerships: () => [
+        { type: 'card-grid', columns: '2', cards: [
+          { title: 'Partner One', body: "Who they are, why they're a fit, what the collaboration looks like." },
+          { title: 'Partner Two', body: "Who they are, why they're a fit, what the collaboration looks like." },
+        ]},
+        { type: 'richtext', markdown: `## Influencer Strategy\n_Are we working with influencers? What tier, what categories, what brief?_\n\n- Influencer category / tier\n- Content format / brief direction` },
+      ],
+
+      paid: () => [{ type: 'richtext', markdown: `## Paid Strategy Overview\n_What role does paid media play in this campaign?_\n\n## Platforms & Budget\n\n**Platform One**: Objective, budget range, targeting approach, ad format.\n\n**Platform Two**: Objective, budget range, targeting approach, ad format.\n\n## Targeting\n\n- Audience segment\n- Retargeting approach\n- Lookalike strategy` }],
+
+      design: () => [{ type: 'richtext', markdown: `## Design Direction\n_Describe the visual direction — mood, aesthetic, references._\n\n## Brand Assets\n_What assets exist and what needs to be created?_\n\n- Asset one\n- Asset two\n\n## Creative Deliverables\n\n**Deliverable One**: Format, specs, usage, timeline.\n\n**Deliverable Two**: Format, specs, usage, timeline.` }],
+
+      email: () => [{ type: 'richtext', markdown: `## Segmentation\n_How is the database segmented?_\n\n## Sequences\n\n**Sequence One**: Trigger, cadence, goal.\n\n**Sequence Two**: Trigger, cadence, goal.` }],
+
+      moodboard: () => [
+        { type: 'richtext', markdown: `## Visual Direction\n_Describe the mood, aesthetic, and references._` },
+        { type: 'image', layout: 'grid', images: [] },
+        { type: 'richtext', markdown: `## Colour Palette\n\n## Typography` },
+      ],
+
+      timeline: () => {
+        const today = new Date();
+        const p1s = today, p1e = addDays(today, 13);
+        const p2s = addDays(today, 14), p2e = addDays(today, 34);
+        const p3s = addDays(today, 35), p3e = addDays(today, 48);
+        return [
+          { type: 'richtext', markdown: `## Timeline Overview\n_Key phases and delivery schedule at a glance._` },
+          { type: 'gantt', phases: [
+            { title: 'Phase 1 — Foundation', start: isoDate(p1s), end: isoDate(p1e), notes: 'Set up, brief, strategy, assets.' },
+            { title: 'Phase 2 — Launch', start: isoDate(p2s), end: isoDate(p2e), notes: 'Campaign activation, pitching, posting.' },
+            { title: 'Phase 3 — Sustain', start: isoDate(p3s), end: isoDate(p3e), notes: 'Follow-up, monitoring, reporting.' },
+          ]},
+        ];
+      },
+
+      measurement: () => [{ type: 'richtext', markdown: `## Key Metrics\n\n**Metric One**: What we're measuring and why.\n\n**Metric Two**: What we're measuring and why.\n\n## Targets\n\n- Target one\n- Target two\n- Target three\n\n## Reporting Cadence\n\n- Monthly PR update — coverage log, metrics, recommendations\n- Quarterly report — full campaign performance review` }],
+
+      budget: () => [{ type: 'richtext', markdown: `## Budget Breakdown\n\n- Line item one: amount — what it covers\n- Line item two: amount — what it covers\n- Line item three: amount — what it covers\n\n## Total\n_Total budget and any assumptions._` }],
+
+      agenda: () => [{ type: 'richtext', markdown: `1. Welcome & Introductions (10 min)\n   Who's in the room and what we're here to do.\n\n2. Agenda Item (X min)\n   What happens and who leads it.\n\n3. Agenda Item (X min)\n   What happens and who leads it.\n\n4. Wrap-up & Next Steps (10 min)` }],
+
+      discovery: () => [{ type: 'richtext', markdown: `## Brand & Positioning\n\n- Question one\n- Question two\n\n## Audience & Market\n\n- Question one\n- Question two\n\n## Goals & Success\n\n- Question one\n- Question two` }],
+
+      immersion: () => [{ type: 'card-grid', columns: '3', cards: [
+        { title: 'Stage One — Discover', body: 'What happens and what it uncovers.' },
+        { title: 'Stage Two — Define', body: 'What happens and what it uncovers.' },
+        { title: 'Stage Three — Align', body: 'What happens and what it uncovers.' },
+      ]}],
+
+      next_steps: () => [{ type: 'richtext', markdown: `- Action one: owner, due date\n- Action two: owner, due date\n- Action three: owner, due date` }],
     };
 
     function getLabelFor(id) {
@@ -862,6 +973,16 @@
         `).join('')}</div>`;
       }
 
+      const showTemplateOffer = !subtab && blocks.length === 0 && SECTION_TEMPLATES[id];
+      if (showTemplateOffer) {
+        html += `
+          <div class="sb-template-offer">
+            <div class="sb-template-offer-title">Start with a template</div>
+            <div class="sb-template-offer-desc">Pre-built structure for ${escHtml(leafLabel)} — edit or remove anything after.</div>
+            <button class="btn btn-primary" style="font-size:12px;" onclick="applyTemplate('${id}')">Use Template</button>
+          </div>`;
+      }
+
       html += `<div class="sb-blocks" id="sb-blocks">`;
       blocks.forEach((block, i) => { html += renderBlockEditor(id, subtab ? subtab.id : null, block, i); });
       html += `</div>`;
@@ -980,33 +1101,92 @@
       renderNav();
     }
 
+    const IMAGE_SIZE_OPTIONS = [
+      ['100', 'Full width'],
+      ['75',  'Large (75%)'],
+      ['50',  'Medium (50%)'],
+      ['33',  'Small (33%)'],
+    ];
+    const IMAGE_RATIO_OPTIONS = [
+      ['',         'Default'],
+      ['original', 'Original'],
+      ['square',   'Square (1:1)'],
+      ['wide',     'Wide (16:9)'],
+      ['tall',     'Tall (3:4)'],
+    ];
+    const IMAGE_LAYOUT_HINTS = {
+      inline: 'Images stack one after another, single column, up to 560px wide.',
+      grid:   'Images arrange into a multi-column grid.',
+      hero:   'Large images, full width, stacked, up to 420px tall.',
+    };
+
     function renderImageEditor(topId, subId, index, block) {
       const images = Array.isArray(block.images) ? block.images : [];
       const subArg = subId ? `'${subId}'` : 'null';
-      const thumbs = images.map((img, i) => `
-        <div class="sb-image-thumb">
+      const layout = block.layout || 'inline';
+      const items = images.map((img, i) => `
+        <div class="sb-image-item">
           <img src="${escAttr(img.src)}" alt="">
+          <div class="sb-image-item-controls">
+            <select onchange="setImageSize('${topId}', ${subArg}, ${index}, ${i}, this.value)">
+              ${IMAGE_SIZE_OPTIONS.map(([v, l]) => `<option value="${v}" ${(img.size || '100') === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+            <select onchange="setImageRatio('${topId}', ${subArg}, ${index}, ${i}, this.value)">
+              ${IMAGE_RATIO_OPTIONS.map(([v, l]) => `<option value="${v}" ${(img.ratio || '') === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select>
+          </div>
           <button onclick="removeBlockImage('${topId}', ${subArg}, ${index}, ${i})" title="Remove">✕</button>
         </div>`).join('');
+      const columns = block.columns || 'auto';
+      const columnsSelect = layout === 'grid' ? `
+            <span class="sb-row-label">Per row</span>
+            <select class="sb-row-select" onchange="setImageColumns('${topId}', ${subArg}, ${index}, this.value)">
+              <option value="auto" ${columns === 'auto' ? 'selected' : ''}>Auto</option>
+              <option value="2" ${columns === '2' ? 'selected' : ''}>2</option>
+              <option value="3" ${columns === '3' ? 'selected' : ''}>3</option>
+              <option value="4" ${columns === '4' ? 'selected' : ''}>4</option>
+            </select>` : '';
       return `
         <div class="sb-image-editor">
-          <div class="sb-image-editor-row">
-            <span class="sb-image-layout-label">Layout</span>
-            <select class="sb-image-layout" onchange="setImageLayout('${topId}', ${subArg}, ${index}, this.value)">
-              <option value="inline" ${block.layout === 'inline' ? 'selected' : ''}>Inline</option>
-              <option value="grid" ${block.layout === 'grid' ? 'selected' : ''}>Grid</option>
-              <option value="hero" ${block.layout === 'hero' ? 'selected' : ''}>Hero</option>
+          <div class="sb-row">
+            <span class="sb-row-label">Layout</span>
+            <select class="sb-row-select" onchange="setImageLayout('${topId}', ${subArg}, ${index}, this.value)">
+              <option value="inline" ${layout === 'inline' ? 'selected' : ''}>Inline</option>
+              <option value="grid" ${layout === 'grid' ? 'selected' : ''}>Grid</option>
+              <option value="hero" ${layout === 'hero' ? 'selected' : ''}>Hero</option>
             </select>
+            ${columnsSelect}
             <button class="btn-generate" onclick="triggerBlockImageUpload('${topId}', ${subArg}, ${index})">🖼 Add Image</button>
           </div>
-          ${thumbs ? `<div class="sb-image-thumbs">${thumbs}</div>` : '<div class="sb-empty-note">No images yet — click Add Image above.</div>'}
+          <div class="sb-row-hint">${escHtml(IMAGE_LAYOUT_HINTS[layout])}</div>
+          ${items ? `<div class="sb-image-list">${items}</div>` : '<div class="sb-empty-note">No images yet — click Add Image above.</div>'}
         </div>`;
     }
 
     function setImageLayout(topId, subId, index, layout) {
       const block = getBlockRef(topId, subId, index);
       if (block) block.layout = layout;
+      renderContent();
       scheduleSave();
+    }
+
+    function setImageColumns(topId, subId, index, value) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) block.columns = value;
+      scheduleSave();
+    }
+
+    function setImageSize(topId, subId, index, imgIndex, value) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.images && block.images[imgIndex]) { block.images[imgIndex].size = value; scheduleSave(); }
+    }
+
+    function setImageRatio(topId, subId, index, imgIndex, value) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.images && block.images[imgIndex]) {
+        if (value) block.images[imgIndex].ratio = value; else delete block.images[imgIndex].ratio;
+        scheduleSave();
+      }
     }
 
     function removeBlockImage(topId, subId, index, imgIndex) {
@@ -1043,11 +1223,28 @@
             oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'body', this.value)">${escHtml(c.body || '')}</textarea>
         </div>`;
       }).join('');
+      const columns = block.columns || 'auto';
       return `
         <div class="sb-card-grid-editor">
+          <div class="sb-row">
+            <span class="sb-row-label">Cards per row</span>
+            <select class="sb-row-select" onchange="setCardGridColumns('${topId}', ${subArg}, ${index}, this.value)">
+              <option value="auto" ${columns === 'auto' ? 'selected' : ''}>Auto</option>
+              <option value="1" ${columns === '1' ? 'selected' : ''}>1 per row</option>
+              <option value="2" ${columns === '2' ? 'selected' : ''}>2 per row</option>
+              <option value="3" ${columns === '3' ? 'selected' : ''}>3 per row</option>
+              <option value="4" ${columns === '4' ? 'selected' : ''}>4 per row</option>
+            </select>
+          </div>
           <div class="sb-cg-grid" data-block-key="${key}">${cardsHtml}</div>
           <button class="btn btn-ghost" style="font-size:12px;margin-top:10px;" onclick="addCard('${topId}', ${subArg}, ${index})">+ Add Card</button>
         </div>`;
+    }
+
+    function setCardGridColumns(topId, subId, index, value) {
+      const block = getBlockRef(topId, subId, index);
+      if (block) block.columns = value;
+      scheduleSave();
     }
 
     function setCardField(topId, subId, index, ci, field, value) {
@@ -1273,13 +1470,23 @@
         activeSections = activeSections.filter(s => s !== id);
       } else {
         activeSections.push(id);
-        if (!hasContentFor(id) && TEMPLATES[id]) {
-          sections[id] = { blocks: [{ type: 'richtext', markdown: TEMPLATES[id] }] };
-        }
       }
       if (currentSectionId === id) currentSubtabId = null;
       renderNav();
       if (currentSectionId === id) renderContent();
+      scheduleSave();
+    }
+
+    // Applies a section's prebuilt template. Only offered (see renderContent's
+    // showTemplateOffer) when the section is empty and not a sub-tab, so this
+    // is always a safe full-replace, never a silent clobber of real content.
+    function applyTemplate(id) {
+      const factory = SECTION_TEMPLATES[id];
+      if (!factory) return;
+      const sec = getSection(id);
+      sec.blocks = factory();
+      renderNav();
+      renderContent();
       scheduleSave();
     }
 

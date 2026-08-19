@@ -27,7 +27,7 @@
 
 /* Cards */
 .gpb-card-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-@media (min-width: 768px) { .gpb-card-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 768px) { .gpb-card-grid { grid-template-columns: var(--gpb-cols, repeat(2, 1fr)); } }
 .gpb-card {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.10);
@@ -42,7 +42,7 @@
 /* Images */
 .gpb-image-inline img { width: 100%; max-width: 560px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.10); display: block; margin-bottom: 12px; object-fit: cover; }
 .gpb-image-inline img:last-child { margin-bottom: 0; }
-.gpb-image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.gpb-image-grid { display: grid; grid-template-columns: var(--gpb-cols, repeat(auto-fill, minmax(220px, 1fr))); gap: 12px; }
 .gpb-image-grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.10); }
 .gpb-image-hero img { width: 100%; max-height: 420px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.10); display: block; margin-bottom: 16px; }
 .gpb-image-hero img:last-child { margin-bottom: 0; }

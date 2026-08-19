@@ -61,16 +61,31 @@ function renderRichtextBlock(block) {
   return `<div class="gpb-richtext">${DOMPurify.sanitize(marked.parse(md))}</div>`;
 }
 
+const IMAGE_RATIO_CSS = {
+  square:   'aspect-ratio:1/1;object-fit:cover;',
+  wide:     'aspect-ratio:16/9;object-fit:cover;',
+  tall:     'aspect-ratio:3/4;object-fit:cover;',
+  original: 'aspect-ratio:auto;object-fit:contain;height:auto;',
+};
+
 function renderImageBlock(block) {
   const images = Array.isArray(block.images) ? block.images : [];
   if (!images.length) return '';
   const layout = block.layout || 'inline';
-  const imgTag = img => `<img src="${gpbEscAttr(img.src)}" alt="${gpbEscAttr(img.alt || '')}">`;
+  const imgTag = img => {
+    let style = IMAGE_RATIO_CSS[img.ratio] || '';
+    const sizePct = img.size ? Number(img.size) : 100;
+    if (sizePct && sizePct !== 100) style += `max-width:${sizePct}%;margin-left:auto;margin-right:auto;`;
+    const styleAttr = style ? ` style="${style}"` : '';
+    return `<img src="${gpbEscAttr(img.src)}" alt="${gpbEscAttr(img.alt || '')}"${styleAttr}>`;
+  };
   if (layout === 'hero') {
     return `<div class="gpb-image-hero">${images.map(imgTag).join('')}</div>`;
   }
   if (layout === 'grid') {
-    return `<div class="gpb-image-grid">${images.map(imgTag).join('')}</div>`;
+    const cols = block.columns && block.columns !== 'auto' ? Number(block.columns) : null;
+    const styleAttr = cols ? ` style="--gpb-cols:repeat(${cols},1fr)"` : '';
+    return `<div class="gpb-image-grid"${styleAttr}>${images.map(imgTag).join('')}</div>`;
   }
   return `<div class="gpb-image-inline">${images.map(imgTag).join('')}</div>`;
 }
@@ -79,7 +94,9 @@ function renderCardGridBlock(block) {
   const cards = (Array.isArray(block.cards) ? block.cards : [])
     .filter(c => (c.title && c.title.trim()) || (c.body && c.body.trim()) || c.icon);
   if (!cards.length) return '';
-  return `<div class="gpb-card-grid">${cards.map(c => `
+  const cols = block.columns && block.columns !== 'auto' ? Number(block.columns) : null;
+  const styleAttr = cols ? ` style="--gpb-cols:repeat(${cols},1fr)"` : '';
+  return `<div class="gpb-card-grid"${styleAttr}>${cards.map(c => `
     <div class="gpb-card">
       ${c.icon ? `<div class="gpb-card-icon">${renderCardIcon(c.icon, 32)}</div>` : ''}
       ${c.title ? `<div class="gpb-card-title">${gpbEsc(c.title)}</div>` : ''}
