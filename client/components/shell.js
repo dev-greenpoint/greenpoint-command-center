@@ -48,7 +48,7 @@ function renderShell({ pageId, title }) {
         <span class="nav-icon">◎</span>
         <span class="nav-label">Accounts | Admin</span>
       </a>
-      <a class="nav-item" href="#">
+      <a class="nav-item ${'settings' === pageId ? 'active' : ''}" href="/settings">
         <span class="nav-icon">⚙</span>
         <span class="nav-label">Settings</span>
       </a>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <script src="/components/theme.js"></script>
+  <style>
+    .page-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
+
+    .settings-section { max-width: 480px; margin-bottom: 28px; }
+    .settings-label { font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 14px; }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .settings-row-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .settings-row-desc { font-size: 12px; color: var(--text-muted); }
+
+    .theme-toggle { display: flex; gap: 6px; flex-shrink: 0; }
+    .theme-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .theme-btn:hover { color: var(--text); border-color: var(--text-dim); }
+    .theme-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content">
+
+        <div class="page-title">Settings</div>
+        <div class="page-subtitle">Preferences for this browser.</div>
+
+        <div class="settings-section card">
+          <div class="settings-label">Appearance</div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-title">Theme</div>
+              <div class="settings-row-desc">Switch between light and dark. Saved to this browser only.</div>
+            </div>
+            <div class="theme-toggle">
+              <button class="theme-btn" id="theme-btn-light" onclick="chooseTheme('light')">☀ Light</button>
+              <button class="theme-btn" id="theme-btn-dark" onclick="chooseTheme('dark')">● Dark</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    renderShell({ pageId: 'settings', title: 'Settings' });
+
+    function renderThemeButtons() {
+      const current = window.gpTheme.get();
+      document.getElementById('theme-btn-light').classList.toggle('active', current === 'light');
+      document.getElementById('theme-btn-dark').classList.toggle('active', current === 'dark');
+    }
+
+    function chooseTheme(theme) {
+      window.gpTheme.set(theme);
+      renderThemeButtons();
+    }
+
+    renderThemeButtons();
+  </script>
+</body>
+</html>
