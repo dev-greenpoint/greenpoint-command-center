@@ -1,10 +1,10 @@
 const NAV_ITEMS = [
   { id: 'overview',      label: 'Overview',          icon: '◈',  href: '/' },
   { id: 'deck-creator',  label: 'Deck Creator',      icon: '◧',  href: '/deck-creator' },
-  { id: 'campaigns',     label: 'Campaign Manager',  icon: '◆',  href: '/campaigns', localOnly: true },
-  { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social', localOnly: true },
+  { id: 'campaigns',     label: 'Campaign Manager',  icon: '◆',  href: '/campaigns' },
+  { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social' },
   { id: 'approvals',     label: 'Approvals',         icon: '◇',  href: '/approvals' },
-  { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports', localOnly: true },
+  { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports' },
 ];
 
 const IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
