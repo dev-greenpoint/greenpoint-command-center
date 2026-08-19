@@ -48,14 +48,6 @@
   <script src="/components/shell.js"></script>
   <script>
     renderShell({ pageId: 'reports', title: 'Reports' });
-    if (!IS_LOCALHOST) {
-      document.getElementById('page-content').innerHTML = `
-        <div style="max-width:420px;margin:80px auto;text-align:center;">
-          <div style="font-size:32px;margin-bottom:12px;">🔒</div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Available on localhost only</div>
-          <div style="font-size:13px;color:var(--text-muted);">This section isn't open in production yet.</div>
-        </div>`;
-    }
   </script>
 </body>
 </html>
