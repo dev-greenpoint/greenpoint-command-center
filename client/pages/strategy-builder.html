@@ -351,6 +351,17 @@
       font-family: var(--font); resize: vertical;
     }
     .notes-textarea:focus { outline: none; border-color: var(--accent); }
+    .notes-notify-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .notes-notify-label { font-size: 11px; color: var(--text-dim); flex-shrink: 0; }
+    .notes-notify-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .notify-chip {
+      padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 500;
+      border: 1px solid var(--border); background: transparent; color: var(--text-muted);
+      cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .notify-chip:hover { color: var(--text); border-color: var(--text-dim); }
+    .notify-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .note-notify-tag { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
 
     /* ── Card grid editor ── */
     .sb-cg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -473,6 +484,10 @@
       <div class="notes-add-row">
         <select class="notes-author-select" id="notes-author"></select>
         <textarea class="notes-textarea" id="notes-body" placeholder="Leave a note for whoever picks this up next…" rows="2"></textarea>
+        <div class="notes-notify-row">
+          <span class="notes-notify-label">Notify</span>
+          <div class="notes-notify-chips" id="notes-notify-chips"></div>
+        </div>
         <button class="btn btn-primary" style="font-size:12px;align-self:flex-end;" onclick="addComment()">Add</button>
       </div>
       <div class="modal-actions">
@@ -1713,13 +1728,31 @@
 
     // ── Notes (deck-level comment thread) ───────────────────────────────────────
 
-    const COMMENT_AUTHOR_KEY = 'gp-comment-author';
+    // Shared with shell.js's notifications bell — same "who am I" identity.
+    const COMMENT_AUTHOR_KEY = 'gp-user-name';
+
+    let selectedNotify = [];
 
     function renderNotesAuthorSelect() {
       const sel = document.getElementById('notes-author');
       const saved = localStorage.getItem(COMMENT_AUTHOR_KEY);
       sel.innerHTML = '<option value="">— Your name —</option>' +
         teamNames.map(n => `<option value="${escAttr(n)}" ${n === saved ? 'selected' : ''}>${escHtml(n)}</option>`).join('');
+    }
+
+    function renderNotifyChips() {
+      const el = document.getElementById('notes-notify-chips');
+      if (!teamNames.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text-dim);">No one in the roster yet</span>'; return; }
+      el.innerHTML = teamNames.map(n => `
+        <button type="button" class="notify-chip ${selectedNotify.includes(n) ? 'active' : ''}" onclick="toggleNotifyChip('${escAttr(n).replace(/'/g, "\\'")}')">${escHtml(n)}</button>
+      `).join('');
+    }
+
+    function toggleNotifyChip(name) {
+      selectedNotify = selectedNotify.includes(name)
+        ? selectedNotify.filter(n => n !== name)
+        : [...selectedNotify, name];
+      renderNotifyChips();
     }
 
     function renderNotesList() {
@@ -1730,6 +1763,8 @@
       }
       el.innerHTML = comments.map(c => {
         const time = c.created_at ? new Date(c.created_at).toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+        let notified = [];
+        try { notified = c.notify ? JSON.parse(c.notify) : []; } catch {}
         return `
           <div class="note-row ${c.resolved ? 'resolved' : ''}">
             <div class="note-row-top">
@@ -1740,12 +1775,15 @@
               </div>
             </div>
             <div class="note-body">${escHtml(c.body)}</div>
+            ${notified.length ? `<div class="note-notify-tag">🔔 ${notified.map(escHtml).join(', ')}</div>` : ''}
           </div>`;
       }).join('');
     }
 
     function openNotes() {
+      selectedNotify = [];
       renderNotesAuthorSelect();
+      renderNotifyChips();
       renderNotesList();
       document.getElementById('notes-modal-overlay').classList.add('open');
     }
@@ -1766,11 +1804,13 @@
 
       const res = await fetch(`/api/strategies/${strategyId}/comments`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ author_name, body }),
+        body: JSON.stringify({ author_name, body, notify: selectedNotify }),
       });
       if (!res.ok) { showToast('Failed to add note', true); return; }
 
       bodyEl.value = '';
+      selectedNotify = [];
+      renderNotifyChips();
       const fresh = await fetch(`/api/strategies/${strategyId}/comments`).then(r => r.json());
       comments = fresh;
       renderNotesList();

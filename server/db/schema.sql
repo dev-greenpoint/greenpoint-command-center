@@ -168,7 +168,8 @@ CREATE TABLE strategy_comments (
   author_name TEXT NOT NULL,
   body TEXT NOT NULL,
   resolved INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT NOW()
+  created_at TEXT DEFAULT NOW(),
+  notify TEXT -- JSON array of team_members names to notify, e.g. '["Alex Chen"]'; null/absent = no notify
 );
 
 CREATE TABLE social_posts (

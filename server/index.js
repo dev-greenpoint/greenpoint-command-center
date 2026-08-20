@@ -21,6 +21,7 @@ const onboardingRouter = require('./routes/onboarding');
 const meetingsRouter = require('./routes/meetings');
 const pitchListsRouter = require('./routes/pitch-lists');
 const { clientBrainRouter, entryRouter: brainEntryRouter } = require('./routes/brain');
+const notificationsRouter = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,6 +95,7 @@ app.use('/api/clients', meetingsRouter);
 app.use('/api/pitch-lists', pitchListsRouter);
 app.use('/api/clients/:id/brain', clientBrainRouter);
 app.use('/api/brain', brainEntryRouter);
+app.use('/api/notifications', notificationsRouter);
 
 const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies', 'deck-creator', 'settings', 'timesheets'];
 PAGES.forEach(page => {

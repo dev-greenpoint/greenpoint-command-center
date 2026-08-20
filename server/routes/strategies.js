@@ -204,15 +204,17 @@ router.get('/:id/comments', async (req, res) => {
   ));
 });
 
-// Add a comment
+// Add a comment. `notify` (optional) is an array of team_members names to
+// surface this comment to in their notifications bell.
 router.post('/:id/comments', async (req, res) => {
-  const { author_name, body } = req.body;
+  const { author_name, body, notify } = req.body;
   if (!author_name || !body || !body.trim()) {
     return res.status(400).json({ error: 'author_name and body are required' });
   }
+  const notifyJson = Array.isArray(notify) && notify.length ? JSON.stringify(notify) : null;
   const [{ id }] = await query(
-    'INSERT INTO strategy_comments (strategy_id, author_name, body) VALUES (?, ?, ?) RETURNING id',
-    [req.params.id, author_name, body.trim()]
+    'INSERT INTO strategy_comments (strategy_id, author_name, body, notify) VALUES (?, ?, ?, ?) RETURNING id',
+    [req.params.id, author_name, body.trim(), notifyJson]
   );
   res.status(201).json({ id });
 });
