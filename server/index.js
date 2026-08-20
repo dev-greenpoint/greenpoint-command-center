@@ -95,7 +95,7 @@ app.use('/api/pitch-lists', pitchListsRouter);
 app.use('/api/clients/:id/brain', clientBrainRouter);
 app.use('/api/brain', brainEntryRouter);
 
-const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies', 'deck-creator', 'settings'];
+const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies', 'deck-creator', 'settings', 'timesheets'];
 PAGES.forEach(page => {
   app.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, `../client/pages/${page}.html`));

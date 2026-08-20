@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timesheets — Greenpoint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles/main.css">
+  <script src="/components/theme.js"></script>
+  <style>
+    .page-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
+    .empty-state {
+      text-align: center; padding: 64px 20px;
+      color: var(--text-muted); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-area">
+      <header class="header" id="header"></header>
+      <main class="page-content">
+
+        <div class="page-title">Timesheets</div>
+        <div class="page-subtitle">Track time logged against clients and campaigns.</div>
+
+        <div class="card">
+          <div class="empty-state">Timesheets isn't built yet — coming soon.</div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="/components/shell.js"></script>
+  <script>
+    renderShell({ pageId: 'timesheets', title: 'Timesheets' });
+  </script>
+</body>
+</html>

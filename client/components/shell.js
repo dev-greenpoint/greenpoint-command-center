@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social' },
   { id: 'approvals',     label: 'Approvals',         icon: '◇',  href: '/approvals' },
   { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports' },
+  { id: 'timesheets',    label: 'Timesheets',        icon: '◷',  href: '/timesheets' },
 ];
 
 const IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
