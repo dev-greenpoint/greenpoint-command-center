@@ -64,7 +64,7 @@ PR campaign's 15-step workflow lives in memory (`project_pr_workflow.md`) and is
 - `campaign_tasks` table = tasks scoped to a campaign stage
 - `tasks` table = general client tasks (used in the client board)
 - `onboarding_checklist` table = onboarding steps (separate from both)
-- Tasks auto-assign based on team member roles set at onboarding — no manual assignment step
+- Assignment is manual, via an avatar-dropdown picker (no auto-assign logic exists). `team_members` (Settings/Team Admin roster) is the master list; a client's `client_team` table copies selected names+roles onto that client, and task assignee/approver pickers on client/PR/onboarding tasks are scoped to that client's `client_team` — Social campaign tasks are the one exception and pick from the full roster directly. All of these links are plain-text name matches, not foreign keys, so renaming or deleting someone in the roster does not update anywhere they're already assigned
 
 ### Strategies
 - Belong to a client (`client_id`)
