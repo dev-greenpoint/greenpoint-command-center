@@ -157,6 +157,20 @@ CREATE TABLE strategies (
   created_by TEXT
 );
 
+-- Deck-level notes/feedback thread (Settings > lighter alternative to
+-- per-section comments — see [[deck_comments_2026-08-20]] in memory).
+-- section_id is unused for now (always NULL) but kept so this can grow
+-- into per-section anchoring later without another migration.
+CREATE TABLE strategy_comments (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  strategy_id INTEGER REFERENCES strategies(id) ON DELETE CASCADE,
+  section_id TEXT,
+  author_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  resolved INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT NOW()
+);
+
 CREATE TABLE social_posts (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,

@@ -325,6 +325,33 @@
     .review-modal-body li { margin-bottom: 4px; }
     .review-modal-body strong { color: var(--text); }
 
+    .notes-modal { width: 480px; display: flex; flex-direction: column; }
+    .notes-list { max-height: 40vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 4px; }
+    .notes-empty { font-size: 12px; color: var(--text-dim); text-align: center; padding: 12px 0; }
+    .note-row { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+    .note-row.resolved { opacity: 0.55; }
+    .note-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .note-author { font-size: 12px; font-weight: 600; color: var(--text); }
+    .note-time { font-size: 11px; color: var(--text-dim); margin-left: 6px; font-weight: 400; }
+    .note-body { font-size: 13px; color: var(--text-muted); line-height: 1.5; white-space: pre-wrap; }
+    .note-actions { display: flex; gap: 10px; }
+    .note-actions button {
+      background: none; border: none; cursor: pointer; font-size: 11px;
+      color: var(--text-dim); padding: 0;
+    }
+    .note-actions button:hover { color: var(--text); }
+    .notes-add-row { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .notes-author-select {
+      align-self: flex-start; background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 12px; padding: 5px 8px;
+    }
+    .notes-textarea {
+      width: 100%; box-sizing: border-box; background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 13px; padding: 8px 10px;
+      font-family: var(--font); resize: vertical;
+    }
+    .notes-textarea:focus { outline: none; border-color: var(--accent); }
+
     /* ── Card grid editor ── */
     .sb-cg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
     .sb-cg-card {
@@ -439,6 +466,21 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="notes-modal-overlay">
+    <div class="modal notes-modal">
+      <div class="modal-title">Notes</div>
+      <div class="notes-list" id="notes-list"></div>
+      <div class="notes-add-row">
+        <select class="notes-author-select" id="notes-author"></select>
+        <textarea class="notes-textarea" id="notes-body" placeholder="Leave a note for whoever picks this up next…" rows="2"></textarea>
+        <button class="btn btn-primary" style="font-size:12px;align-self:flex-end;" onclick="addComment()">Add</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeNotes()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script src="/components/shell.js"></script>
@@ -457,6 +499,8 @@
     let saveTimer = null;
     let pendingUploadTarget = null;
     let openIconPickerKey = null;
+    let comments = [];
+    let teamNames = [];
     const CARD_ICON_OPTIONS = Object.keys(CARD_ICON_SET);
 
     // ── Prebuilt section templates ──────────────────────────────────────────
@@ -620,6 +664,14 @@
       currentSectionId = activeSections[0] || sectionDefsForDocType(docType)[0].id;
       currentSubtabId = null;
       renderShell({ pageId: 'clients', title: strategy.title });
+
+      const [commentsRes, namesRes] = await Promise.all([
+        fetch(`/api/strategies/${strategyId}/comments`),
+        fetch('/api/team-members/names'),
+      ]);
+      comments = commentsRes.ok ? await commentsRes.json() : [];
+      teamNames = namesRes.ok ? await namesRes.json() : [];
+
       render();
     }
 
@@ -666,6 +718,7 @@
             <span class="save-indicator" id="save-status"></span>
             <span class="status-pill ${chipClass}">${chipLabel}</span>
             ${reviewBtn}
+            <button class="btn btn-ghost" style="font-size:12px;" onclick="openNotes()">💬 Notes${comments.length ? ` (${comments.length})` : ''}</button>
             ${publishBtn}
             <button class="btn btn-danger" style="font-size:12px;" onclick="deleteStrategy()">Delete</button>
           </div>
@@ -1658,6 +1711,97 @@
       document.getElementById('review-modal-overlay').classList.remove('open');
     }
 
+    // ── Notes (deck-level comment thread) ───────────────────────────────────────
+
+    const COMMENT_AUTHOR_KEY = 'gp-comment-author';
+
+    function renderNotesAuthorSelect() {
+      const sel = document.getElementById('notes-author');
+      const saved = localStorage.getItem(COMMENT_AUTHOR_KEY);
+      sel.innerHTML = '<option value="">— Your name —</option>' +
+        teamNames.map(n => `<option value="${escAttr(n)}" ${n === saved ? 'selected' : ''}>${escHtml(n)}</option>`).join('');
+    }
+
+    function renderNotesList() {
+      const el = document.getElementById('notes-list');
+      if (!comments.length) {
+        el.innerHTML = '<div class="notes-empty">No notes yet.</div>';
+        return;
+      }
+      el.innerHTML = comments.map(c => {
+        const time = c.created_at ? new Date(c.created_at).toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+        return `
+          <div class="note-row ${c.resolved ? 'resolved' : ''}">
+            <div class="note-row-top">
+              <span class="note-author">${escHtml(c.author_name)}<span class="note-time">${time}</span></span>
+              <div class="note-actions">
+                <button onclick="toggleResolveComment(${c.id}, ${c.resolved ? 0 : 1})">${c.resolved ? 'Reopen' : 'Resolve'}</button>
+                <button onclick="deleteComment(${c.id})">Delete</button>
+              </div>
+            </div>
+            <div class="note-body">${escHtml(c.body)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function openNotes() {
+      renderNotesAuthorSelect();
+      renderNotesList();
+      document.getElementById('notes-modal-overlay').classList.add('open');
+    }
+
+    function closeNotes() {
+      document.getElementById('notes-modal-overlay').classList.remove('open');
+    }
+
+    async function addComment() {
+      const authorSel = document.getElementById('notes-author');
+      const bodyEl = document.getElementById('notes-body');
+      const author_name = authorSel.value;
+      const body = bodyEl.value.trim();
+      if (!author_name) { authorSel.focus(); return; }
+      if (!body) { bodyEl.focus(); return; }
+
+      localStorage.setItem(COMMENT_AUTHOR_KEY, author_name);
+
+      const res = await fetch(`/api/strategies/${strategyId}/comments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author_name, body }),
+      });
+      if (!res.ok) { showToast('Failed to add note', true); return; }
+
+      bodyEl.value = '';
+      const fresh = await fetch(`/api/strategies/${strategyId}/comments`).then(r => r.json());
+      comments = fresh;
+      renderNotesList();
+      renderActionsOnly();
+    }
+
+    async function toggleResolveComment(id, resolved) {
+      await fetch(`/api/strategies/${strategyId}/comments/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolved }),
+      });
+      const c = comments.find(x => x.id === id);
+      if (c) c.resolved = resolved;
+      renderNotesList();
+    }
+
+    async function deleteComment(id) {
+      if (!confirm('Delete this note?')) return;
+      await fetch(`/api/strategies/${strategyId}/comments/${id}`, { method: 'DELETE' });
+      comments = comments.filter(c => c.id !== id);
+      renderNotesList();
+      renderActionsOnly();
+    }
+
+    // Refreshes just the Notes button's count without a full re-render (avoids
+    // losing focus/scroll position elsewhere on the page while the modal is open).
+    function renderActionsOnly() {
+      const btn = [...document.querySelectorAll('.strategy-actions .btn-ghost')].find(b => b.textContent.includes('Notes'));
+      if (btn) btn.textContent = `💬 Notes${comments.length ? ` (${comments.length})` : ''}`;
+    }
+
     // ── Toast ─────────────────────────────────────────────────────────────────
 
     function showToast(msg, isError = false) {
@@ -1711,6 +1855,10 @@
 
     document.getElementById('review-modal-overlay').addEventListener('click', function(e) {
       if (e.target === this) closeReviewModal();
+    });
+
+    document.getElementById('notes-modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeNotes();
     });
 
     load();

@@ -194,6 +194,45 @@ router.delete('/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Comments (deck-level notes thread — see CLAUDE.md / memory) ────────────
+
+// List comments for a strategy, oldest first
+router.get('/:id/comments', async (req, res) => {
+  res.json(await query(
+    'SELECT * FROM strategy_comments WHERE strategy_id=? ORDER BY created_at ASC',
+    [req.params.id]
+  ));
+});
+
+// Add a comment
+router.post('/:id/comments', async (req, res) => {
+  const { author_name, body } = req.body;
+  if (!author_name || !body || !body.trim()) {
+    return res.status(400).json({ error: 'author_name and body are required' });
+  }
+  const [{ id }] = await query(
+    'INSERT INTO strategy_comments (strategy_id, author_name, body) VALUES (?, ?, ?) RETURNING id',
+    [req.params.id, author_name, body.trim()]
+  );
+  res.status(201).json({ id });
+});
+
+// Toggle resolved
+router.patch('/:id/comments/:commentId', async (req, res) => {
+  const { resolved } = req.body;
+  await query(
+    'UPDATE strategy_comments SET resolved=? WHERE id=? AND strategy_id=?',
+    [resolved ? 1 : 0, req.params.commentId, req.params.id]
+  );
+  res.json({ ok: true });
+});
+
+// Delete a comment
+router.delete('/:id/comments/:commentId', async (req, res) => {
+  await query('DELETE FROM strategy_comments WHERE id=? AND strategy_id=?', [req.params.commentId, req.params.id]);
+  res.json({ ok: true });
+});
+
 // Flattens a sections[id] value (legacy plain string, or the new
 // { blocks:[...] } / { subtabs:[...] } shape) into plain text for use as
 // AI-generation context. Image blocks contribute no useful text.
