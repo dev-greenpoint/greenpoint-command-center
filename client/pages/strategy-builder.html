@@ -1269,6 +1269,8 @@
       }
     }
 
+    const CARD_TITLE_ALIGNS = ['left', 'center', 'right'];
+
     function renderCardGridEditor(topId, subId, index, block) {
       const cards = Array.isArray(block.cards) ? block.cards : [];
       const subArg = subId ? `'${subId}'` : 'null';
@@ -1281,6 +1283,10 @@
               <button class="btn-generate" style="font-size:11px;padding:4px 10px;" onclick="toggleIconPicker('${pickerKey}')">◆ Select Icon</button>
               ${openIconPickerKey === pickerKey ? `<div class="sb-icon-picker-panel">${CARD_ICON_OPTIONS.map(ic => `<button title="${ic}" onclick="setCardIcon('${topId}', ${subArg}, ${index}, ${ci}, '${ic}')">${renderCardIcon(ic, 18)}</button>`).join('')}</div>` : ''}
             </div>`;
+        const titleAlign = CARD_TITLE_ALIGNS.includes(c.titleAlign) ? c.titleAlign : 'left';
+        const titleAlignBtns = CARD_TITLE_ALIGNS.map(a => `
+          <button type="button" class="gpe-btn ${titleAlign === a ? 'active' : ''}" title="Align title ${a}"
+            onclick="setCardTitleAlign('${topId}', ${subArg}, ${index}, ${ci}, '${a}')">${a[0].toUpperCase()}</button>`).join('');
         return `
         <div class="sb-cg-card" data-ci="${ci}" draggable="true">
           <div class="sb-cg-card-toolbar">
@@ -1288,8 +1294,9 @@
             <button onclick="removeCard('${topId}', ${subArg}, ${index}, ${ci})" title="Remove card">✕</button>
           </div>
           ${iconSection}
-          <input class="sb-cg-title-input" type="text" placeholder="Card title" value="${escAttr(c.title || '')}"
+          <input class="sb-cg-title-input" type="text" placeholder="Card title" style="text-align:${titleAlign};" value="${escAttr(c.title || '')}"
             oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'title', this.value)">
+          <div class="gpe-toolbar" style="margin-top:-4px;">${titleAlignBtns}</div>
           <div class="gpe-editable" id="cg-body-${key}-${ci}" data-placeholder="Card text"
             data-kind="card-body" data-top="${topId}" data-sub="${subId || ''}" data-index="${index}" data-ci="${ci}"></div>
         </div>`;
@@ -1321,6 +1328,15 @@
     function setCardField(topId, subId, index, ci, field, value) {
       const block = getBlockRef(topId, subId, index);
       if (block && block.cards && block.cards[ci]) { block.cards[ci][field] = value; scheduleSave(); }
+    }
+
+    function setCardTitleAlign(topId, subId, index, ci, align) {
+      const block = getBlockRef(topId, subId, index);
+      if (block && block.cards && block.cards[ci]) {
+        block.cards[ci].titleAlign = align;
+        renderContent();
+        scheduleSave();
+      }
     }
 
     function addCard(topId, subId, index) {

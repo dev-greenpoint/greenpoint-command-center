@@ -114,10 +114,11 @@ function renderCardGridBlock(block) {
   // c.bodyHtml (set by the contenteditable rich editor) takes priority; falls
   // back to the legacy marker-syntax (**bold**/*italic*/__underline__) path
   // for any card never re-opened for edit.
+  const titleAlignStyle = a => (a === 'center' || a === 'right') ? ` style="text-align:${a}"` : '';
   return `<div class="gpb-card-grid"${styleAttr}>${cards.map(c => `
     <div class="gpb-card">
       ${c.icon ? `<div class="gpb-card-icon">${renderCardIcon(c.icon, 32)}</div>` : ''}
-      ${c.title ? `<div class="gpb-card-title">${gpbEsc(c.title)}</div>` : ''}
+      ${c.title ? `<div class="gpb-card-title"${titleAlignStyle(c.titleAlign)}>${gpbEsc(c.title)}</div>` : ''}
       ${(c.bodyHtml || c.body) ? `<div class="gpb-card-body">${c.bodyHtml ? DOMPurify.sanitize(c.bodyHtml) : gpbFormatInline(c.body)}</div>` : ''}
     </div>`).join('')}</div>`;
 }
