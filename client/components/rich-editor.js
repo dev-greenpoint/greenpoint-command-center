@@ -7,10 +7,10 @@
 // client-board.html / strategy-view.html are read-only render consumers).
 //
 // Usage: initRichEditor(containerEl, { initialHtml, onChange, toolbar })
-//   toolbar: 'basic' (Bold/Italic/Underline) or 'full' (+ Heading/Lists/
-//   Font size/Align) — font size and alignment are block/document-level
-//   controls, so they're only offered on the fuller richtext-block toolbar,
-//   not the compact card-body/gantt-notes/deck-notes fields.
+//   toolbar: 'basic' (Bold/Italic/Underline — gantt notes, deck notes),
+//   'card' (+ Font size/Align — card-grid body), or 'full' (+ Heading/Lists —
+//   richtext blocks). Headings/lists are richtext-only (don't fit a short
+//   card blurb); font size/align are offered on both 'card' and 'full'.
 //   onChange(sanitizedHtml) fires on every edit (debounced by the caller via
 //   its own scheduleSave(), same as the old textarea oninput handlers).
 
@@ -27,27 +27,36 @@ const RICH_EDITOR_FONT_SIZES = [
   { cmd: 'size22', px: 22, preview: 17, title: 'Huge' },
 ];
 
+const RICH_EDITOR_BIU = [
+  { cmd: 'bold', label: 'B', style: 'font-weight:700;', title: 'Bold' },
+  { cmd: 'italic', label: 'I', style: 'font-style:italic;', title: 'Italic' },
+  { cmd: 'underline', label: 'U', style: 'text-decoration:underline;', title: 'Underline' },
+];
+const RICH_EDITOR_SIZE_BTNS = RICH_EDITOR_FONT_SIZES.map(s => ({ cmd: s.cmd, label: 'A', style: `font-size:${s.preview}px;`, title: s.title }));
+const RICH_EDITOR_ALIGN_BTNS = [
+  { cmd: 'alignLeft', label: 'L', title: 'Align left' },
+  { cmd: 'alignCenter', label: 'C', title: 'Align center' },
+  { cmd: 'alignRight', label: 'R', title: 'Align right' },
+];
+
 const RICH_EDITOR_TOOLBARS = {
-  basic: [
-    { cmd: 'bold', label: 'B', style: 'font-weight:700;', title: 'Bold' },
-    { cmd: 'italic', label: 'I', style: 'font-style:italic;', title: 'Italic' },
-    { cmd: 'underline', label: 'U', style: 'text-decoration:underline;', title: 'Underline' },
-  ],
+  // Compact fields (gantt notes, deck notes) — inline emphasis only.
+  basic: [...RICH_EDITOR_BIU],
+  // Card-grid body — adds size/align, but no headings/lists (doesn't fit a
+  // short card blurb the way it fits a full richtext block).
+  card: [...RICH_EDITOR_BIU, { sep: true }, ...RICH_EDITOR_SIZE_BTNS, { sep: true }, ...RICH_EDITOR_ALIGN_BTNS],
+  // Richtext blocks — the full document-style toolbar.
   full: [
-    { cmd: 'bold', label: 'B', style: 'font-weight:700;', title: 'Bold' },
-    { cmd: 'italic', label: 'I', style: 'font-style:italic;', title: 'Italic' },
-    { cmd: 'underline', label: 'U', style: 'text-decoration:underline;', title: 'Underline' },
+    ...RICH_EDITOR_BIU,
     { sep: true },
-    ...RICH_EDITOR_FONT_SIZES.map(s => ({ cmd: s.cmd, label: 'A', style: `font-size:${s.preview}px;`, title: s.title })),
+    ...RICH_EDITOR_SIZE_BTNS,
     { sep: true },
     { cmd: 'h2', label: 'H2', title: 'Heading' },
     { cmd: 'h3', label: 'H3', title: 'Subheading' },
     { cmd: 'ul', label: '☰', title: 'Bullet list' },
     { cmd: 'ol', label: '1.', title: 'Numbered list' },
     { sep: true },
-    { cmd: 'alignLeft', label: 'L', title: 'Align left' },
-    { cmd: 'alignCenter', label: 'C', title: 'Align center' },
-    { cmd: 'alignRight', label: 'R', title: 'Align right' },
+    ...RICH_EDITOR_ALIGN_BTNS,
   ],
 };
 
@@ -55,7 +64,7 @@ const RICH_EDITOR_JUSTIFY_CMD = { alignLeft: 'justifyLeft', alignCenter: 'justif
 
 function initRichEditor(containerEl, opts) {
   opts = opts || {};
-  const toolbarKind = opts.toolbar === 'full' ? 'full' : 'basic';
+  const toolbarKind = RICH_EDITOR_TOOLBARS[opts.toolbar] ? opts.toolbar : 'basic';
   const buttons = RICH_EDITOR_TOOLBARS[toolbarKind];
 
   function updateToolbarState() {
@@ -138,7 +147,8 @@ function initRichEditor(containerEl, opts) {
 
   if (toolbarKind === 'full') {
     // Enter → new <p>, matches .gpb-richtext p CSS (only meaningful while this
-    // element is focused; 'basic' editors override Enter entirely below).
+    // element is focused; every other toolbar kind overrides Enter below —
+    // 'basic'/'card' fields are short blurbs, not multi-paragraph documents).
     containerEl.addEventListener('focus', () => document.execCommand('defaultParagraphSeparator', false, 'p'));
   }
 
@@ -147,7 +157,7 @@ function initRichEditor(containerEl, opts) {
   });
 
   containerEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && toolbarKind === 'basic') {
+    if (e.key === 'Enter' && toolbarKind !== 'full') {
       e.preventDefault();
       document.execCommand('insertLineBreak');
     }

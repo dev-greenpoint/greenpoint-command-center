@@ -1102,7 +1102,7 @@
           const card = block.cards && block.cards[ci];
           if (!card) return;
           initRichEditor(el, {
-            toolbar: 'basic',
+            toolbar: 'card',
             initialHtml: card.bodyHtml || gpbFormatInline(card.body || ''),
             onChange: html => { card.bodyHtml = html; scheduleSave(); },
           });
