@@ -53,9 +53,24 @@ function gpbEscAttr(str) {
   return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// Lightweight inline formatting for card-grid body text: **bold**, *italic*,
+// __underline__ (set via the B/I/U toolbar in strategy-builder.html's card
+// editor). Escapes first so this never opens up real HTML injection — the
+// marker syntax is applied on top of already-escaped text.
+function gpbFormatInline(str) {
+  let s = gpbEsc(str || '');
+  s = s.replace(/\*\*([^\n]+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__([^\n]+?)__/g, '<u>$1</u>');
+  s = s.replace(/\*([^\n]+?)\*/g, '<em>$1</em>');
+  return s;
+}
+
 // ── Block renderers ──────────────────────────────────────────────────────────
 
 function renderRichtextBlock(block) {
+  // block.html (set by the contenteditable rich editor) takes priority; falls
+  // back to the legacy markdown path for any block never re-opened for edit.
+  if (block.html) return `<div class="gpb-richtext">${DOMPurify.sanitize(block.html)}</div>`;
   const md = block.markdown || '';
   if (!md.trim()) return '';
   return `<div class="gpb-richtext">${DOMPurify.sanitize(marked.parse(md))}</div>`;
@@ -92,15 +107,18 @@ function renderImageBlock(block) {
 
 function renderCardGridBlock(block) {
   const cards = (Array.isArray(block.cards) ? block.cards : [])
-    .filter(c => (c.title && c.title.trim()) || (c.body && c.body.trim()) || c.icon);
+    .filter(c => (c.title && c.title.trim()) || (c.body && c.body.trim()) || c.bodyHtml || c.icon);
   if (!cards.length) return '';
   const cols = block.columns && block.columns !== 'auto' ? Number(block.columns) : null;
   const styleAttr = cols ? ` style="--gpb-cols:repeat(${cols},1fr)"` : '';
+  // c.bodyHtml (set by the contenteditable rich editor) takes priority; falls
+  // back to the legacy marker-syntax (**bold**/*italic*/__underline__) path
+  // for any card never re-opened for edit.
   return `<div class="gpb-card-grid"${styleAttr}>${cards.map(c => `
     <div class="gpb-card">
       ${c.icon ? `<div class="gpb-card-icon">${renderCardIcon(c.icon, 32)}</div>` : ''}
       ${c.title ? `<div class="gpb-card-title">${gpbEsc(c.title)}</div>` : ''}
-      ${c.body ? `<div class="gpb-card-body">${gpbEsc(c.body)}</div>` : ''}
+      ${(c.bodyHtml || c.body) ? `<div class="gpb-card-body">${c.bodyHtml ? DOMPurify.sanitize(c.bodyHtml) : gpbFormatInline(c.body)}</div>` : ''}
     </div>`).join('')}</div>`;
 }
 
@@ -156,7 +174,7 @@ function renderGanttBlock(block) {
         <div class="gpb-gantt-row-track">
           <div class="gpb-gantt-bar" style="left:${leftPct}%;width:${widthPct}%" title="${gpbEscAttr(p.title || '')}"></div>
         </div>
-        ${p.notes ? `<div class="gpb-gantt-row-notes">${gpbEsc(p.notes)}</div>` : ''}
+        ${(p.notesHtml || p.notes) ? `<div class="gpb-gantt-row-notes">${p.notesHtml ? DOMPurify.sanitize(p.notesHtml) : gpbEsc(p.notes)}</div>` : ''}
       </div>`;
   }).join('');
 

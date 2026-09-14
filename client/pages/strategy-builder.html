@@ -173,38 +173,41 @@
     }
     .sb-subtab-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-    /* ── Textarea / preview ── */
-    .section-textarea {
-      width: 100%; min-height: 200px;
+    .hidden { display: none !important; }
+
+    /* ── Rich editor (contenteditable + toolbar), shared by richtext blocks,
+       card-grid body, gantt notes, and deck-level Notes — see rich-editor.js ── */
+    .gpe-toolbar { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
+    .gpe-sep { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }
+    .gpe-btn {
+      width: 24px; height: 24px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text-muted); font-size: 11px; cursor: pointer;
+      font-family: var(--font); line-height: 1; padding: 0;
+    }
+    .gpe-btn:hover { color: var(--text); border-color: var(--accent); }
+    .gpe-btn.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .gpe-editable {
+      width: 100%; box-sizing: border-box;
       background: var(--surface-2); border: 1px solid var(--border);
       border-radius: var(--radius); color: var(--text);
       font-size: 13px; line-height: 1.7; padding: 14px 16px;
-      font-family: var(--font); resize: vertical;
-      box-sizing: border-box; transition: border-color 0.15s;
+      font-family: var(--font); transition: border-color 0.15s;
     }
-    .section-textarea:focus { outline: none; border-color: var(--accent); }
-    .section-textarea::placeholder { color: var(--text-dim); }
-
-    .hidden { display: none !important; }
-
-    .section-preview {
-      min-height: 100px; padding: 14px 16px;
-      background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: var(--radius); font-size: 13px;
-      line-height: 1.75; color: var(--text);
-      cursor: text; transition: border-color 0.15s;
-    }
-    .section-preview:hover { border-color: var(--accent); }
-    .section-preview h1,.section-preview h2,.section-preview h3 {
-      font-size: 13px; font-weight: 700; margin: 14px 0 5px;
-    }
-    .section-preview h1:first-child,.section-preview h2:first-child,.section-preview h3:first-child { margin-top: 0; }
-    .section-preview p { margin: 0 0 8px; }
-    .section-preview p:last-child { margin-bottom: 0; }
-    .section-preview ul,.section-preview ol { margin: 0 0 8px; padding-left: 18px; }
-    .section-preview li { margin-bottom: 3px; }
-    .section-preview strong { font-weight: 700; }
-    .section-preview em { font-style: italic; color: var(--text-muted); }
+    .gpe-editable:focus { outline: none; border-color: var(--accent); }
+    .gpe-editable[data-placeholder]:empty::before { content: attr(data-placeholder); color: var(--text-dim); pointer-events: none; }
+    .gpe-editable h1, .gpe-editable h2, .gpe-editable h3 { font-size: 13px; font-weight: 700; margin: 14px 0 5px; }
+    .gpe-editable h1:first-child, .gpe-editable h2:first-child, .gpe-editable h3:first-child { margin-top: 0; }
+    .gpe-editable p { margin: 0 0 8px; }
+    .gpe-editable p:last-child { margin-bottom: 0; }
+    .gpe-editable ul, .gpe-editable ol { margin: 0 0 8px; padding-left: 18px; }
+    .gpe-editable li { margin-bottom: 3px; }
+    .gpe-editable strong { font-weight: 700; }
+    .gpe-editable em { font-style: italic; color: var(--text-muted); }
+    .gpe-editable[data-kind="richtext"] { min-height: 200px; }
+    .gpe-editable[data-kind="card-body"] { min-height: 70px; font-size: 12px; padding: 6px 8px; }
+    .gpe-editable[data-kind="gantt-notes"] { grid-column: 2 / 5; min-height: 40px; font-size: 12px; padding: 6px 8px; }
+    .sb-gantt-row-editor .gpe-toolbar { grid-column: 2 / 5; margin-bottom: 4px; }
+    #notes-body-edit { min-height: 44px; font-size: 13px; padding: 8px 10px; }
 
     /* ── Blocks ── */
     .sb-blocks { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
@@ -378,11 +381,6 @@
       background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
       color: var(--text); font-size: 13px; font-weight: 600; padding: 6px 8px; font-family: var(--font);
     }
-    .sb-cg-body-input {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-      color: var(--text); font-size: 12px; padding: 6px 8px; font-family: var(--font);
-      min-height: 70px; resize: vertical;
-    }
 
     /* ── Gantt block editor ── */
     .sb-gantt-rows-editor { display: flex; flex-direction: column; gap: 8px; }
@@ -397,11 +395,6 @@
       background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 12px;
     }
     .sb-gantt-row-editor button:hover { color: var(--danger); }
-    .sb-gantt-notes-input {
-      grid-column: 2 / 5; background: var(--surface-2); border: 1px solid var(--border);
-      border-radius: 4px; color: var(--text); font-size: 12px; padding: 6px 8px;
-      font-family: var(--font); min-height: 40px; resize: vertical;
-    }
     .sb-gantt-preview { margin-top: 16px; padding: 16px; background: var(--surface-2); border-radius: var(--radius); }
 
     /* ── Generate button ── */
@@ -483,7 +476,7 @@
       <div class="notes-list" id="notes-list"></div>
       <div class="notes-add-row">
         <select class="notes-author-select" id="notes-author"></select>
-        <textarea class="notes-textarea" id="notes-body" placeholder="Leave a note for whoever picks this up next…" rows="2"></textarea>
+        <div class="gpe-editable" id="notes-body-edit" data-placeholder="Leave a note for whoever picks this up next…"></div>
         <div class="notes-notify-row">
           <span class="notes-notify-label">Notify</span>
           <div class="notes-notify-chips" id="notes-notify-chips"></div>
@@ -502,6 +495,7 @@
   <script src="/components/section-defs.js"></script>
   <script src="/components/card-icons.js"></script>
   <script src="/components/strategy-render.js"></script>
+  <script src="/components/rich-editor.js"></script>
   <script>
     const strategyId = location.pathname.split('/')[2];
     let strategy = null;
@@ -1080,6 +1074,49 @@
 
       el.innerHTML = html;
       attachBlockDragHandlers();
+      wireRichEditors();
+    }
+
+    // Finds every freshly-rendered .gpe-editable placeholder (richtext blocks,
+    // card-grid body, gantt notes) and turns it into a live rich editor —
+    // called at the end of renderContent() since that fully replaces
+    // #sb-content's innerHTML on every structural change (add/remove block,
+    // section switch, drag-reorder), destroying and recreating these nodes.
+    function wireRichEditors() {
+      document.querySelectorAll('.gpe-editable[data-kind]').forEach(el => {
+        const topId = el.dataset.top;
+        const subId = el.dataset.sub || null;
+        const index = Number(el.dataset.index);
+        const kind = el.dataset.kind;
+        const block = getBlockRef(topId, subId, index);
+        if (!block) return;
+
+        if (kind === 'richtext') {
+          initRichEditor(el, {
+            toolbar: 'full',
+            initialHtml: block.html || DOMPurify.sanitize(marked.parse(block.markdown || '')),
+            onChange: html => { block.html = html; scheduleSave(); refreshNavItemTick(topId); },
+          });
+        } else if (kind === 'card-body') {
+          const ci = Number(el.dataset.ci);
+          const card = block.cards && block.cards[ci];
+          if (!card) return;
+          initRichEditor(el, {
+            toolbar: 'basic',
+            initialHtml: card.bodyHtml || gpbFormatInline(card.body || ''),
+            onChange: html => { card.bodyHtml = html; scheduleSave(); },
+          });
+        } else if (kind === 'gantt-notes') {
+          const pi = Number(el.dataset.pi);
+          const phase = block.phases && block.phases[pi];
+          if (!phase) return;
+          initRichEditor(el, {
+            toolbar: 'basic',
+            initialHtml: phase.notesHtml || gpbEsc(phase.notes || ''),
+            onChange: html => { phase.notesHtml = html; scheduleSave(); refreshGanttPreview(topId, subId, index); },
+          });
+        }
+      });
     }
 
     function currentBlocksArray() {
@@ -1125,45 +1162,10 @@
     }
 
     function renderRichtextEditor(topId, subId, index, block) {
-      const content = block.markdown || '';
-      const hasContent = content.trim().length > 0;
       const suffix = `${topId}-${subId || 'x'}-${index}`;
-      const subArg = subId ? `'${subId}'` : 'null';
       return `
-        <div class="section-preview ${hasContent ? '' : 'hidden'}" id="rt-prev-${suffix}"
-             onclick="editRichtext('${topId}', ${subArg}, ${index})" title="Click to edit">${hasContent ? DOMPurify.sanitize(marked.parse(content)) : ''}</div>
-        <textarea class="section-textarea ${hasContent ? 'hidden' : ''}" id="rt-ta-${suffix}"
-          placeholder="Write here…"
-          oninput="onBlockTextInput('${topId}', ${subArg}, ${index}, this)"
-          onblur="previewRichtext('${topId}', ${subArg}, ${index})"
-        >${escHtml(content)}</textarea>`;
-    }
-
-    function onBlockTextInput(topId, subId, index, textareaEl) {
-      const block = getBlockRef(topId, subId, index);
-      if (block) block.markdown = textareaEl.value;
-      scheduleSave();
-    }
-
-    function editRichtext(topId, subId, index) {
-      const suffix = `${topId}-${subId || 'x'}-${index}`;
-      document.getElementById(`rt-prev-${suffix}`)?.classList.add('hidden');
-      const ta = document.getElementById(`rt-ta-${suffix}`);
-      if (ta) { ta.classList.remove('hidden'); ta.focus(); }
-    }
-
-    function previewRichtext(topId, subId, index) {
-      const suffix = `${topId}-${subId || 'x'}-${index}`;
-      const ta = document.getElementById(`rt-ta-${suffix}`);
-      if (!ta) return;
-      const content = ta.value.trim();
-      const prev = document.getElementById(`rt-prev-${suffix}`);
-      if (content && prev) {
-        prev.innerHTML = DOMPurify.sanitize(marked.parse(content));
-        prev.classList.remove('hidden');
-        ta.classList.add('hidden');
-      }
-      refreshNavItemTick(topId);
+        <div class="gpe-editable" id="rt-edit-${suffix}" data-placeholder="Write here…"
+          data-kind="richtext" data-top="${topId}" data-sub="${subId || ''}" data-index="${index}"></div>`;
     }
 
     function refreshNavItemTick(topId) {
@@ -1288,8 +1290,8 @@
           ${iconSection}
           <input class="sb-cg-title-input" type="text" placeholder="Card title" value="${escAttr(c.title || '')}"
             oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'title', this.value)">
-          <textarea class="sb-cg-body-input" placeholder="Card text"
-            oninput="setCardField('${topId}', ${subArg}, ${index}, ${ci}, 'body', this.value)">${escHtml(c.body || '')}</textarea>
+          <div class="gpe-editable" id="cg-body-${key}-${ci}" data-placeholder="Card text"
+            data-kind="card-body" data-top="${topId}" data-sub="${subId || ''}" data-index="${index}" data-ci="${ci}"></div>
         </div>`;
       }).join('');
       const columns = block.columns || 'auto';
@@ -1320,6 +1322,7 @@
       const block = getBlockRef(topId, subId, index);
       if (block && block.cards && block.cards[ci]) { block.cards[ci][field] = value; scheduleSave(); }
     }
+
     function addCard(topId, subId, index) {
       const block = getBlockRef(topId, subId, index);
       if (block) { block.cards = block.cards || []; block.cards.push({ title: '', body: '' }); renderContent(); scheduleSave(); }
@@ -1355,8 +1358,8 @@
           <input type="date" value="${escAttr(p.start || '')}" onchange="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'start', this.value)">
           <input type="date" value="${escAttr(p.end || '')}" onchange="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'end', this.value)">
           <button onclick="removePhase('${topId}', ${subArg}, ${index}, ${pi})" title="Remove phase">✕</button>
-          <textarea class="sb-gantt-notes-input" placeholder="Notes (optional)"
-            oninput="setPhaseField('${topId}', ${subArg}, ${index}, ${pi}, 'notes', this.value)">${escHtml(p.notes || '')}</textarea>
+          <div class="gpe-editable" id="gantt-notes-${topId}-${subId || 'x'}-${index}-${pi}" data-placeholder="Notes (optional)"
+            data-kind="gantt-notes" data-top="${topId}" data-sub="${subId || ''}" data-index="${index}" data-pi="${pi}"></div>
         </div>`).join('');
       return `
         <div class="sb-gantt-editor">
@@ -1774,7 +1777,7 @@
                 <button onclick="deleteComment(${c.id})">Delete</button>
               </div>
             </div>
-            <div class="note-body">${escHtml(c.body)}</div>
+            <div class="note-body">${DOMPurify.sanitize(c.body)}</div>
             ${notified.length ? `<div class="note-notify-tag">🔔 ${notified.map(escHtml).join(', ')}</div>` : ''}
           </div>`;
       }).join('');
@@ -1786,6 +1789,13 @@
       renderNotifyChips();
       renderNotesList();
       document.getElementById('notes-modal-overlay').classList.add('open');
+      const bodyEl = document.getElementById('notes-body-edit');
+      if (!bodyEl.dataset.wired) {
+        initRichEditor(bodyEl, { toolbar: 'basic' });
+        bodyEl.dataset.wired = '1';
+      } else {
+        bodyEl.innerHTML = '';
+      }
     }
 
     function closeNotes() {
@@ -1794,11 +1804,11 @@
 
     async function addComment() {
       const authorSel = document.getElementById('notes-author');
-      const bodyEl = document.getElementById('notes-body');
+      const bodyEl = document.getElementById('notes-body-edit');
       const author_name = authorSel.value;
-      const body = bodyEl.value.trim();
+      const body = DOMPurify.sanitize(bodyEl.innerHTML);
       if (!author_name) { authorSel.focus(); return; }
-      if (!body) { bodyEl.focus(); return; }
+      if (!bodyEl.textContent.trim()) { bodyEl.focus(); return; }
 
       localStorage.setItem(COMMENT_AUTHOR_KEY, author_name);
 
@@ -1808,7 +1818,7 @@
       });
       if (!res.ok) { showToast('Failed to add note', true); return; }
 
-      bodyEl.value = '';
+      bodyEl.innerHTML = '';
       selectedNotify = [];
       renderNotifyChips();
       const fresh = await fetch(`/api/strategies/${strategyId}/comments`).then(r => r.json());
