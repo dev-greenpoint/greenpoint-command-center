@@ -73,6 +73,46 @@ app.post('/api/upload', (req, res) => {
   });
 });
 
+// ── AI image generation (Cloudinary Image Generation add-on) ──────────────────
+// Defaults to flux/standard (~1 credit/image) — Cloudinary's own default is a
+// premium tier that costs ~9x that for comparable quality, so always pass a
+// model explicitly. Returns the same { url } shape as /api/upload so the
+// client can treat "uploaded" and "generated" images interchangeably.
+app.post('/api/generate-image', async (req, res) => {
+  const { prompt, aspect_ratio } = req.body;
+  if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'prompt required' });
+
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  if (!cloudName || !apiKey || !apiSecret) {
+    return res.status(500).json({ error: 'Cloudinary image generation is not configured' });
+  }
+
+  try {
+    const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+    const body = { prompt: prompt.trim(), model: { family: 'flux', tier: 'standard' } };
+    if (aspect_ratio) body.image_size = { aspect_ratio };
+
+    const cloudRes = await fetch(`https://api.cloudinary.com/v2/generate/${cloudName}/text_to_image`, {
+      method: 'POST',
+      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await cloudRes.json();
+    if (!cloudRes.ok) {
+      return res.status(502).json({ error: data?.error?.message || 'Image generation failed' });
+    }
+
+    const url = data?.data?.assets?.[0]?.storage?.secure_url;
+    if (!url) return res.status(502).json({ error: 'No image returned' });
+
+    res.json({ url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/health', async (req, res) => {
   await query('SELECT 1');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

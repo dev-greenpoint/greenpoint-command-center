@@ -489,6 +489,27 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="generate-image-modal-overlay">
+    <div class="modal notes-modal">
+      <div class="modal-title">Generate Image</div>
+      <div class="sb-row" style="margin-bottom:10px;">
+        <span class="sb-row-label">Shape</span>
+        <select class="sb-row-select" id="gen-image-aspect">
+          <option value="16:9">Wide (16:9)</option>
+          <option value="1:1">Square (1:1)</option>
+          <option value="4:5">Tall (4:5)</option>
+        </select>
+      </div>
+      <textarea id="gen-image-prompt" class="notes-textarea" placeholder="Describe the image — e.g. &quot;A boutique Bali pool villa at golden hour, photorealistic travel photography&quot;" rows="4"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeGenerateImageModal()">Cancel</button>
+        <button class="btn-generate" id="gen-image-submit" onclick="submitGenerateImage()">
+          <span class="spinner"></span><span class="gen-icon">✨</span>Generate
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
   <script src="/components/shell.js"></script>
@@ -1228,6 +1249,7 @@
             </select>
             ${columnsSelect}
             <button class="btn-generate" onclick="triggerBlockImageUpload('${topId}', ${subArg}, ${index})">🖼 Add Image</button>
+            <button class="btn-generate" onclick="openGenerateImageModal('${topId}', ${subArg}, ${index})">✨ Generate</button>
           </div>
           <div class="sb-row-hint">${escHtml(IMAGE_LAYOUT_HINTS[layout])}</div>
           ${items ? `<div class="sb-image-list">${items}</div>` : '<div class="sb-empty-note">No images yet — click Add Image above.</div>'}
@@ -1910,6 +1932,59 @@
       showToast('Image added');
     }
 
+    // ── AI image generation (Cloudinary) ────────────────────────────────────────
+
+    function openGenerateImageModal(topId, subId, index) {
+      pendingUploadTarget = { topId, subId, index };
+      document.getElementById('gen-image-prompt').value = '';
+      document.getElementById('gen-image-aspect').value = '16:9';
+      document.getElementById('generate-image-modal-overlay').classList.add('open');
+      document.getElementById('gen-image-prompt').focus();
+    }
+
+    function closeGenerateImageModal() {
+      document.getElementById('generate-image-modal-overlay').classList.remove('open');
+      pendingUploadTarget = null;
+    }
+
+    async function submitGenerateImage() {
+      const prompt = document.getElementById('gen-image-prompt').value.trim();
+      if (!prompt) { document.getElementById('gen-image-prompt').focus(); return; }
+      if (!pendingUploadTarget) return;
+      const target = pendingUploadTarget;
+      const aspect_ratio = document.getElementById('gen-image-aspect').value;
+
+      const btn = document.getElementById('gen-image-submit');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/generate-image', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, aspect_ratio }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) {
+          showToast(data.error || 'Image generation failed', true);
+        } else {
+          const block = getBlockRef(target.topId, target.subId, target.index);
+          if (block) {
+            block.images = block.images || [];
+            block.images.push({ src: data.url, alt: '' });
+            renderContent();
+            scheduleSave();
+            showToast('Image generated');
+          }
+          closeGenerateImageModal();
+        }
+      } catch {
+        showToast('Image generation failed', true);
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
     // ── Utils ─────────────────────────────────────────────────────────────────
 
     function escHtml(str) {
@@ -1925,6 +2000,10 @@
 
     document.getElementById('notes-modal-overlay').addEventListener('click', function(e) {
       if (e.target === this) closeNotes();
+    });
+
+    document.getElementById('generate-image-modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeGenerateImageModal();
     });
 
     load();
