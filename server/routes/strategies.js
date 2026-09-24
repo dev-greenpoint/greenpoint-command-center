@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { query } = require('../db/database');
+const LAYOUTS = { scroll: require('../deck-layouts/scroll') };
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -40,15 +43,17 @@ router.get('/', async (req, res) => {
   res.json(await query(`
     SELECT s.id, s.client_id, s.title, s.status, s.updated_at, s.created_at,
            s.submitted_by, s.reviewer, s.submitted_at, s.created_by,
+           s.locked_at, s.locked_by,
            cl.name as client_name
     FROM strategies s
-    JOIN clients cl ON s.client_id = cl.id
+    LEFT JOIN clients cl ON s.client_id = cl.id
     ORDER BY s.updated_at DESC`));
 });
 
 // List strategies for a client
 router.get('/client/:clientId', async (req, res) => {
-  res.json(await query('SELECT * FROM strategies WHERE client_id=? ORDER BY created_at DESC', [req.params.clientId]));
+  const rows = await query('SELECT * FROM strategies WHERE client_id=? ORDER BY created_at DESC', [req.params.clientId]);
+  res.json(rows.map(({ snapshot_html, ...r }) => r));
 });
 
 // Get single strategy with full context
@@ -56,10 +61,11 @@ router.get('/:id', async (req, res) => {
   const list = await query(`
     SELECT s.*, cl.name as client_name, cl.research as client_research, cl.industry as client_industry
     FROM strategies s
-    JOIN clients cl ON s.client_id = cl.id
+    LEFT JOIN clients cl ON s.client_id = cl.id
     WHERE s.id = ?`, [req.params.id]);
   if (!list.length) return res.status(404).json({ error: 'Not found' });
-  res.json(list[0]);
+  const { snapshot_html, ...strategy } = list[0];
+  res.json(strategy);
 });
 
 // Get strategy by share token (public — only published)
@@ -67,7 +73,7 @@ router.get('/share/:token', async (req, res) => {
   const list = await query(`
     SELECT s.*, cl.name as client_name
     FROM strategies s
-    JOIN clients cl ON s.client_id = cl.id
+    LEFT JOIN clients cl ON s.client_id = cl.id
     WHERE s.share_token = ?`, [req.params.token]);
   if (!list.length) return res.status(404).json({ error: 'Not found' });
   if (list[0].status === 'draft') return res.status(403).json({ error: 'Not shared' });
@@ -98,10 +104,88 @@ const DECK_TYPE_SECTIONS = {
   },
 };
 
+// ── Save & Lock ─────────────────────────────────────────────────────────────
+// A locked deck is read-only: every route that changes its content, status or
+// existence goes through rejectIfLocked. Its share link (/s/:token, see
+// server/index.js) serves snapshot_html instead of the live view page.
+
+async function rejectIfLocked(req, res, next) {
+  const [row] = await query('SELECT locked_at FROM strategies WHERE id=?', [req.params.id]);
+  if (row?.locked_at) return res.status(423).json({ error: 'This deck is locked. Unlock it to make changes.' });
+  next();
+}
+
+const CLIENT_DIR = path.join(__dirname, '../../client');
+
+// Freezes the share view as it looks today: the page's local CSS/JS is inlined
+// and the deck data embedded as window.__FROZEN__, so the result depends on
+// nothing in this codebase that could change later.
+function buildSnapshot(strategy, lockedAt) {
+  const readLocal = (p) => fs.readFileSync(path.join(CLIENT_DIR, p), 'utf8');
+  let html = readLocal(strategy.layout ? 'pages/deck-layout.html' : 'pages/strategy-view.html');
+  html = html.replace(/<link rel="stylesheet" href="(\/[^"]+)">/g,
+    (_, p) => `<style>\n${readLocal(p)}\n</style>`);
+  html = html.replace(/<script src="(\/[^"]+)"><\/script>/g,
+    (_, p) => `<script>\n${readLocal(p).replace(/<\/script/gi, '<\\/script')}\n</script>`);
+  if (/(src|href)="\/[^/]/.test(html)) throw new Error('Snapshot still references a local file');
+
+  const frozen = {
+    locked_at: lockedAt,
+    data: {
+      title: strategy.title,
+      sections: strategy.sections,
+      active_sections: strategy.active_sections,
+      client_name: strategy.client_name,
+      layout: strategy.layout,
+    },
+  };
+  const json = JSON.stringify(frozen).replace(/</g, '\\u003c');
+  return html.replace('<head>', () => `<head>\n  <script>window.__FROZEN__ = ${json};</script>`);
+}
+
+router.post('/:id/lock', async (req, res) => {
+  const list = await query(`
+    SELECT s.*, cl.name as client_name
+    FROM strategies s
+    LEFT JOIN clients cl ON s.client_id = cl.id
+    WHERE s.id = ?`, [req.params.id]);
+  if (!list.length) return res.status(404).json({ error: 'Not found' });
+  const strategy = list[0];
+  if (strategy.locked_at) return res.status(409).json({ error: 'Already locked' });
+
+  const lockedAt = new Date().toISOString();
+  let snapshot;
+  try {
+    snapshot = buildSnapshot(strategy, lockedAt);
+  } catch (err) {
+    return res.status(500).json({ error: `Could not save snapshot: ${err.message}` });
+  }
+  // A locked deck always gets a share link, even if it was never submitted.
+  const token = strategy.share_token || crypto.randomBytes(16).toString('hex');
+  await query('UPDATE strategies SET locked_at=?, locked_by=?, snapshot_html=?, share_token=? WHERE id=?',
+    [lockedAt, req.body.locked_by || null, snapshot, token, req.params.id]);
+  res.json({ locked_at: lockedAt, locked_by: req.body.locked_by || null, share_token: token });
+});
+
+router.post('/:id/unlock', async (req, res) => {
+  await query('UPDATE strategies SET locked_at=NULL, locked_by=NULL, snapshot_html=NULL WHERE id=?', [req.params.id]);
+  res.json({ ok: true });
+});
+
 // Create strategy
 router.post('/', async (req, res) => {
-  const { client_id, title, deck_type, created_by } = req.body;
-  if (!client_id) return res.status(400).json({ error: 'client_id required' });
+  const { title, deck_type, created_by } = req.body;
+  const client_id = req.body.client_id || null;
+
+  // Layout decks (e.g. the scroll presentation) start from the layout's blank content.
+  const layout = LAYOUTS[req.body.layout];
+  if (layout) {
+    const [{ id }] = await query(
+      'INSERT INTO strategies (client_id, title, sections, active_sections, doc_type, created_by, layout) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
+      [client_id, title || 'Untitled Deck', JSON.stringify(layout.blank()), '[]', 'strategy', created_by || null, req.body.layout]
+    );
+    return res.json({ id });
+  }
 
   const deckDef = deck_type && DECK_TYPE_SECTIONS[deck_type];
   let activeSections, sectionsSeed;
@@ -111,7 +195,7 @@ router.post('/', async (req, res) => {
     sectionsSeed = { _labels: deckDef.labels };
   } else {
     // Derive active sections from client services
-    const [clientRow] = await query('SELECT services FROM clients WHERE id=?', [client_id]);
+    const [clientRow] = client_id ? await query('SELECT services FROM clients WHERE id=?', [client_id]) : [];
     const services = clientRow?.services ? clientRow.services.split(',').map(s => s.trim()).filter(Boolean) : [];
 
     const CORE = ['overview', 'strategy', 'audiences', 'messages', 'timeline'];
@@ -133,7 +217,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update strategy
-router.put('/:id', async (req, res) => {
+router.put('/:id', rejectIfLocked, async (req, res) => {
   const { title, sections, active_sections, status, submitted_by, reviewer } = req.body;
   const parts = [];
   const vals = [];
@@ -150,7 +234,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Submit for approval — generates share token, sets awaiting_approval
-router.post('/:id/submit', async (req, res) => {
+router.post('/:id/submit', rejectIfLocked, async (req, res) => {
   const { submitted_by, reviewer } = req.body;
   const existing = await query('SELECT share_token FROM strategies WHERE id=?', [req.params.id]);
   if (!existing.length) return res.status(404).json({ error: 'Not found' });
@@ -171,25 +255,25 @@ router.post('/:id/submit', async (req, res) => {
 });
 
 // Approve
-router.post('/:id/approve', async (req, res) => {
+router.post('/:id/approve', rejectIfLocked, async (req, res) => {
   await query("UPDATE strategies SET status='approved' WHERE id=?", [req.params.id]);
   res.json({ ok: true });
 });
 
 // Request updates
-router.post('/:id/request-updates', async (req, res) => {
+router.post('/:id/request-updates', rejectIfLocked, async (req, res) => {
   await query("UPDATE strategies SET status='updates_requested' WHERE id=?", [req.params.id]);
   res.json({ ok: true });
 });
 
 // Recall to draft
-router.post('/:id/recall', async (req, res) => {
+router.post('/:id/recall', rejectIfLocked, async (req, res) => {
   await query("UPDATE strategies SET status='draft' WHERE id=?", [req.params.id]);
   res.json({ ok: true });
 });
 
 // Delete strategy
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', rejectIfLocked, async (req, res) => {
   await query('DELETE FROM strategies WHERE id=?', [req.params.id]);
   res.json({ ok: true });
 });
@@ -259,7 +343,7 @@ function sectionToPlainText(value) {
 }
 
 // AI generate section content
-router.post('/:id/generate', async (req, res) => {
+router.post('/:id/generate', rejectIfLocked, async (req, res) => {
   const { section_id, subtab_id, mode } = req.body;
   const ideasMode = mode === 'ideas';
   if (!section_id) return res.status(400).json({ error: 'section_id required' });
@@ -268,7 +352,7 @@ router.post('/:id/generate', async (req, res) => {
     SELECT s.*, cl.name as client_name, cl.research as client_research,
            cl.industry as client_industry, cl.website, cl.services
     FROM strategies s
-    JOIN clients cl ON s.client_id = cl.id
+    LEFT JOIN clients cl ON s.client_id = cl.id
     WHERE s.id = ?`, [req.params.id]);
   if (!list.length) return res.status(404).json({ error: 'Not found' });
   const row = list[0];
@@ -355,7 +439,7 @@ router.post('/:id/review', async (req, res) => {
   const list = await query(`
     SELECT s.*, cl.name as client_name, cl.research as client_research, cl.industry as client_industry
     FROM strategies s
-    JOIN clients cl ON s.client_id = cl.id
+    LEFT JOIN clients cl ON s.client_id = cl.id
     WHERE s.id = ?`, [req.params.id]);
   if (!list.length) return res.status(404).json({ error: 'Not found' });
   const row = list[0];

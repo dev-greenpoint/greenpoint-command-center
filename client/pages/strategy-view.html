@@ -360,7 +360,10 @@
     // ── Load ─────────────────────────────────────────────────────────────────────
 
     async function load() {
-      const res = await fetch(`/api/strategies/share/${token}`);
+      // window.__FROZEN__ is embedded when this page is saved as a locked
+      // deck's snapshot — render that data instead of fetching live.
+      const frozen = window.__FROZEN__;
+      const res = frozen ? { ok: true, json: async () => frozen.data } : await fetch(`/api/strategies/share/${token}`);
 
       document.getElementById('loading').style.display = 'none';
 
@@ -391,12 +394,12 @@
       document.title = `${strategyData.title} — Greenpoint Media`;
 
       // Populate hero
-      const now = new Date();
+      const now = frozen ? new Date(frozen.locked_at) : new Date();
       const monthYear = now.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
       const clientPart = strategyData.client_name ? `${strategyData.client_name} · ` : '';
       document.getElementById('hero-eyebrow').textContent = `${clientPart}${monthYear}`;
       document.getElementById('hero-title').textContent = strategyData.title;
-      document.getElementById('topbar-badge').textContent = `Greenpoint × ${strategyData.client_name || strategyData.campaign_name || 'Client'}`;
+      document.getElementById('topbar-badge').textContent = (strategyData.client_name || strategyData.campaign_name) ? `Greenpoint × ${strategyData.client_name || strategyData.campaign_name}` : 'Greenpoint Media';
 
       if (strategyData.campaign_name) {
         document.getElementById('hero-desc').textContent = strategyData.campaign_name;

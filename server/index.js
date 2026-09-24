@@ -22,6 +22,7 @@ const meetingsRouter = require('./routes/meetings');
 const pitchListsRouter = require('./routes/pitch-lists');
 const { clientBrainRouter, entryRouter: brainEntryRouter } = require('./routes/brain');
 const notificationsRouter = require('./routes/notifications');
+const deckAiRouter = require('./routes/deck-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -78,8 +79,15 @@ app.post('/api/upload', (req, res) => {
 // premium tier that costs ~9x that for comparable quality, so always pass a
 // model explicitly. Returns the same { url } shape as /api/upload so the
 // client can treat "uploaded" and "generated" images interchangeably.
+// Images are filed as "Command Center/<Client>/<Deck>" with a readable name
+// built from the prompt + date.
+const cloudinaryFolderPart = (s, fallback) =>
+  (s || '').replace(/[\/\\?&#%<>*:|"]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) || fallback;
+const cloudinarySlug = (s) =>
+  (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').split('-').slice(0, 8).join('-') || 'image';
+
 app.post('/api/generate-image', async (req, res) => {
-  const { prompt, aspect_ratio } = req.body;
+  const { prompt, aspect_ratio, client_name, deck_title } = req.body;
   if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'prompt required' });
 
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -91,7 +99,15 @@ app.post('/api/generate-image', async (req, res) => {
 
   try {
     const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
-    const body = { prompt: prompt.trim(), model: { family: 'flux', tier: 'standard' } };
+    const date = new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+    const name = `${cloudinarySlug(prompt)}-${date}-${Math.random().toString(36).slice(2, 6)}`;
+    const folder = ['Command Center', cloudinaryFolderPart(client_name, 'No Client'), cloudinaryFolderPart(deck_title, 'Untitled Deck')].join('/');
+
+    const body = {
+      prompt: prompt.trim(),
+      model: { family: 'flux', tier: 'standard' },
+      target: { target_type: 'managed_asset', public_id: name },
+    };
     if (aspect_ratio) body.image_size = { aspect_ratio };
 
     const cloudRes = await fetch(`https://api.cloudinary.com/v2/generate/${cloudName}/text_to_image`, {
@@ -106,6 +122,20 @@ app.post('/api/generate-image', async (req, res) => {
 
     const url = data?.data?.assets?.[0]?.storage?.secure_url;
     if (!url) return res.status(502).json({ error: 'No image returned' });
+
+    // The generate API has no folder option, so file it with a follow-up Admin
+    // API update (free). Non-fatal — the image is usable even if this fails.
+    const publicId = data?.data?.assets?.[0]?.storage?.public_id || data?.data?.assets?.[0]?.public_id || name;
+    try {
+      const moveRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/resources/image/upload/${encodeURIComponent(publicId)}`, {
+        method: 'POST',
+        headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset_folder: folder, display_name: name, tags: 'command-center,ai-generated' }),
+      });
+      if (!moveRes.ok) console.error('Cloudinary folder move failed:', await moveRes.text());
+    } catch (err) {
+      console.error('Cloudinary folder move failed:', err.message);
+    }
 
     res.json({ url });
   } catch (err) {
@@ -136,8 +166,9 @@ app.use('/api/pitch-lists', pitchListsRouter);
 app.use('/api/clients/:id/brain', clientBrainRouter);
 app.use('/api/brain', brainEntryRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/deck-ai', deckAiRouter);
 
-const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies', 'deck-creator', 'settings', 'timesheets'];
+const PAGES = ['clients', 'campaigns', 'social', 'approvals', 'reports', 'team-admin', 'strategies', 'deck-creator', 'deck-creator-2', 'settings', 'timesheets'];
 PAGES.forEach(page => {
   app.get(`/${page}`, (req, res) => {
     res.sendFile(path.join(__dirname, `../client/pages/${page}.html`));
@@ -164,12 +195,18 @@ app.get('/clients/:id', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/client-profile.html'));
 });
 
-app.get('/strategy/:id', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/pages/strategy-builder.html'));
+// Layout decks (Deck Creator 2.0, strategies.layout set) are edited and viewed
+// in deck-layout.html; classic decks use the builder / view pages.
+app.get('/strategy/:id', async (req, res) => {
+  const [row] = /^\d+$/.test(req.params.id) ? await query('SELECT layout FROM strategies WHERE id=?', [req.params.id]) : [];
+  res.sendFile(path.join(__dirname, `../client/pages/${row?.layout ? 'deck-layout' : 'strategy-builder'}.html`));
 });
 
-app.get('/s/:token', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/pages/strategy-view.html'));
+// Locked decks serve the snapshot frozen at lock time (see routes/strategies.js)
+app.get('/s/:token', async (req, res) => {
+  const [row] = await query('SELECT layout, snapshot_html FROM strategies WHERE share_token=?', [req.params.token]);
+  if (row?.snapshot_html) return res.type('html').send(row.snapshot_html);
+  res.sendFile(path.join(__dirname, `../client/pages/${row?.layout ? 'deck-layout' : 'strategy-view'}.html`));
 });
 
 app.get('/pitch-list/:campaignId', (req, res) => {

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deck</title>
+  <!-- Deck Creator 2.0 layout decks (strategies.layout set). One page, three modes:
+       /strategy/:id  → edit (click text to type, hover for add/remove/image controls)
+       /s/:token      → client share view
+       window.__FROZEN__ (Save & Lock snapshot, see routes/strategies.js) → frozen view
+       Layout renderers live in /components/deck-layouts/<layout>.js. -->
+  <script src="/components/deck-layouts/scroll.js"></script>
+  <style>
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:#fff; }
+    .dl-msg { font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; color:#595959; text-align:center; padding:30vh 24px; }
+
+    /* ── Edit mode ── */
+    .editing .sd section, .editing .sd footer { position:relative; }
+    .editing [data-path][contenteditable] { outline:1px dashed transparent; outline-offset:3px; border-radius:2px; cursor:text; min-width:1ch; }
+    .editing [data-path][contenteditable]:hover { outline-color:rgba(126,151,134,0.7); }
+    .editing [data-path][contenteditable]:focus { outline:2px solid #7E9786; }
+    .editing [data-multi] { white-space:pre-wrap; }
+    .editing [data-path][contenteditable]:empty::before { content:attr(data-ph); opacity:0.35; pointer-events:none; }
+    .editing .sd-tbd:empty, .editing .sd-fmt:empty { display:inline-block; }
+    .ed-wrap { display:block; position:relative; }
+    .ed-del { position:absolute; top:-10px; right:-10px; z-index:5; width:22px; height:22px; border-radius:50%; border:none; background:#C8553D; color:#fff; font:600 14px/22px system-ui,sans-serif; text-align:center; padding:0; cursor:pointer; opacity:0; transition:opacity .12s; letter-spacing:0; text-transform:none; }
+    .ed-del.inline { position:static; opacity:1; width:auto; height:auto; border-radius:4px; padding:4px 10px; font-size:12px; line-height:1.4; }
+    :has(> .ed-del:not(.inline)) { position:relative; }
+    :has(> .ed-del):hover > .ed-del, .ed-del:focus { opacity:1; }
+    .ed-add { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; margin-top:14px; border:1px dashed #B9C7BC; background:transparent; color:#5E7466; font:500 12px/1 system-ui,sans-serif; letter-spacing:0; text-transform:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    .ed-add:hover { background:rgba(126,151,134,0.1); }
+    .ed-add.dark { border-color:rgba(255,255,255,0.3); color:#A8BCAE; }
+    .sd-tabs .ed-add { margin:0 0 6px 4px; }
+    .ed-ctl { display:inline-flex; align-items:center; gap:6px; margin:10px 10px 0 0; font:500 11px/1 system-ui,sans-serif; letter-spacing:0; text-transform:none; color:#595959; }
+    .sd-dark .ed-ctl, .sd-phase.ink .ed-ctl { color:rgba(255,255,255,0.6); }
+    .ed-ctl input, .ed-ctl select { font:13px system-ui,sans-serif; padding:4px 6px; border:1px solid #C9C6C0; border-radius:4px; background:#fff; color:#1E1D1E; }
+    .ed-ctl input[type=number] { width:58px; }
+    .ed-tools { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+    .ed-toggle { position:absolute; top:12px; right:12px; z-index:6; font:500 11px/1 system-ui,sans-serif; letter-spacing:0; text-transform:none; padding:6px 10px; border-radius:4px; border:1px solid rgba(0,0,0,0.15); background:rgba(255,255,255,0.85); color:#595959; cursor:pointer; }
+    .ed-hidden { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px clamp(15px,3vw,48px); background:#FAF9F7; border-top:1px solid #DCDAD6; font:13px system-ui,sans-serif; color:#9E9E9E; }
+    .ed-hidden button { position:static; }
+    .ed-img-btns { position:absolute; inset:auto 10px 10px auto; display:flex; gap:6px; z-index:4; }
+    .ed-img-btns button, .ed-pop button { font:500 12px/1 system-ui,sans-serif; letter-spacing:0; text-transform:none; padding:7px 10px; border-radius:5px; border:none; background:rgba(30,29,30,0.85); color:#fff; cursor:pointer; }
+    .ed-img-btns button:hover { background:#5E7466; }
+    .sd-img:not(.has) .ed-img-btns { position:static; margin-top:14px; }
+    .sd-img:not(.has) { flex-direction:column; }
+    .sd-img.busy::after { content:'Working…'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.7); color:#1E1D1E; font:13px system-ui,sans-serif; letter-spacing:0; text-transform:none; }
+    .ed-logo { cursor:pointer; }
+    .ed-pop { position:fixed; z-index:200; width:min(420px,calc(100vw - 32px)); background:#fff; color:#1E1D1E; border-radius:10px; box-shadow:0 12px 40px rgba(0,0,0,0.25); padding:16px; font:13px system-ui,sans-serif; }
+    .ed-pop textarea { width:100%; min-height:90px; margin:8px 0 12px; font:13px/1.5 system-ui,sans-serif; padding:8px; border:1px solid #C9C6C0; border-radius:6px; resize:vertical; box-sizing:border-box; }
+    .ed-pop .row { display:flex; justify-content:flex-end; gap:8px; }
+    .ed-pop .ghost { background:transparent; color:#595959; }
+
+    /* Editor toolbar */
+    .dl-bar { position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:100; display:flex; align-items:center; gap:8px; max-width:calc(100vw - 24px); overflow-x:auto; padding:8px; border-radius:12px; background:rgba(30,29,30,0.94); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); box-shadow:0 10px 30px rgba(0,0,0,0.3); font:13px system-ui,sans-serif; color:#fff; }
+    .dl-bar button { flex-shrink:0; font:500 13px system-ui,sans-serif; padding:8px 12px; border-radius:8px; border:none; background:rgba(255,255,255,0.08); color:#fff; cursor:pointer; white-space:nowrap; }
+    .dl-bar button:hover { background:rgba(255,255,255,0.16); }
+    .dl-bar button.primary { background:#7E9786; }
+    .dl-bar button.primary:hover { background:#5E7466; }
+    .dl-bar button.danger:hover { background:#C8553D; }
+    .dl-bar input { flex:1 1 220px; min-width:140px; font:500 13px system-ui,sans-serif; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:#fff; }
+    .dl-status { flex-shrink:0; min-width:64px; color:rgba(255,255,255,0.55); font-size:12px; text-align:center; }
+    .dl-toast { position:fixed; left:50%; bottom:84px; transform:translateX(-50%); z-index:150; background:#1E1D1E; color:#fff; padding:10px 16px; border-radius:8px; font:13px system-ui,sans-serif; box-shadow:0 6px 20px rgba(0,0,0,0.3); max-width:calc(100vw - 32px); word-break:break-all; }
+  </style>
+</head>
+<body>
+  <div id="deck"><p class="dl-msg">Loading…</p></div>
+
+  <script>
+    const root = document.getElementById('deck');
+    const frozen = window.__FROZEN__;
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const deckId = !frozen && pathParts[0] === 'strategy' ? pathParts[1] : null;
+    const shareToken = !frozen && pathParts[0] === 's' ? pathParts[1] : null;
+
+    let deck = null;       // row from /api/strategies
+    let content = null;    // parsed deck.sections (the layout's content JSON)
+    let layout = null;
+    let editing = false;   // edit mode on (off = preview, share, locked, frozen)
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ── Content paths ("phases.0.deliverables.1.body") ─────────────────────
+    const keys = p => p.split('.').map(k => (/^\d+$/.test(k) ? Number(k) : k));
+    function get(p) { return keys(p).reduce((o, k) => (o == null ? undefined : o[k]), content); }
+    function set(p, v) {
+      const ks = keys(p);
+      let o = content;
+      ks.slice(0, -1).forEach((k, i) => { if (o[k] == null) o[k] = typeof ks[i + 1] === 'number' ? [] : {}; o = o[k]; });
+      o[ks[ks.length - 1]] = v;
+    }
+
+    // ── Render helpers handed to the layout ─────────────────────────────────
+    function makeCtx() {
+      const edit = editing;
+      const delBtn = (p, title = 'Remove', cls = '') => `<button type="button" class="ed-del ${cls}" data-del="${esc(p)}" title="${esc(title)}" contenteditable="false">${cls === 'inline' ? esc(title) : '×'}</button>`;
+      return {
+        edit,
+        esc,
+        attr: esc,
+        title: deck.title || '',
+        // Editable text. View mode drops empty fields (or shows opts.fallback).
+        T(p, tag, cls, opts = {}) {
+          const v = get(p);
+          const val = v == null ? '' : String(v);
+          const reveal = opts.reveal ? ' data-reveal' : '';
+          const c = cls ? ` class="${cls}"` : '';
+          if (!edit) {
+            const shown = val.trim() ? val : (opts.fallback || '');
+            return shown ? `<${tag}${c}${reveal}${opts.multiline ? ' style="white-space:pre-line"' : ''}>${esc(shown)}</${tag}>` : '';
+          }
+          const el = `<${tag}${c}${reveal} data-path="${esc(p)}" data-ph="${esc(opts.ph || '')}"${opts.multiline ? ' data-multi' : ''} contenteditable="plaintext-only" spellcheck="true">${esc(val)}</${tag}>`;
+          return opts.del ? `<span class="ed-wrap">${el}${delBtn(opts.del)}</span>` : el;
+        },
+        del: (p, title, cls) => (edit ? delBtn(p, title, cls) : ''),
+        add: (p, label, tone = '') => (edit ? `<button type="button" class="ed-add ${tone}" data-add="${esc(p)}">+ ${esc(label)}</button>` : ''),
+        num: (p, label) => (edit ? `<label class="ed-ctl">${esc(label)} <input type="number" step="0.25" min="0" data-num="${esc(p)}" value="${esc(get(p) ?? 0)}"></label>` : ''),
+        select: (p, options) => (edit ? `<label class="ed-ctl"><select data-select="${esc(p)}">${options.map(([v, l]) => `<option value="${esc(v)}"${get(p) === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>` : ''),
+        toggle(key, label) {
+          if (!edit) return '';
+          const on = get(key) && get(key).show !== false;
+          return on
+            ? `<button type="button" class="ed-toggle" data-toggle="${esc(key)}">Hide “${esc(label)}”</button>`
+            : `<div class="ed-hidden"><span>“${esc(label)}” section is hidden</span><button type="button" class="ed-add" style="margin:0" data-toggle="${esc(key)}">Show section</button></div>`;
+        },
+        // Image slot: {url, prompt}. cls "bg" = controls only (hero background).
+        img(p, ratio, cls) {
+          const im = get(p) || {};
+          const btns = edit ? `<div class="ed-img-btns" contenteditable="false">
+              <button type="button" data-img-upload="${esc(p)}">${im.url ? 'Replace' : 'Upload'}</button>
+              <button type="button" data-img-gen="${esc(p)}" data-ratio="${esc(ratio)}">✨ ${im.url ? 'Regenerate' : 'Generate'}</button>
+              ${im.url ? `<button type="button" data-img-remove="${esc(p)}">Remove</button>` : ''}
+            </div>` : '';
+          if (cls === 'bg') return btns.replace('ed-img-btns', 'ed-img-btns" style="position:static');
+          if (!im.url && !edit) return '';
+          return `<div class="${cls}${im.url ? ' has' : ''}" data-img="${esc(p)}">${im.url ? `<img src="${esc(im.url)}" alt="">` : `<span>Image · ${esc(ratio)}</span>`}${btns}</div>`;
+        },
+        logo(p, xCls, imgCls, phCls) {
+          const url = get(p);
+          if (!edit) return url ? `<span class="${xCls}" aria-hidden="true">×</span><img class="${imgCls}" src="${esc(url)}" alt="">` : '';
+          return `<span class="${xCls}" aria-hidden="true">×</span>` + (url
+            ? `<img class="${imgCls} ed-logo" src="${esc(url)}" alt="Client logo" title="Click to change or remove the client logo" data-logo="${esc(p)}">`
+            : `<span class="${phCls} ed-logo" data-logo="${esc(p)}" title="Upload the client logo">Client logo</span>`);
+        },
+        monthsEditor: () => (edit ? `<label class="ed-ctl" style="margin-top:24px">Timeline months <input type="text" style="width:320px" data-months value="${esc((content.months || []).join(', '))}" placeholder="Oct, Nov, Dec"></label>` : ''),
+      };
+    }
+
+    function render() {
+      const y = window.scrollY;
+      root.innerHTML = layout.render(content, makeCtx());
+      layout.afterRender && layout.afterRender(root, makeCtx());
+      document.body.classList.toggle('editing', editing);
+      window.scrollTo(0, y);
+    }
+
+    // ── Saving ──────────────────────────────────────────────────────────────
+    let saveTimer = null;
+    let saving = Promise.resolve();
+    function setStatus(t) { const el = document.getElementById('dl-status'); if (el) el.textContent = t; }
+    function scheduleSave() {
+      setStatus('Unsaved');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveNow, 700);
+    }
+    function saveNow() {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      setStatus('Saving…');
+      saving = saving.then(async () => {
+        const res = await fetch(`/api/strategies/${deckId}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sections: content, title: deck.title }),
+        });
+        setStatus(res.ok ? 'Saved' : (res.status === 423 ? 'Locked' : 'Save failed'));
+      }).catch(() => setStatus('Save failed'));
+      return saving;
+    }
+    window.addEventListener('beforeunload', e => { if (saveTimer) { saveNow(); e.preventDefault(); } });
+
+    function toast(msg) {
+      document.querySelector('.dl-toast')?.remove();
+      const t = document.createElement('div');
+      t.className = 'dl-toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }
+
+    // The typed text, not innerText — innerText applies CSS text-transform, and
+    // the layout uppercases many labels.
+    function plainText(el) {
+      let out = '';
+      el.childNodes.forEach(n => {
+        if (n.nodeType === Node.TEXT_NODE) out += n.nodeValue;
+        else if (n.nodeName === 'BR') out += '\n';
+        else if (n.nodeType === Node.ELEMENT_NODE) out += (out && !out.endsWith('\n') ? '\n' : '') + plainText(n);
+      });
+      return out;
+    }
+
+    // ── Edit interactions (delegated) ───────────────────────────────────────
+    root.addEventListener('input', e => {
+      const el = e.target;
+      if (el.matches('[data-path][contenteditable]')) {
+        set(el.dataset.path, plainText(el).replace(/\n$/, ''));
+        scheduleSave();
+      }
+    });
+    root.addEventListener('keydown', e => {
+      const el = e.target;
+      if (e.key === 'Enter' && el.matches('[data-path][contenteditable]:not([data-multi])')) { e.preventDefault(); el.blur(); }
+      // a space inside an editable tab label must not "click" the tab
+      if ((e.key === ' ' || e.key === 'Enter') && el.closest('[data-tab]') && el.isContentEditable) e.stopPropagation();
+    });
+    root.addEventListener('change', e => {
+      const el = e.target;
+      if (el.dataset.num) { set(el.dataset.num, Number(el.value) || 0); render(); scheduleSave(); }
+      else if (el.dataset.select) { set(el.dataset.select, el.value); render(); scheduleSave(); }
+      else if ('months' in el.dataset) { content.months = el.value.split(',').map(s => s.trim()).filter(Boolean); render(); scheduleSave(); }
+    });
+    root.addEventListener('click', e => {
+      if (!editing) return;
+      const t = e.target.closest('[data-add],[data-del],[data-toggle],[data-img-upload],[data-img-gen],[data-img-remove],[data-logo]');
+      // links inside editable text (nav, tabs) shouldn't navigate while editing
+      if (e.target.closest('[contenteditable]') && e.target.closest('a')) e.preventDefault();
+      if (!t) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const d = t.dataset;
+      if (d.add) {
+        const list = get(d.add) || [];
+        list.push(layout.blank(d.add.split('.').pop()));
+        set(d.add, list);
+        render(); scheduleSave();
+        const els = root.querySelectorAll(`[data-path^="${CSS.escape(d.add)}.${list.length - 1}"]`);
+        (els[0] || null)?.focus();
+      } else if (d.del) {
+        const ks = d.del.split('.');
+        const idx = Number(ks.pop());
+        get(ks.join('.')).splice(idx, 1);
+        render(); scheduleSave();
+      } else if (d.toggle) {
+        const s = get(d.toggle);
+        s.show = s.show === false;
+        render(); scheduleSave();
+      } else if (d.imgUpload) {
+        pickImage(d.imgUpload, url => set(`${d.imgUpload}.url`, url));
+      } else if (d.imgRemove) {
+        set(`${d.imgRemove}.url`, '');
+        render(); scheduleSave();
+      } else if (d.imgGen) {
+        openGenerate(d.imgGen, d.ratio);
+      } else if (d.logo) {
+        if (get(d.logo)) openLogoMenu(d.logo, t);
+        else pickImage(d.logo, url => set(d.logo, url));
+      }
+    });
+
+    function slotEl(p) { return root.querySelector(`[data-img="${CSS.escape(p)}"]`); }
+
+    function pickImage(p, apply) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+        slotEl(p)?.classList.add('busy');
+        const form = new FormData();
+        form.append('file', file);
+        try {
+          const res = await fetch('/api/upload', { method: 'POST', body: form });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Upload failed');
+          apply(data.url);
+          render(); scheduleSave();
+        } catch (err) {
+          slotEl(p)?.classList.remove('busy');
+          toast(err.message);
+        }
+      };
+      input.click();
+    }
+
+    function closePop() { document.querySelector('.ed-pop')?.remove(); }
+    function popAt(anchor, html) {
+      closePop();
+      const pop = document.createElement('div');
+      pop.className = 'ed-pop';
+      pop.innerHTML = html;
+      document.body.appendChild(pop);
+      const r = anchor.getBoundingClientRect();
+      pop.style.left = Math.max(16, Math.min(window.innerWidth - pop.offsetWidth - 16, r.left)) + 'px';
+      pop.style.top = Math.max(16, Math.min(window.innerHeight - pop.offsetHeight - 16, r.bottom + 8)) + 'px';
+      return pop;
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
+
+    function openGenerate(p, ratio) {
+      const anchor = root.querySelector(`[data-img-gen="${CSS.escape(p)}"]`);
+      const pop = popAt(anchor, `<strong>Generate image</strong> <span style="color:#9E9E9E">(${esc(ratio)})</span>
+        <textarea placeholder="Describe the image…">${esc((get(p) || {}).prompt || '')}</textarea>
+        <div class="row"><button type="button" class="ghost" data-suggest style="margin-right:auto">↻ New suggestion</button><button type="button" class="ghost" data-x>Cancel</button><button type="button" data-go>✨ Generate</button></div>`);
+      const box = pop.querySelector('textarea');
+      // Ask the AI for a prompt written from this slot's deck content; the
+      // user can edit it (or ask again) before generating.
+      async function suggest() {
+        const btn = pop.querySelector('[data-suggest]');
+        const before = box.value;
+        box.value = '';
+        box.placeholder = 'Writing a prompt from the deck content…';
+        box.disabled = btn.disabled = true;
+        try {
+          const res = await fetch('/api/deck-ai/image-prompt', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deck_title: deck.title, client_name: deck.client_name, ratio, context: layout.imageContext ? layout.imageContext(content, p) : '' }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Could not write a prompt');
+          box.value = data.prompt;
+        } catch (err) {
+          box.value = before;
+          toast(err.message);
+        }
+        box.placeholder = 'Describe the image…';
+        box.disabled = btn.disabled = false;
+        box.focus();
+      }
+      pop.querySelector('[data-suggest]').onclick = suggest;
+      pop.querySelector('[data-x]').onclick = closePop;
+      pop.querySelector('[data-go]').onclick = async () => {
+        const prompt = pop.querySelector('textarea').value.trim();
+        if (!prompt) return;
+        closePop();
+        set(`${p}.prompt`, prompt);
+        const busy = slotEl(p) || anchor.closest('.ed-img-btns');
+        busy?.classList.add('busy');
+        toast('Generating image… this takes about 10–20 seconds');
+        try {
+          const res = await fetch('/api/generate-image', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, aspect_ratio: ratio, client_name: deck.client_name, deck_title: deck.title }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Image generation failed');
+          set(`${p}.url`, data.url);
+          render(); scheduleSave();
+        } catch (err) {
+          busy?.classList.remove('busy');
+          toast(err.message);
+        }
+      };
+      if (box.value.trim()) box.focus(); else suggest();
+    }
+
+    function openLogoMenu(p, anchor) {
+      const pop = popAt(anchor, `<strong>Client logo</strong><p style="color:#595959;margin:6px 0 12px">Use a white or light logo — it sits on the dark header and footer.</p>
+        <div class="row"><button type="button" class="ghost" data-remove>Remove</button><button type="button" data-replace>Replace</button></div>`);
+      pop.querySelector('[data-remove]').onclick = () => { closePop(); set(p, ''); render(); scheduleSave(); };
+      pop.querySelector('[data-replace]').onclick = () => { closePop(); pickImage(p, url => set(p, url)); };
+    }
+
+    // ── Toolbar (edit mode) ─────────────────────────────────────────────────
+    function renderBar() {
+      document.querySelector('.dl-bar')?.remove();
+      if (!deckId) return;
+      const bar = document.createElement('div');
+      bar.className = 'dl-bar';
+      const locked = !!deck.locked_at;
+      bar.innerHTML = locked ? `
+        <button type="button" data-a="back">← Deck Creator</button>
+        <span style="padding:0 8px">🔒 Locked${deck.locked_by ? ` by ${esc(deck.locked_by)}` : ''} — the share link shows this saved version</span>
+        <button type="button" data-a="share">Copy link</button>
+        <button type="button" data-a="unlock">Unlock</button>` : `
+        <button type="button" data-a="back">← Deck Creator</button>
+        <input type="text" data-a="title" value="${esc(deck.title)}" aria-label="Deck title">
+        <span class="dl-status" id="dl-status">Saved</span>
+        <button type="button" data-a="preview">${editing ? 'Preview' : 'Edit'}</button>
+        <button type="button" data-a="share" class="primary">Share link</button>
+        <button type="button" data-a="lock">Save &amp; Lock</button>
+        <button type="button" data-a="delete" class="danger">Delete</button>`;
+      document.body.appendChild(bar);
+
+      const title = bar.querySelector('[data-a="title"]');
+      if (title) title.addEventListener('input', () => { deck.title = title.value; document.title = deck.title; scheduleSave(); });
+
+      bar.addEventListener('click', async e => {
+        const a = e.target.closest('button')?.dataset.a;
+        if (a === 'back') { if (saveTimer) await saveNow(); location.href = '/deck-creator'; }
+        if (a === 'preview') { editing = !editing; render(); renderBar(); }
+        if (a === 'share') {
+          if (saveTimer) await saveNow();
+          if (!deck.share_token || deck.status === 'draft') {
+            const res = await fetch(`/api/strategies/${deckId}/submit`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ submitted_by: me() }),
+            });
+            const data = await res.json();
+            if (!res.ok) return toast(data.error || 'Could not create the share link');
+            deck.share_token = data.token;
+            deck.status = 'awaiting_approval';
+          }
+          const link = `${location.origin}/s/${deck.share_token}`;
+          try { await navigator.clipboard.writeText(link); toast(`Link copied: ${link}`); } catch { toast(link); }
+        }
+        if (a === 'lock') {
+          if (!confirm('Lock this deck? It becomes read-only and the share link keeps showing exactly this version until someone unlocks it.')) return;
+          if (saveTimer) await saveNow();
+          const res = await fetch(`/api/strategies/${deckId}/lock`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ locked_by: me() }),
+          });
+          const data = await res.json();
+          if (!res.ok) return toast(data.error || 'Lock failed');
+          Object.assign(deck, data);
+          editing = false; render(); renderBar();
+          toast('Locked');
+        }
+        if (a === 'unlock') {
+          await fetch(`/api/strategies/${deckId}/unlock`, { method: 'POST' });
+          deck.locked_at = null; deck.locked_by = null;
+          editing = true; render(); renderBar();
+        }
+        if (a === 'delete') {
+          if (!confirm('Delete this deck? This cannot be undone.')) return;
+          clearTimeout(saveTimer); saveTimer = null;
+          await fetch(`/api/strategies/${deckId}`, { method: 'DELETE' });
+          location.href = '/deck-creator';
+        }
+      });
+    }
+    function me() { try { return localStorage.getItem('gp-user-name') || null; } catch { return null; } }
+
+    // ── Load ────────────────────────────────────────────────────────────────
+    async function load() {
+      try {
+        if (frozen) {
+          deck = frozen.data;
+        } else if (deckId) {
+          const res = await fetch(`/api/strategies/${deckId}`);
+          if (!res.ok) throw new Error('Deck not found.');
+          deck = await res.json();
+        } else if (shareToken) {
+          const res = await fetch(`/api/strategies/share/${shareToken}`);
+          if (!res.ok) throw new Error(res.status === 403 ? 'This deck hasn’t been shared yet.' : 'Deck not found.');
+          deck = await res.json();
+        } else {
+          throw new Error('Deck not found.');
+        }
+        content = typeof deck.sections === 'string' ? JSON.parse(deck.sections) : deck.sections;
+        layout = window.DeckLayouts[deck.layout];
+        if (!layout) throw new Error('Unknown deck layout.');
+      } catch (err) {
+        root.innerHTML = `<p class="dl-msg">${esc(err.message)}</p>`;
+        return;
+      }
+      document.title = deck.title || 'Deck';
+      const style = document.createElement('style');
+      style.textContent = layout.css;
+      document.head.appendChild(style);
+      editing = !!deckId && !deck.locked_at;
+      render();
+      renderBar();
+    }
+    load();
+  </script>
+</body>
+</html>

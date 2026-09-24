@@ -34,8 +34,8 @@
 
     .deck-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      max-width: 320px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-width: 680px;
       gap: 14px;
     }
 
@@ -55,6 +55,19 @@
       box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(0,0,0,0.15);
       transform: translateY(-1px);
     }
+
+    .deck-card-top { display: flex; align-items: center; justify-content: space-between; }
+    .deck-card-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 100px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+    }
+    .deck-card-tag.ai { background: var(--accent); color: #fff; }
 
     .deck-card-icon {
       font-size: 24px;
@@ -151,16 +164,23 @@
         <div class="page-header">
           <div class="page-title">Deck Creator</div>
         </div>
-        <div class="page-subtitle">Choose a deck type to get started.</div>
+        <div class="page-subtitle">Build a deck yourself, or let AI draft one from a document.</div>
 
         <div class="section-block">
           <div class="deck-grid">
 
             <div class="deck-card" onclick="selectDeck('strategy')">
-              <div class="deck-card-icon">◐</div>
-              <div class="deck-card-name">Strategy</div>
-              <div class="deck-card-desc">Full strategy document — objectives, audiences, messaging, channels, and timeline. Add or remove sections as needed.</div>
-              <div class="deck-card-sections">Overview → Strategy → Audiences → Messages → Timeline</div>
+              <div class="deck-card-top"><div class="deck-card-icon">◐</div><span class="deck-card-tag">Manual</span></div>
+              <div class="deck-card-name">Build it yourself</div>
+              <div class="deck-card-desc">Start from a blank scrolling presentation and type straight onto the page — brief, phases, channel plan. Add or remove anything as you go.</div>
+              <div class="deck-card-sections">Brief → How it works → Phases → Channel plan</div>
+            </div>
+
+            <div class="deck-card" onclick="location.href = '/deck-creator-2'">
+              <div class="deck-card-top"><div class="deck-card-icon">✦</div><span class="deck-card-tag ai">AI</span></div>
+              <div class="deck-card-name">Generate from a document</div>
+              <div class="deck-card-desc">Upload a brief, strategy or proposal and AI drafts the whole deck as a scrolling presentation. Edit anything afterwards.</div>
+              <div class="deck-card-sections">PDF, Word or text → finished draft in about a minute</div>
             </div>
 
             <!-- Workshop deck type kept in background (not shown on picker) — only Strategy is available for now -->
@@ -207,11 +227,15 @@
   <div class="modal-overlay" id="clientModal">
     <div class="modal-box">
       <div class="modal-title" id="modalDeckTitle"></div>
-      <div class="modal-subtitle">Which client is this for?</div>
+      <div class="modal-subtitle">Which client is this for? (optional)</div>
       <select class="modal-select" id="modalClientSelect">
         <option value="">Select a client…</option>
       </select>
       <input type="text" class="modal-select" id="modalCreatedBy" placeholder="Created by (your name)">
+      <select class="modal-select" id="modalLayout" aria-label="Format">
+        <option value="scroll">Scroll presentation — one long page, edit in place</option>
+        <option value="classic">Classic tabs — the original section-by-section builder</option>
+      </select>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
         <button class="btn btn-primary" onclick="createDeck()">Create</button>
@@ -238,21 +262,16 @@
 
     async function selectDeck(type) {
       pendingType = type;
-      document.getElementById('modalDeckTitle').textContent = DECK_TITLES[type] || type;
+      document.getElementById('modalDeckTitle').textContent = 'New deck';
 
-      let clients;
+      let clients = [];
       try {
         const res = await fetch('/api/clients');
-        if (!res.ok) throw new Error('Failed to load clients');
-        clients = await res.json();
-      } catch (err) {
-        alert('Failed to load clients. Please try again.');
-        closeModal();
-        return;
-      }
+        if (res.ok) clients = await res.json();
+      } catch {}
 
       const sel = document.getElementById('modalClientSelect');
-      sel.innerHTML = '<option value="">Select a client…</option>' +
+      sel.innerHTML = '<option value="">No client</option>' +
         clients.map(c => `<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
       document.getElementById('modalCreatedBy').value = '';
 
@@ -266,18 +285,15 @@
 
     async function createDeck() {
       const clientId = document.getElementById('modalClientSelect').value;
-      if (!clientId) {
-        alert('Please select a client');
-        return;
-      }
       const createdBy = document.getElementById('modalCreatedBy').value.trim();
+      const layout = document.getElementById('modalLayout').value;
 
-      const title = DECK_TITLES[pendingType] || 'Untitled';
+      const title = layout === 'scroll' ? 'Untitled Deck' : (DECK_TITLES[pendingType] || 'Untitled');
       try {
         const res = await fetch('/api/strategies', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ client_id: Number(clientId), title, deck_type: pendingType, created_by: createdBy || null }),
+          body: JSON.stringify({ client_id: clientId ? Number(clientId) : null, title, deck_type: pendingType, created_by: createdBy || null, layout: layout === 'classic' ? null : layout }),
         });
         if (!res.ok) throw new Error(`Failed to create deck: ${res.status}`);
         const data = await res.json();
@@ -319,7 +335,7 @@
       }
 
       const clientSel = document.getElementById('filterClient');
-      const uniqueClients = [...new Map(allDecks.map(d => [d.client_id, d.client_name])).entries()];
+      const uniqueClients = [...new Map(allDecks.filter(d => d.client_id).map(d => [d.client_id, d.client_name])).entries()];
       clientSel.innerHTML = '<option value="">All clients</option>' +
         uniqueClients.map(([id, name]) => `<option value="${id}">${escHtml(name)}</option>`).join('');
 
@@ -353,13 +369,13 @@
         return `
           <tr>
             <td><strong>${escHtml(d.title)}</strong></td>
-            <td>${escHtml(d.client_name)}</td>
+            <td>${escHtml(d.client_name) || '—'}</td>
             <td>${escHtml(d.created_by) || '—'}</td>
-            <td><span class="deck-status-chip" style="${chipStyle}">${chipLabel}</span></td>
+            <td><span class="deck-status-chip" style="${chipStyle}">${chipLabel}</span>${d.locked_at ? ' <span title="Locked">🔒</span>' : ''}</td>
             <td style="color:var(--text-muted);">${updated}</td>
             <td style="text-align:right;">
               <a href="/strategy/${d.id}" class="btn btn-ghost" style="padding:4px 10px;font-size:12px;">Open</a>
-              <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="deleteDeck(${d.id})">×</button>
+              ${d.locked_at ? '' : `<button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="deleteDeck(${d.id})">×</button>`}
             </td>
           </tr>
         `;

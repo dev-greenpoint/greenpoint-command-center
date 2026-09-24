@@ -251,7 +251,7 @@
               <span class="strat-client-dot"></span>
               ${escHtml(s.client_name || 'Unknown Client')}
             </div>
-            <span class="status-pill ${cls}">${label}</span>
+            <span class="status-pill ${cls}">${label}${s.locked_at ? ' 🔒' : ''}</span>
           </div>
           <div class="strat-title">${escHtml(s.title)}</div>
           <div class="strat-card-footer">

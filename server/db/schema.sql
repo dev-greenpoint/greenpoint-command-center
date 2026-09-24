@@ -154,7 +154,16 @@ CREATE TABLE strategies (
   reviewer TEXT,
   submitted_at TEXT,
   doc_type TEXT DEFAULT 'strategy',
-  created_by TEXT
+  created_by TEXT,
+  -- Save & Lock: a locked deck is read-only and its share link serves
+  -- snapshot_html (a self-contained copy of the view page + data taken at
+  -- lock time) so later design/code changes don't alter it.
+  locked_at TEXT,
+  locked_by TEXT,
+  snapshot_html TEXT,
+  -- Deck Creator 2.0 layout (e.g. 'scroll'). NULL = classic tabbed deck; when
+  -- set, `sections` holds that layout's structured content instead of blocks.
+  layout TEXT
 );
 
 -- Deck-level notes/feedback thread (Settings > lighter alternative to

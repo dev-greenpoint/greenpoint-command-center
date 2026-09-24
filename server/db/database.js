@@ -8,7 +8,8 @@ types.setTypeParser(20, val => parseInt(val, 10));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  // Local dev DB (Postgres on this machine) has no SSL; Supabase requires it.
+  ssl: /@?(localhost|127\.0\.0\.1)[:/]/.test(process.env.DATABASE_URL || '') ? false : { rejectUnauthorized: false },
   // Supabase's pooler is a long geographic hop from here — reconnecting after
   // an idle-close costs a full extra TLS+auth round trip (~1-2s). Keep
   // connections open between requests instead of pg's 10s default so normal

@@ -43,6 +43,13 @@
     .sp-draft     { background: var(--surface-2); color: var(--text-muted); }
     .sp-pending   { background: #3d2a00; color: var(--warning); }
     .sp-published { background: #0d3323; color: var(--success); }
+    .sp-locked { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .locked-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 16px; margin-bottom: 16px; border-radius: var(--radius);
+      background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; color: var(--text-muted);
+    }
+    .locked-frame { width: 100%; height: calc(100vh - 240px); min-height: 480px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
 
     /* ── Builder layout ── */
     .sb-layout {
@@ -726,9 +733,15 @@
           <button class="btn btn-ghost" style="font-size:12px;" onclick="viewShared()">View</button>
           <button class="btn btn-ghost" style="font-size:12px;" onclick="recall()">Recall to Draft</button>`,
       };
-      const publishBtn = statusActions[strategy.status] || statusActions.draft;
+      const locked = !!strategy.locked_at;
+      const publishBtn = locked ? `
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="copyShareLink()">Copy Link</button>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="viewShared()">View</button>
+          <button class="btn btn-ghost" style="font-size:12px;" onclick="unlockDeck()">Unlock</button>`
+        : (statusActions[strategy.status] || statusActions.draft)
+          + `<button class="btn btn-ghost" style="font-size:12px;" onclick="lockDeck()">🔒 Save &amp; Lock</button>`;
       const hasReviewableContent = activeSections.some(id => sectionHasContent(sections[id]));
-      const reviewBtn = hasReviewableContent ? `
+      const reviewBtn = hasReviewableContent && !locked ? `
             <button class="btn-generate" id="review-btn" style="font-size:12px;" onclick="reviewStrategy()">
               <span class="spinner"></span><span class="gen-icon">✦</span>Review Strategy
             </button>` : '';
@@ -737,29 +750,39 @@
         <div class="strategy-header">
           <div style="flex:1;">
             <div style="margin-bottom:8px;">
-              <a href="/clients/${strategy.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← ${strategy.client_name || 'Client'}</a>
+              ${strategy.client_id
+                ? `<a href="/clients/${strategy.client_id}/board" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← ${escHtml(strategy.client_name || 'Client')}</a>`
+                : `<a href="/deck-creator" style="color:var(--text-muted);font-size:13px;text-decoration:none;">← Deck Creator</a>`}
             </div>
             <input class="strategy-title-input" id="strategy-title" type="text"
-              value="${escAttr(strategy.title)}"
+              value="${escAttr(strategy.title)}" ${locked ? 'readonly' : ''}
               onchange="saveTitle(this.value)" onblur="saveTitle(this.value)">
             <div class="strategy-meta">${strategy.client_name || ''}</div>
           </div>
           <div class="strategy-actions">
             <span class="save-indicator" id="save-status"></span>
             <span class="status-pill ${chipClass}">${chipLabel}</span>
+            ${locked ? '<span class="status-pill sp-locked">🔒 Locked</span>' : ''}
             ${reviewBtn}
             <button class="btn btn-ghost" style="font-size:12px;" onclick="openNotes()">💬 Notes${comments.length ? ` (${comments.length})` : ''}</button>
             ${publishBtn}
-            <button class="btn btn-danger" style="font-size:12px;" onclick="deleteStrategy()">Delete</button>
+            ${locked ? '' : '<button class="btn btn-danger" style="font-size:12px;" onclick="deleteStrategy()">Delete</button>'}
           </div>
         </div>
 
+        ${locked ? `
+        <div class="locked-banner">
+          <span>🔒 Locked ${escHtml(new Date(strategy.locked_at).toLocaleString('en-AU', { dateStyle: 'medium', timeStyle: 'short' }))}${strategy.locked_by ? ` by ${escHtml(strategy.locked_by)}` : ''}.
+          This is the saved copy. Design changes to Deck Creator won't affect it.</span>
+        </div>
+        <iframe class="locked-frame" src="/s/${escAttr(strategy.share_token)}" title="Locked deck"></iframe>` : `
         <div class="sb-layout">
           <nav class="sb-nav" id="sb-nav"></nav>
           <div class="sb-content" id="sb-content"></div>
-        </div>
+        </div>`}
       `;
 
+      if (locked) return;
       renderNav();
       renderContent();
     }
@@ -1603,12 +1626,14 @@
     // ── Save ──────────────────────────────────────────────────────────────────
 
     function scheduleSave() {
+      if (strategy.locked_at) return;
       setSaveStatus('Saving…');
       clearTimeout(saveTimer);
       saveTimer = setTimeout(save, 1200);
     }
 
     async function save() {
+      if (strategy.locked_at) return;
       const payload = { ...sections, _labels: sectionLabels };
       await fetch(`/api/strategies/${strategyId}`, {
         method: 'PUT',
@@ -1626,7 +1651,7 @@
 
     async function saveTitle(val) {
       const title = val.trim() || 'Untitled Strategy';
-      if (title === strategy.title) return;
+      if (strategy.locked_at || title === strategy.title) return;
       strategy.title = title;
       await fetch(`/api/strategies/${strategyId}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
@@ -1733,12 +1758,43 @@
       } catch { prompt('Copy this link:', link); }
     }
 
+    // ── Save & Lock ───────────────────────────────────────────────────────────
+    // Locking freezes a copy of the deck as it looks now (server/routes/strategies.js
+    // buildSnapshot); its share link keeps showing that copy until unlocked.
+
+    async function lockDeck() {
+      if (!confirm('Save and lock this deck?\n\nIt becomes read-only, and its share link keeps showing exactly how it looks now, even after Deck Creator design changes.')) return;
+      clearTimeout(saveTimer);
+      await save();
+      let lockedBy = null;
+      try { lockedBy = localStorage.getItem('gp-user-name'); } catch {}
+      const res = await fetch(`/api/strategies/${strategyId}/lock`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locked_by: lockedBy }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error || 'Could not lock deck', true); return; }
+      Object.assign(strategy, data);
+      render();
+      showToast('Deck saved and locked');
+    }
+
+    async function unlockDeck() {
+      if (!confirm('Unlock this deck?\n\nThe saved copy is discarded. The deck becomes editable and will pick up any Deck Creator design changes.')) return;
+      const res = await fetch(`/api/strategies/${strategyId}/unlock`, { method: 'POST' });
+      if (!res.ok) { showToast('Could not unlock deck', true); return; }
+      strategy.locked_at = null;
+      strategy.locked_by = null;
+      render();
+      showToast('Deck unlocked');
+    }
+
     // ── Delete ────────────────────────────────────────────────────────────────
 
     async function deleteStrategy() {
       if (!confirm('Delete this strategy? This cannot be undone.')) return;
       await fetch(`/api/strategies/${strategyId}`, { method: 'DELETE' });
-      window.location = `/clients/${strategy.client_id}/board`;
+      window.location = strategy.client_id ? `/clients/${strategy.client_id}/board` : '/deck-creator';
     }
 
     // ── Whole-document AI review ────────────────────────────────────────────────
@@ -1961,7 +2017,7 @@
       try {
         const res = await fetch('/api/generate-image', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, aspect_ratio }),
+          body: JSON.stringify({ prompt, aspect_ratio, client_name: strategy.client_name, deck_title: strategy.title }),
         });
         const data = await res.json();
         if (!res.ok || !data.url) {
