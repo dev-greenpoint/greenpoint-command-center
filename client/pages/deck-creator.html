@@ -35,20 +35,20 @@
     .deck-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      max-width: 680px;
-      gap: 14px;
+      max-width: 820px;
+      gap: 20px;
     }
 
     .deck-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 28px 24px;
+      padding: 36px 32px;
       cursor: pointer;
       transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     }
     .deck-card:hover {
       border-color: var(--accent);
@@ -92,7 +92,7 @@
 
     .deck-card-sections {
       margin-top: auto;
-      padding-top: 14px;
+      padding-top: 18px;
       border-top: 1px solid var(--border);
       font-size: 11px;
       color: var(--text-dim);
@@ -206,6 +206,7 @@
               <thead>
                 <tr>
                   <th>Title</th>
+                  <th>Type</th>
                   <th>Client</th>
                   <th>Created by</th>
                   <th>Status</th>
@@ -214,7 +215,7 @@
                 </tr>
               </thead>
               <tbody id="deck-list-tbody">
-                <tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:32px;">Loading…</td></tr>
+                <tr><td colspan="7" style="color:var(--text-muted);text-align:center;padding:32px;">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -370,6 +371,7 @@
         return `
           <tr>
             <td><strong>${escHtml(d.title)}</strong></td>
+            <td>${d.source === 'ai' ? '<span class="deck-card-tag ai">AI</span>' : '<span class="deck-card-tag">Manual</span>'}</td>
             <td>${escHtml(d.client_name) || '—'}</td>
             <td>${escHtml(d.created_by) || '—'}</td>
             <td><span class="deck-status-chip" style="${chipStyle}">${chipLabel}</span>${d.locked_at ? ' <span title="Locked">🔒</span>' : ''}</td>

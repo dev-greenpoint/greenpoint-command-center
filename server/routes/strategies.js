@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
   res.json(await query(`
     SELECT s.id, s.client_id, s.title, s.status, s.updated_at, s.created_at,
            s.submitted_by, s.reviewer, s.submitted_at, s.created_by,
-           s.locked_at, s.locked_by,
+           s.locked_at, s.locked_by, s.source,
            cl.name as client_name
     FROM strategies s
     LEFT JOIN clients cl ON s.client_id = cl.id

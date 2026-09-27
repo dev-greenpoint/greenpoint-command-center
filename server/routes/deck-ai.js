@@ -284,8 +284,8 @@ router.post('/generate', upload.single('file'), async (req, res) => {
 
     const deckTitle = (title && title.trim()) || deck.title || 'Untitled Deck';
     const [{ id }] = await query(
-      'INSERT INTO strategies (client_id, title, sections, active_sections, doc_type, created_by, layout) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
-      [client?.id ?? null, deckTitle, JSON.stringify(sections), JSON.stringify(active), 'strategy', created_by || null, layout]
+      'INSERT INTO strategies (client_id, title, sections, active_sections, doc_type, created_by, layout, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+      [client?.id ?? null, deckTitle, JSON.stringify(sections), JSON.stringify(active), 'strategy', created_by || null, layout, 'ai']
     );
     res.json({ id });
   } catch (err) {

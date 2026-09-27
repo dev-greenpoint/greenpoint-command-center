@@ -163,7 +163,9 @@ CREATE TABLE strategies (
   snapshot_html TEXT,
   -- Deck Creator 2.0 layout (e.g. 'scroll'). NULL = classic tabbed deck; when
   -- set, `sections` holds that layout's structured content instead of blocks.
-  layout TEXT
+  layout TEXT,
+  -- How the deck was made: 'ai' = Generate from a document; NULL = manual.
+  source TEXT
 );
 
 -- Deck-level notes/feedback thread (Settings > lighter alternative to
