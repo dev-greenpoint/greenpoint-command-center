@@ -1,12 +1,15 @@
 const NAV_ITEMS = [
-  { id: 'overview',      label: 'Overview',          icon: '◈',  href: '/' },
+  { id: 'overview',      label: 'Overview',          icon: '◈',  href: '/', hidden: true },
   { id: 'deck-creator',  label: 'Deck Creator',      icon: '◧',  href: '/deck-creator' },
-  { id: 'campaigns',     label: 'Campaign Manager',  icon: '◆',  href: '/campaigns' },
-  { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social' },
+  { id: 'campaigns',     label: 'Campaign Manager',  icon: '◆',  href: '/campaigns', hidden: true },
+  { id: 'social',        label: 'Social Campaigns',  icon: '◉',  href: '/social', hidden: true },
   { id: 'approvals',     label: 'Approvals',         icon: '◇',  href: '/approvals' },
-  { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports' },
-  { id: 'timesheets',    label: 'Timesheets',        icon: '◷',  href: '/timesheets' },
+  { id: 'reports',       label: 'Reports',           icon: '▦',  href: '/reports', hidden: true },
+  { id: 'timesheets',    label: 'Timesheets',        icon: '◷',  href: '/timesheets', hidden: true },
 ];
+// `hidden: true` items (and the Clients list / Accounts link) are kept out of the
+// sidebar while the app is Deck-Creator-only — pages still work by URL.
+const SHOW_CLIENT_NAV = false;
 
 const IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
@@ -21,10 +24,12 @@ function renderShell({ pageId, title }) {
       <span class="logo-text">Command Center</span>
     </div>
     <nav class="sidebar-nav">
+      ${SHOW_CLIENT_NAV ? `
       <div class="nav-section-label">Clients</div>
       <div id="sidebar-clients"><span style="font-size:11px;color:var(--text-dim);padding:4px 16px;">Loading…</span></div>
+      ` : ''}
       <div class="nav-section-label" style="margin-top:8px;">Workspace</div>
-      ${NAV_ITEMS.map(item => {
+      ${NAV_ITEMS.filter(item => !item.hidden).map(item => {
         const locked = item.localOnly && !IS_LOCALHOST;
         if (locked) {
           return `
@@ -45,10 +50,12 @@ function renderShell({ pageId, title }) {
 
     </nav>
     <div class="sidebar-footer">
+      ${SHOW_CLIENT_NAV ? `
       <a class="nav-item ${'clients' === pageId ? 'active' : ''}" href="/clients">
         <span class="nav-icon">◎</span>
         <span class="nav-label">Accounts | Admin</span>
       </a>
+      ` : ''}
       <a class="nav-item ${'settings' === pageId ? 'active' : ''}" href="/settings">
         <span class="nav-icon">⚙</span>
         <span class="nav-label">Settings</span>
@@ -91,7 +98,7 @@ function renderShell({ pageId, title }) {
   });
 
   // Load client list into sidebar
-  fetch('/api/clients')
+  if (SHOW_CLIENT_NAV) fetch('/api/clients')
     .then(r => r.json())
     .then(clients => {
       const el = document.getElementById('sidebar-clients');
