@@ -373,12 +373,14 @@
         <button type="button" data-a="back">← Deck Creator</button>
         <span style="padding:0 8px">🔒 Locked${deck.locked_by ? ` by ${esc(deck.locked_by)}` : ''} — the share link shows this saved version</span>
         <button type="button" data-a="share">Copy link</button>
+        <button type="button" data-a="download" title="Download the deck's text as a Word document">Download</button>
         <button type="button" data-a="unlock">Unlock</button>` : `
         <button type="button" data-a="back">← Deck Creator</button>
         <input type="text" data-a="title" value="${esc(deck.title)}" aria-label="Deck title">
         <span class="dl-status" id="dl-status">Saved</span>
         <button type="button" data-a="preview">${editing ? 'Preview' : 'Edit'}</button>
         <button type="button" data-a="share" class="primary">Share link</button>
+        <button type="button" data-a="download" title="Download the deck's text as a Word document">Download</button>
         <button type="button" data-a="lock">Save &amp; Lock</button>
         <button type="button" data-a="delete" class="danger">Delete</button>`;
       document.body.appendChild(bar);
@@ -404,6 +406,10 @@
           }
           const link = `${location.origin}/s/${deck.share_token}`;
           try { await navigator.clipboard.writeText(link); toast(`Link copied: ${link}`); } catch { toast(link); }
+        }
+        if (a === 'download') {
+          if (saveTimer) await saveNow();
+          location.href = `/api/strategies/${deckId}/export`;
         }
         if (a === 'lock') {
           if (!confirm('Lock this deck? It becomes read-only and the share link keeps showing exactly this version until someone unlocks it.')) return;

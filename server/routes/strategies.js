@@ -6,6 +6,7 @@ const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { query } = require('../db/database');
 const LAYOUTS = { scroll: require('../deck-layouts/scroll') };
+const { buildDocx } = require('../lib/docx');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -66,6 +67,23 @@ router.get('/:id', async (req, res) => {
   if (!list.length) return res.status(404).json({ error: 'Not found' });
   const { snapshot_html, ...strategy } = list[0];
   res.json(strategy);
+});
+
+// Download a Word-doc backup of a deck's current text (layout decks only)
+router.get('/:id/export', async (req, res) => {
+  const [row] = await query('SELECT title, layout, sections FROM strategies WHERE id=?', [req.params.id]);
+  if (!row) return res.status(404).json({ error: 'Not found' });
+  const layout = LAYOUTS[row.layout];
+  if (!layout || !layout.toDocument) return res.status(400).json({ error: 'Download is only available for scroll decks' });
+  let content;
+  try { content = JSON.parse(row.sections || '{}'); } catch { content = {}; }
+  const buffer = await buildDocx(layout.toDocument(content, row.title));
+  const name = (row.title || 'Deck').replace(/[^\w\s\-–—&.,()']/g, '').replace(/\s+/g, ' ').trim().slice(0, 100) || 'Deck';
+  res.set({
+    'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'Content-Disposition': `attachment; filename="deck.docx"; filename*=UTF-8''${encodeURIComponent(name)}.docx`,
+  });
+  res.send(buffer);
 });
 
 // Get strategy by share token (public — only published)
