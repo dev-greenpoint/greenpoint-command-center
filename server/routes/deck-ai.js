@@ -267,12 +267,21 @@ router.post('/generate', upload.single('file'), async (req, res) => {
     const steps = layout ? LAYOUTS[layout].steps : [{ schema: DECK_SCHEMA, prompt: () => 'Build the deck from the document above.' }];
     const messages = [];
     const deck = {};
+    // A step can be a group (array) of steps that only need what came before
+    // the group; those run in parallel and are added to the conversation in order.
     for (const [i, step] of steps.entries()) {
-      const ask = { type: 'text', text: step.prompt(deck) };
-      messages.push({ role: 'user', content: i === 0 ? [...content, ask] : [ask] });
-      const out = await generateJson(layout ? LAYOUTS[layout].systemPrompt : SYSTEM_PROMPT, step.schema, messages);
-      messages.push({ role: 'assistant', content: JSON.stringify(out) });
-      Object.assign(deck, out);
+      const group = Array.isArray(step) ? step : [step];
+      const base = messages.slice();
+      const outs = await Promise.all(group.map(async st => {
+        const ask = { type: 'text', text: st.prompt(deck) };
+        const turn = { role: 'user', content: i === 0 ? [...content, ask] : [ask] };
+        const out = await generateJson(layout ? LAYOUTS[layout].systemPrompt : SYSTEM_PROMPT, st.schema, [...base, turn]);
+        return { turn, out };
+      }));
+      for (const { turn, out } of outs) {
+        messages.push(turn, { role: 'assistant', content: JSON.stringify(out) });
+        Object.assign(deck, out);
+      }
     }
     let sections, active = [];
     if (layout) {

@@ -192,6 +192,22 @@
   .sd-col-t { margin-top:14px !important; font-size:21px; line-height:1.3; }
   .sd-col-b { margin-top:16px !important; font-size:14px; line-height:1.6; color:#595959; }
 
+  /* Extra sections (added by the AI or with "+ Section") */
+  .sd-grey { background:#F4F4F4; }
+  .sd-x-intro { margin-top:20px !important; max-width:40rem; font-size:16px; line-height:1.75; color:#595959; }
+  .sd-dark .sd-x-intro { color:rgba(255,255,255,0.7); }
+  .sd-x-cards { margin-top:48px; display:grid; gap:0 40px; grid-template-columns:minmax(0,1fr); }
+  .sd-x-cards > * { padding:28px 0 36px; border-top:1px solid #DCDAD6; }
+  @media (min-width:768px) { .sd-x-cards { grid-template-columns:repeat(var(--n,3),minmax(0,1fr)); } }
+  .sd-x-card-t { margin-top:18px !important; font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; line-height:1.1; letter-spacing:-0.02em; text-transform:uppercase; color:#5E7466; }
+  .sd-x-card-d { margin-top:14px !important; font-size:15px; line-height:1.7; color:#595959; white-space:pre-line; }
+  .sd-x-list { margin-top:40px; }
+  .sd-x-list strong { font-weight:600; }
+  .sd-x-sep { opacity:0.5; }
+  .sd-dark .sd-li { border-color:rgba(255,255,255,0.14); color:rgba(255,255,255,0.85); }
+  .sd-dark .sd-dot { background:#A8BCAE; }
+  .ed-x-tools { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+
   /* Close */
   .sd-close { position:relative; background:#1E1D1E; overflow:hidden; color:#fff; }
   .sd-close .sd-ring { right:-260px; top:-260px; width:760px; height:760px; border:175px solid rgba(255,255,255,0.08); }
@@ -229,6 +245,8 @@
     items: () => ({ meta: '', title: '', body: '', tag: '' }),
     lines: () => '',
     months: () => '',
+    extras: () => ({ show: true, after: 'channels', style: 'rows', label: 'New section', headline: '', intro: '', entries: [{ title: '', detail: '' }] }),
+    entries: () => ({ title: '', detail: '' }),
   };
 
   let activeTab = 0;
@@ -247,8 +265,18 @@
     const monthCells = months.map(m => `<div>${ctx.esc(m)}</div>`).join('');
     const gridLines = `<div class="sd-grid-lines" aria-hidden="true">${months.map(() => '<div></div>').join('')}</div>`;
     const shown = key => d[key] && (d[key].show !== false);
-    const navItems = [['brief', 'brief'], ['mechanic', 'mechanic'], ['spine', 'spine'], ['channels', 'channels']]
-      .filter(([key]) => shown(key));
+    const extras = (d.extras || []).map((x, i) => ({ x, i })).filter(({ x }) => edit || x.show !== false);
+    const navBase = [['brief', 'brief'], ['mechanic', 'mechanic'], ['spine', 'spine'], ['channels', 'channels']].filter(([key]) => shown(key));
+    // Extra sections join the menu in page order while it stays short.
+    const extraNav = key => extras.filter(({ x }) => x.show !== false && (x.after || 'channels') === key && (x.label || '').trim()).map(({ i }) => [`extras.${i}`, `extra-${i}`]);
+    const navAll = [];
+    [['brief', 'brief'], ['mechanic', 'mechanic'], ['phases', null], ['channels', 'channels']].forEach(([key]) => {
+      const base = navBase.find(([k]) => k === key || (key === 'phases' && k === 'spine'));
+      if (base) navAll.push(base);
+      navAll.push(...extraNav(key));
+    });
+    const navItems = navAll.length <= 7 ? navAll : navBase;
+    const navLabel = key => (key.startsWith('extras.') ? d.extras[+key.split('.')[1]].label : d[key].nav);
 
     const header = `
     <header class="sd-nav" id="sd-nav">
@@ -258,7 +286,7 @@
           ${logo('client_logo', 'sd-x', 'sd-client-logo', 'sd-logo-ph')}
         </a>
         <nav class="sd-links" aria-label="Sections">
-          ${navItems.map(([key, id]) => `<a href="#${id}" data-nav="${id}">${ctx.esc(d[key].nav)}</a>`).join('')}
+          ${navItems.map(([key, id]) => `<a href="#${id}" data-nav="${id}">${ctx.esc(navLabel(key))}</a>`).join('')}
         </nav>
         ${has(d.date_range) || edit ? `<span class="sd-pill">${T('date_range', 'span', '', { ph: 'Month – Month' })}</span>` : ''}
       </div>
@@ -479,6 +507,44 @@
       </div>
     </section>`;
 
+    // Extra sections: cards on white, rows on grey, list on dark.
+    const extraSection = ({ x, i }) => {
+      const P = `extras.${i}`;
+      const style = x.style || 'rows';
+      const cls = style === 'list' ? 'sd-dark' : style === 'rows' ? 'sd-grey' : '';
+      const tone = style === 'list' ? 'dark' : '';
+      if (x.show === false) return toggle(P, x.label || 'Section');
+      const entries = x.entries || [];
+      let body;
+      if (style === 'cards') {
+        body = `<div class="sd-x-cards" style="--n:${Math.min(3, Math.max(1, entries.length))}">${entries.map((_, k) => `<div data-reveal>${del(`${P}.entries.${k}`)}
+            <span class="sd-mech-n" style="color:#9E9E9E">${pad2(k + 1)}</span>
+            ${T(`${P}.entries.${k}.title`, 'p', 'sd-x-card-t', { ph: 'Card title' })}
+            ${T(`${P}.entries.${k}.detail`, 'p', 'sd-x-card-d', { ph: 'A few lines of detail.', multiline: true })}
+          </div>`).join('')}</div>`;
+      } else if (style === 'list') {
+        body = `<div class="sd-list sd-x-list" data-reveal>${entries.map((e, k) => `<div class="sd-li">${del(`${P}.entries.${k}`)}<span class="sd-dot" aria-hidden="true"></span><span><strong>${T(`${P}.entries.${k}.title`, 'span', '', { ph: 'Point' })}</strong>${(e.detail || '').trim() || edit ? `<span class="sd-x-sep"> — </span>${T(`${P}.entries.${k}.detail`, 'span', '', { ph: 'Optional detail' })}` : ''}</span></div>`).join('')}</div>`;
+      } else {
+        body = `<div class="sd-terms" data-reveal>${entries.map((_, k) => `<div class="sd-term">${del(`${P}.entries.${k}`)}${T(`${P}.entries.${k}.title`, 'span', 'sd-term-k', { ph: 'Label' })}${T(`${P}.entries.${k}.detail`, 'span', 'sd-term-v', { ph: 'Detail' })}</div>`).join('')}</div>`;
+      }
+      return `
+      <section id="extra-${i}" class="${cls}" style="${cls ? '' : 'background:#fff'}">
+        ${toggle(P, x.label || 'Section')}
+        <div class="sd-wrap sd-pad">
+          <div data-reveal>
+            ${T(`${P}.label`, 'p', 'sd-kicker', { ph: 'Section label' })}
+            ${T(`${P}.headline`, 'h2', 'sd-h2big', { ph: 'Section title' })}
+            ${T(`${P}.intro`, 'p', 'sd-x-intro', { ph: 'Optional intro', multiline: true })}
+          </div>
+          ${body}
+          ${add(`${P}.entries`, style === 'cards' ? 'Card' : style === 'list' ? 'Point' : 'Row', tone)}
+          ${edit ? `<div class="ed-x-tools">${select(`${P}.style`, [['cards', 'Cards'], ['rows', 'Rows'], ['list', 'List']])}${select(`${P}.after`, [['brief', 'After The Brief'], ['mechanic', 'After How It Works'], ['phases', 'After the phases'], ['channels', 'After Channel Plan']])}${del(P, 'Remove section', 'inline')}</div>` : ''}
+        </div>
+      </section>`;
+    };
+    const extrasAfter = key => extras.filter(({ x }) => (x.after || 'channels') === key).map(extraSection).join('')
+      + (edit && key === 'channels' ? `<div class="sd-wrap" style="padding-top:16px;padding-bottom:16px">${add('extras', 'Section')}</div>` : '');
+
     const close = `
     <footer id="close" class="sd-close">
       <div class="sd-ring" aria-hidden="true"></div>
@@ -502,7 +568,7 @@
       </div>
     </footer>`;
 
-    return `<div class="sd">${header}<main>${hero}${brief}${mechanic}${spine}${phaseSections}${channels}</main>${close}</div>`;
+    return `<div class="sd">${header}<main>${hero}${brief}${extrasAfter('brief')}${mechanic}${extrasAfter('mechanic')}${spine}${phaseSections}${extrasAfter('phases')}${channels}${extrasAfter('channels')}</main>${close}</div>`;
   }
 
   // Header turns solid on scroll, nav highlights the section in view, channel
