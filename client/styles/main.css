@@ -237,6 +237,8 @@ html, body {
   transition: background 0.15s, color 0.15s;
 }
 .notif-bell:hover { background: var(--surface-2); color: var(--text); }
+.notif-nugget { display: block; transition: transform 0.15s; }
+.notif-bell:hover .notif-nugget { transform: rotate(-8deg) scale(1.08); }
 .notif-badge {
   position: absolute;
   top: 1px; right: 1px;

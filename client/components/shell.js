@@ -77,7 +77,16 @@ function renderShell({ pageId, title }) {
     <div class="header-spacer"></div>
     <div class="notif-wrap" id="notif-wrap">
       <button class="notif-bell" id="notif-bell" title="Notifications">
-        🔔<span class="notif-badge" id="notif-badge" style="display:none;"></span>
+        <svg class="notif-nugget" width="20" height="18" viewBox="0 0 20 18" aria-hidden="true">
+          <defs>
+            <linearGradient id="gp-nugget-fill" x1="0.15" y1="0.1" x2="0.85" y2="0.95">
+              <stop offset="0" stop-color="#FFE9A3"/><stop offset="0.45" stop-color="#E8B422"/><stop offset="1" stop-color="#9A6A08"/>
+            </linearGradient>
+          </defs>
+          <path d="M3.2 7.4 L6.1 3.1 L10.4 2 L13.6 3.4 L17.4 5.2 L18.6 9.3 L16.9 13.2 L12.6 15.9 L7.4 15.6 L3.4 13.6 L1.6 10.4 Z" fill="url(#gp-nugget-fill)" stroke="#7A5205" stroke-width="0.8" stroke-linejoin="round"/>
+          <path d="M6.1 3.1 L8.3 7 L13.6 3.4 M8.3 7 L7.4 15.6 M8.3 7 L16.9 13.2 M8.3 7 L3.2 7.4" fill="none" stroke="#B9860F" stroke-width="0.6" opacity="0.7"/>
+          <ellipse cx="7.1" cy="5.3" rx="1.6" ry="0.8" fill="#FFF8DC" opacity="0.9" transform="rotate(-25 7.1 5.3)"/>
+        </svg><span class="notif-badge" id="notif-badge" style="display:none;"></span>
       </button>
       <div class="notif-panel" id="notif-panel"></div>
     </div>
