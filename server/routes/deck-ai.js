@@ -210,7 +210,7 @@ async function generateJson(system, schema, messages) {
 // Writes an image-generation prompt for one image slot, from the deck text
 // around it (see imageContext in client/components/deck-layouts/*.js).
 router.post('/image-prompt', express.json(), async (req, res) => {
-  const { context, deck_title, client_name, ratio } = req.body || {};
+  const { context, deck_title, client_name, ratio, style } = req.body || {};
   if (!context || !String(context).replace(/[^a-z]/gi, '').length) {
     return res.status(400).json({ error: 'Add some text to this part of the deck first, then try again.' });
   }
@@ -218,10 +218,12 @@ router.post('/image-prompt', express.json(), async (req, res) => {
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 400,
-      system: `You write prompts for an AI image generator (FLUX) for Greenpoint Media, an Australian PR and marketing agency, to illustrate slides in client presentations. Write one prompt of 2–4 sentences: the subject, setting, composition, lighting and mood, in a polished editorial photography style unless the content clearly calls for something else. Never ask for text, words, logos, brand marks or UI in the image. Where a setting isn't specified and it fits, make it Australian. Reply with the prompt only.`,
+      system: `You write prompts for an AI image generator (FLUX) for Greenpoint Media, an Australian PR and marketing agency, to illustrate sections of client presentations. Write one prompt of 2–3 sentences describing the subject, setting and composition. Don't describe the photographic style, lighting or colour grade: a deck-wide style is added automatically.
+
+Choose scenes AI images do well and that look real: hands, objects, food, places and environments, and people seen from behind, from a distance or in soft focus. Avoid close-up faces, identifiable children (show hands, silhouettes or objects instead), crowds of faces, and anything specific to the client that must be accurate, such as their products, staff or venue. Never ask for text, words, signs, logos, brand marks or screens with UI. Where a setting isn't specified and it fits, make it Australian. Reply with the prompt only.`,
       messages: [{
         role: 'user',
-        content: [deck_title && `Deck: ${deck_title}`, client_name && `Client: ${client_name}`, ratio && `Aspect ratio: ${ratio}`, '', String(context).slice(0, 6000)].filter(v => v !== undefined && v !== null && v !== false).join('\n'),
+        content: [deck_title && `Deck: ${deck_title}`, client_name && `Client: ${client_name}`, ratio && `Aspect ratio: ${ratio}`, style && `Deck photo style: ${style}`, '', String(context).slice(0, 6000)].filter(v => v !== undefined && v !== null && v !== false).join('\n'),
       }],
     });
     const prompt = message.content.filter(b => b.type === 'text').map(b => b.text).join('').trim().replace(/^["']|["']$/g, '');

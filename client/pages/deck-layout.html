@@ -298,12 +298,22 @@
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 
+    // Deck-wide photo styles (server/lib/photo-styles.js), loaded once.
+    let photoStyles = [{ id: 'warm', label: 'Warm editorial' }];
+    fetch('/api/photo-styles').then(r => r.json()).then(list => { if (Array.isArray(list) && list.length) photoStyles = list; }).catch(() => {});
+
     function openGenerate(p, ratio) {
       const anchor = root.querySelector(`[data-img-gen="${CSS.escape(p)}"]`);
+      const styleId = content.photo_style || 'warm';
       const pop = popAt(anchor, `<strong>Generate image</strong> <span style="color:#9E9E9E">(${esc(ratio)})</span>
+        <label style="display:flex;align-items:center;gap:8px;margin:8px 0 2px;font-size:12px;color:#595959">Photo style
+          <select data-style style="flex:1">${photoStyles.map(s => `<option value="${esc(s.id)}"${s.id === styleId ? ' selected' : ''}>${esc(s.label)}</option>`).join('')}</select></label>
+        <span style="font-size:11px;color:#9E9E9E">Applies to every image in this deck, so they match.</span>
         <textarea placeholder="Describe the image…">${esc((get(p) || {}).prompt || '')}</textarea>
         <div class="row"><button type="button" class="ghost" data-suggest style="margin-right:auto">↻ New suggestion</button><button type="button" class="ghost" data-x>Cancel</button><button type="button" data-go>✨ Generate</button></div>`);
       const box = pop.querySelector('textarea');
+      pop.querySelector('[data-style]').onchange = e => { content.photo_style = e.target.value; scheduleSave(); };
+      const styleLabel = () => (photoStyles.find(s => s.id === (content.photo_style || 'warm')) || {}).label;
       // Ask the AI for a prompt written from this slot's deck content; the
       // user can edit it (or ask again) before generating.
       async function suggest() {
@@ -315,7 +325,7 @@
         try {
           const res = await fetch('/api/deck-ai/image-prompt', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deck_title: deck.title, client_name: deck.client_name, ratio, context: layout.imageContext ? layout.imageContext(content, p) : '' }),
+            body: JSON.stringify({ deck_title: deck.title, client_name: deck.client_name, ratio, style: styleLabel(), context: layout.imageContext ? layout.imageContext(content, p) : '' }),
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Could not write a prompt');
@@ -341,7 +351,7 @@
         try {
           const res = await fetch('/api/generate-image', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, aspect_ratio: ratio, client_name: deck.client_name, deck_title: deck.title }),
+            body: JSON.stringify({ prompt, aspect_ratio: ratio, client_name: deck.client_name, deck_title: deck.title, style: content.photo_style || 'warm' }),
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Image generation failed');

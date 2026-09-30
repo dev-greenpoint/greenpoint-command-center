@@ -10,6 +10,10 @@ const obj = (properties) => ({ type: 'object', properties, required: Object.keys
 const arr = (items, description) => (description ? { type: 'array', items, description } : { type: 'array', items });
 const num = (description) => ({ type: 'number', description });
 
+// Shared guidance for image descriptions (matches the image-prompt writer in
+// routes/deck-ai.js); the deck-wide photo style is added when generating.
+const IMAGE_GUIDE = 'Describe the subject, setting and composition in 1–2 sentences, not the photo style. Prefer hands, objects, places, and people from behind or at a distance; no close-up faces or identifiable children; no text, signs or logos.';
+
 const SCALE = 'Position on the month scale: 0 = start of the first month, 1 = end of the first month, 2.5 = middle of the third month.';
 
 const MAIN = {
@@ -21,7 +25,7 @@ const MAIN = {
     headline: arr(str(), 'The big uppercase title, 1–3 short lines of 1–2 words each.'),
     objective: str('Two or three sentences: what the campaign has to achieve and how.'),
     stats: arr(obj({ label: str('e.g. "Budget", "Duration", "Target"'), value: str() }), 'Up to 3 headline facts.'),
-    image_prompt: str('Description of a background photo for the hero, for an image generator. No text in the image.'),
+    image_prompt: str(`Background photo for the hero, for an image generator. ${IMAGE_GUIDE}`),
   }),
   brief: obj({
     show: { type: 'boolean' },
@@ -58,7 +62,7 @@ const MAIN = {
       headline: str('The title of this piece.'),
       body: str('Two to four lines describing it and why it works.'),
       image_ratio: { type: 'string', enum: ['16:9', '9:16', 'none'], description: '16:9 for wide visuals, 9:16 for vertical social video, none when no visual fits.' },
-      image_prompt: str('Description of the visual for an image generator; empty when image_ratio is none.'),
+      image_prompt: str(`The visual for an image generator; empty when image_ratio is none. ${IMAGE_GUIDE}`),
       includes: arr(str(), 'Everything the document says is included, as short items.'),
       end_card: arr(str(), 'Optional 2–3 short punchy lines for a video end card; empty otherwise.'),
     })),

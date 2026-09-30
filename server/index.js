@@ -86,8 +86,15 @@ const cloudinaryFolderPart = (s, fallback) =>
 const cloudinarySlug = (s) =>
   (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').split('-').slice(0, 8).join('-') || 'image';
 
+const { styledPrompt, PHOTO_STYLES } = require('./lib/photo-styles');
+
+// Photo style options for the Generate image popup.
+app.get('/api/photo-styles', (req, res) => {
+  res.json(Object.entries(PHOTO_STYLES).map(([id, s]) => ({ id, label: s.label })));
+});
+
 app.post('/api/generate-image', async (req, res) => {
-  const { prompt, aspect_ratio, client_name, deck_title } = req.body;
+  const { prompt, aspect_ratio, client_name, deck_title, style } = req.body;
   if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'prompt required' });
 
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -104,7 +111,7 @@ app.post('/api/generate-image', async (req, res) => {
     const folder = ['Command Center', cloudinaryFolderPart(client_name, 'No Client'), cloudinaryFolderPart(deck_title, 'Untitled Deck')].join('/');
 
     const body = {
-      prompt: prompt.trim(),
+      prompt: styledPrompt(prompt, style),
       model: { family: 'flux', tier: 'standard' },
       target: { target_type: 'managed_asset', public_id: name },
     };
